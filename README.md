@@ -28,5 +28,3 @@ Backend: Go, PostgreSQL, Redis, Celery, Docker
 CI/CD: GitHub Actions, Docker Compose
 
 Cloud: AWS S3, Cloudflare CDN
-
-Translated with DeepL.com (free version)
