@@ -1,10 +1,10 @@
-package http
+package chat
 
 import (
 	"github.com/gorilla/mux"
 )
 
-func NewAuthRouter() *mux.Router {
+func NewChatRouter() *mux.Router {
 	r := mux.NewRouter()
 	
 	return r
