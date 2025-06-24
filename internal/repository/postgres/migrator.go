@@ -16,7 +16,7 @@ func Migrate(conn *sql.DB, serviceName string) {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://db//migrations/%s", serviceName), //- нужно указать норм путь к папке с миграциями
+		fmt.Sprintf("file://./internal/repository/migrations/%s", serviceName),
 		"postgres",
 		driver,
 	)
