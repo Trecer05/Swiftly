@@ -1,4 +1,4 @@
-package postgres
+package chat
 
 import (
 	"database/sql"
