@@ -16,19 +16,20 @@ func (manager *Manager) SaveRefreshToken(token string, userId int) error {
 func (manager *Manager) GetRefreshToken(userId int) (auth.RefreshToken, error) {
 	var token auth.RefreshToken
 
-	if err := manager.Conn.QueryRow(`SELECT refresh, expired_at FROM user_tokens WHERE user_id = $1`, userId).Scan(&token.Token, &token.ExpiredAt); err != nil {
+	if err := manager.Conn.QueryRow(`SELECT id, refresh, expired_at FROM user_tokens WHERE user_id = $1`, userId).Scan(&token.ID, &token.Token, &token.ExpiredAt); err != nil {
 		return auth.RefreshToken{}, err
 	}
 
 	return token, nil
 }
 
-func (manager *Manager) DeleteRefreshToken(userId int) error {
+func (manager *Manager) DeleteRefreshToken(userId int, token string) error {
 	if _, err := manager.Conn.Exec(`DELETE FROM user_tokens WHERE user_id = $1`, userId); err != nil {
 		return err
 	}
 
-	return nil
+	_, err := manager.Conn.Exec(`INSERT INTO expired_tokens (user_id, token) VALUES ($1, $2)`, userId, token)
+	return err
 }
 
 func (manager *Manager) UpdateRefreshToken(userId int, token string) error {

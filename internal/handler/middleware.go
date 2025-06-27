@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Trecer05/Swiftly/internal/service/auth"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -30,15 +29,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil || !token.Valid {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			log.Println("Invalid token")
-			return
-		}
-
-		claims := token.Claims.(jwt.MapClaims)
-		login := claims["authorization"].(bool)
-
-		if !login {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			log.Println("Unauthorized request")
 			return
 		}
 
