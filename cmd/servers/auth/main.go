@@ -22,7 +22,7 @@ func main() {
 
 	r := router.NewAuthRouter(manager)
 
-	s := server.NewServer(os.Getenv("SERVER_PORT"), r)
+	s := server.NewServer(os.Getenv("AUTH_SERVER_PORT"), r)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}

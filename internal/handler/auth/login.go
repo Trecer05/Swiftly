@@ -79,3 +79,55 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 		"refresh_token": refreshToken,
 	})
 }
+
+func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	var user model.User
+	var err error
+
+	if err = json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
+
+	if err = mgr.Register(&user); err != nil {
+		if err == errors.ErrEmailExists {
+			http.Error(w, err.Error(), http.StatusConflict)
+			log.Println(err)
+			return
+		} else if err == errors.ErrNumberExists {
+			http.Error(w, err.Error(), http.StatusConflict)
+			log.Println(err)
+			return
+		}
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	refreshToken, err := tokens.GenerateRefreshToken(mgr, user.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     tokens.AddAccessTime(),
+	}
+
+	var accessToken string
+	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
+}
