@@ -20,6 +20,10 @@ func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
 	api.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		Login(w, r, mgr)
 	}).Methods(http.MethodPost)
+
+	api.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		Register(w, r, mgr)
+	}).Methods(http.MethodPost)
 }
 
 func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
