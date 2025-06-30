@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Trecer05/Swiftly/internal/service/auth"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -32,6 +35,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		claims := token.Claims.(jwt.MapClaims)
+
+		if exp, ok := claims["exp"].(float64); ok {
+			if int64(exp) < time.Now().Unix() {
+				http.Error(w, "Token expired", http.StatusUnauthorized)
+				log.Println("Token expired")
+				return
+			}
+		}
+
+		idFloat, ok := claims["id"].(float64)
+		if !ok {
+			http.Error(w, "Invalid token payload", http.StatusUnauthorized)
+			return
+		}
+		id := int(idFloat)
+
+		ctx := context.WithValue(r.Context(), "id", id)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

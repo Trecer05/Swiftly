@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
+	models "github.com/Trecer05/Swiftly/internal/model/auth"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -42,21 +43,21 @@ func AddAccessTime() int64 {
 	return time.Now().Add(15 * time.Minute).Unix()
 }
 
-func ValidateRefreshToken(manager *auth.Manager, userId int) (error) {
+func ValidateRefreshToken(manager *auth.Manager, userId int) (models.RefreshToken, error) {
 	token, err := manager.GetRefreshToken(userId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return jwt.ErrTokenExpired
+			return models.RefreshToken{}, jwt.ErrTokenExpired
 		}
-		return err
+		return token, err
 	}
 
 	if time.Now().After(token.ExpiredAt) {
 		if err := manager.DeleteRefreshToken(userId, token.Token); err != nil {
-			return err
+			return models.RefreshToken{}, err
 		} else {
-			return jwt.ErrTokenExpired
+			return models.RefreshToken{}, jwt.ErrTokenExpired
 		}
 	}
-	return nil
+	return token, nil
 }
