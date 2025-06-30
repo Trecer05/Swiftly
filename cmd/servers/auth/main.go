@@ -15,7 +15,7 @@ func main() {
 	if err := env.LoadEnvFile(".env"); err != nil {
 		log.Fatalf("Ошибка загрузки env: %v", err)
 	}
-	
+
 	manager := mgr.NewAuthManager("postgres", os.Getenv("DB_AUTH_CONNECTION_STRING"))
 
 	migrator.Migrate(manager.Conn, "auth")

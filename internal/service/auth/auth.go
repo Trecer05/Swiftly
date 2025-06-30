@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
 	models "github.com/Trecer05/Swiftly/internal/model/auth"
+	"github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

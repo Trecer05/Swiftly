@@ -27,7 +27,7 @@ func (manager *Manager) Login(user *model.User) error {
 	return nil
 }
 
-func (manager *Manager) Register(user *model.User) (error) {
+func (manager *Manager) Register(user *model.User) error {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err

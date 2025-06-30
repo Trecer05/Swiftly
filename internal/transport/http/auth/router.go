@@ -9,7 +9,7 @@ import (
 
 func NewAuthRouter(manager *mgr.Manager) *mux.Router {
 	r := mux.NewRouter()
-	
+
 	handlers.InitAuthRoutes(r, manager)
 
 	return r

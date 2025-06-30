@@ -74,8 +74,8 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	}
 
 	claims := jwt.MapClaims{
-		"id": user.ID,
-		"exp":     tokens.AddAccessTime(),
+		"id":  user.ID,
+		"exp": tokens.AddAccessTime(),
 	}
 
 	var accessToken string
@@ -205,8 +205,8 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	}
 
 	claims := jwt.MapClaims{
-		"id": id,
-		"exp":     tokens.AddAccessTime(),
+		"id":  id,
+		"exp": tokens.AddAccessTime(),
 	}
 
 	if t.AccessToken, err = tokens.GenerateAccessToken(claims); err != nil {

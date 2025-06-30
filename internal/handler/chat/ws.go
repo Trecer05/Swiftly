@@ -17,7 +17,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	// тут получение айди и имени из сессии будет
 
 	upgrader := websocket.Upgrader{
-		CheckOrigin:     func(r *http.Request) bool { return true },
+		CheckOrigin: func(r *http.Request) bool { return true },
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -30,7 +30,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 	chat := wsChat.NewChat()
 	cl.Conn = conn
-	
+
 	chat.Lock.Lock()
 	chat.Clients[&cl] = true
 	chat.Lock.Unlock()
@@ -46,7 +46,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 				}
 				break
 			}
-			
+
 			var msg chatModels.Message
 			err = json.Unmarshal(msgBytes, &msg)
 			if err != nil {

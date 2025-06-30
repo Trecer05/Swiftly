@@ -6,6 +6,6 @@ import (
 
 func NewChatRouter() *mux.Router {
 	r := mux.NewRouter()
-	
+
 	return r
 }

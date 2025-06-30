@@ -33,7 +33,7 @@ func (manager *Manager) DeleteRefreshToken(userId int, token string) error {
 }
 
 func (manager *Manager) UpdateRefreshToken(userId int, token string) error {
-	if _, err := manager.Conn.Exec(`UPDATE user_tokens SET expired_at = $1, refresh = $2 WHERE user_id = $3`, time.Now().Add(time.Hour * 24 * 7).Unix(), token, userId); err != nil {
+	if _, err := manager.Conn.Exec(`UPDATE user_tokens SET expired_at = $1, refresh = $2 WHERE user_id = $3`, time.Now().Add(time.Hour*24*7).Unix(), token, userId); err != nil {
 		return err
 	}
 
