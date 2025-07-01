@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
@@ -11,6 +10,7 @@ import (
 	model "github.com/Trecer05/Swiftly/internal/model/auth"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
 	tokens "github.com/Trecer05/Swiftly/internal/service/auth"
+	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
@@ -44,32 +44,20 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	if err := mgr.Login(&user); err != nil {
 		switch err {
 		case errors.ErrInvalidPassword:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "invalid password"})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusUnauthorized)
 			return
 		case errors.ErrNoUser:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "user not found"})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
 			return
 		default:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "internal error"})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -80,17 +68,11 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 		if err == jwt.ErrTokenExpired {
 			refreshToken, err = tokens.GenerateRefreshToken(mgr, user.ID)
 			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				log.Println(err)
+				serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 				return
 			}
 		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -105,10 +87,7 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -124,42 +103,27 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err = json.NewDecoder(r.Body).Decode(&user); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	if err = mgr.Register(&user); err != nil {
 		switch err {
 		case errors.ErrEmailExists:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusConflict)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
 			return
 		case errors.ErrNumberExists:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusConflict)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
 			return
 		default:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
 
 	refreshToken, err := tokens.GenerateRefreshToken(mgr, user.ID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -170,10 +134,7 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -191,33 +152,21 @@ func Logout(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var ok bool
 
 	if id, ok = r.Context().Value("id").(int); !ok {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": errors.ErrUnauthorized.Error()})
-		log.Println(errors.ErrUnauthorized, "ctx")
+		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	if token, err = tokens.ValidateRefreshToken(mgr, id); err != nil {
 		if err == jwt.ErrTokenExpired {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrRefreshTokenExpired.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	if err := mgr.DeleteRefreshToken(id, token.Token); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -233,18 +182,12 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var ok bool
 
 	if id, ok = r.Context().Value("id").(int); !ok {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": errors.ErrUnauthorized.Error()})
-		log.Println(errors.ErrUnauthorized, "ctx")
+		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
@@ -252,16 +195,10 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	if err != nil {
 		switch err {
 		case jwt.ErrTokenExpired:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrRefreshTokenExpired.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
 			return
 		default:
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			log.Println(err)
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -273,10 +210,7 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	}
 
 	if t.AccessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		log.Println(err)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
