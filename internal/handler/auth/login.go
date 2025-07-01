@@ -6,16 +6,21 @@ import (
 	"net/http"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
+	tokenErrors "github.com/Trecer05/Swiftly/internal/errors/tokens"
+	middleware "github.com/Trecer05/Swiftly/internal/handler"
 	model "github.com/Trecer05/Swiftly/internal/model/auth"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
 	tokens "github.com/Trecer05/Swiftly/internal/service/auth"
-	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
 
 func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
 	api := router.PathPrefix("/api/v1").Subrouter()
+
+	apiSecure := router.PathPrefix("/api/v1").Subrouter()
+	apiSecure.Use(middleware.AuthMiddleware())
 
 	api.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		Login(w, r, mgr)
@@ -25,11 +30,11 @@ func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
 		Register(w, r, mgr)
 	}).Methods(http.MethodPost)
 
-	api.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		Logout(w, r, mgr)
 	}).Methods(http.MethodPost)
 
-	api.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
 		Refresh(w, r, mgr)
 	}).Methods(http.MethodPost)
 }
@@ -39,7 +44,9 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
@@ -47,30 +54,48 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	if err := mgr.Login(&user); err != nil {
 		switch err {
 		case errors.ErrInvalidPassword:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid password"})
 			log.Println(err)
 			return
 		case errors.ErrNoUser:
-			http.Error(w, err.Error(), http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "user not found"})
+			log.Println(err)
+			return
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "internal error"})
 			log.Println(err)
 			return
 		}
 	}
 
 	var refreshToken string
-	if _, err := tokens.ValidateRefreshToken(mgr, user.ID); err != nil {
+	token, err := tokens.ValidateRefreshToken(mgr, user.ID)
+	if err != nil {
 		if err == jwt.ErrTokenExpired {
 			refreshToken, err = tokens.GenerateRefreshToken(mgr, user.ID)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 				log.Println(err)
 				return
 			}
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			log.Println(err)
 			return
 		}
+	}
+	if token.Token == "" {
+		token.Token = refreshToken
 	}
 
 	claims := jwt.MapClaims{
@@ -80,7 +105,9 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
@@ -88,7 +115,7 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"refresh_token": token.Token,
 	})
 }
 
@@ -97,7 +124,9 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err = json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
@@ -105,35 +134,45 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	if err = mgr.Register(&user); err != nil {
 		switch err {
 		case errors.ErrEmailExists:
-			http.Error(w, err.Error(), http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			log.Println(err)
 			return
 		case errors.ErrNumberExists:
-			http.Error(w, err.Error(), http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			log.Println(err)
+			return
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			log.Println(err)
 			return
 		}
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
-		return
 	}
 
 	refreshToken, err := tokens.GenerateRefreshToken(mgr, user.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
 
 	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"exp":     tokens.AddAccessTime(),
+		"id":  user.ID,
+		"exp": tokens.AddAccessTime(),
 	}
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
@@ -148,26 +187,36 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 func Logout(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 	var token model.RefreshToken
-	if r.Context().Value("id") == nil {
-		http.Error(w, errors.ErrUnauthorized.Error(), http.StatusUnauthorized)
-		log.Println(err)
+	var id int
+	var ok bool
+
+	if id, ok = r.Context().Value("id").(int); !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": errors.ErrUnauthorized.Error()})
+		log.Println(errors.ErrUnauthorized, "ctx")
 		return
 	}
 
-	if token, err = tokens.ValidateRefreshToken(mgr, r.Context().Value("id").(int)); err != nil {
+	if token, err = tokens.ValidateRefreshToken(mgr, id); err != nil {
 		if err == jwt.ErrTokenExpired {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrRefreshTokenExpired.Error()})
 			log.Println(err)
 			return
 		}
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
 
-	if err := mgr.DeleteRefreshToken(r.Context().Value("id").(int), token.Token); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := mgr.DeleteRefreshToken(id, token.Token); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
@@ -180,29 +229,43 @@ func Logout(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var t model.Tokens
-	id := r.Context().Value("id").(int)
+	var id int
+	var ok bool
+
+	if id, ok = r.Context().Value("id").(int); !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": errors.ErrUnauthorized.Error()})
+		log.Println(errors.ErrUnauthorized, "ctx")
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}
 
 	refreshToken, err := tokens.ValidateRefreshToken(mgr, id)
 	if err != nil {
-		if err == jwt.ErrTokenExpired {
-			refreshToken.Token, err = tokens.GenerateRefreshToken(mgr, id)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch err {
+		case jwt.ErrTokenExpired:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrRefreshTokenExpired.Error()})
+			log.Println(err)
+			return
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			log.Println(err)
 			return
 		}
 	}
+	t.RefreshToken = refreshToken.Token
 
 	claims := jwt.MapClaims{
 		"id":  id,
@@ -210,7 +273,9 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	}
 
 	if t.AccessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		log.Println(err)
 		return
 	}

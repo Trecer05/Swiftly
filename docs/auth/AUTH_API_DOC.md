@@ -21,6 +21,7 @@
 - 401 Unauthorized — неверный пароль
 - 404 Not Found — пользователь не найден
 - 500 Internal Server Error — внутренняя ошибка сервера
+
 **Ответ (успех):**
 ```json
 {
@@ -40,8 +41,7 @@
 {
   "email": "string",
   "phone": "string",
-  "password": "string",
-  ...
+  "password": "string"
 }
 ```
 **Возможные коды ответов:**
@@ -49,6 +49,7 @@
 - 400 Bad Request — некорректные данные запроса
 - 409 Conflict — email или телефон уже зарегистрированы
 - 500 Internal Server Error — внутренняя ошибка сервера
+
 **Ответ (успех):**
 ```json
 {
@@ -67,6 +68,7 @@
 - 200 OK — успешный выход
 - 401 Unauthorized — пользователь не авторизован или refresh токен истёк
 - 500 Internal Server Error — внутренняя ошибка сервера
+
 **Ответ (успех):**
 ```json
 {
@@ -75,7 +77,8 @@
 ```
 **Примеры ошибок:**
 - 401: `{"error": "unauthorized"}`
-- 401: `{"error": "token expired"}`
+- 401: `{"error": "access token expired"}` - запрос на /refresh
+- 401: `{"error": "refresh token expired"}` - тогда сразу выход пользователя
 
 ### POST /api/v1/refresh
 **Описание:** Обновление access токена по refresh токену.
@@ -90,6 +93,7 @@
 - 400 Bad Request — некорректные данные запроса
 - 401 Unauthorized — refresh токен истёк или невалиден
 - 500 Internal Server Error — внутренняя ошибка сервера
+
 **Ответ (успех):**
 ```json
 {
@@ -98,7 +102,7 @@
 }
 ```
 **Примеры ошибок:**
-- 401: `{"error": "token expired"}`
+- 401: `{"error": "refresh token expired"}`
 - 400: `{"error": "invalid request body"}`
 
 ---
@@ -107,3 +111,4 @@
 - Для всех HTTP-запросов Content-Type: application/json.
 - В login и register может быть либо email, либо phone (одно из двух).
 - Возможны дополнительные поля в моделях пользователя (см. исходный код моделей). 
+- /refresh и /logout - защищенные маршруты bearer аутентификацией в header bearer добавляется access токен

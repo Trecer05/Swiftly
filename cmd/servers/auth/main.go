@@ -12,13 +12,16 @@ import (
 )
 
 func main() {
-	if err := env.LoadEnvFile(".env"); err != nil {
+	if err := env.LoadEnvFile("./.env"); err != nil {
 		log.Fatalf("Ошибка загрузки env: %v", err)
 	}
+	log.Println("ENV loaded")
 
 	manager := mgr.NewAuthManager("postgres", os.Getenv("DB_AUTH_CONNECTION_STRING"))
+	log.Println("DB connected")
 
 	migrator.Migrate(manager.Conn, "auth")
+	log.Println("DB migrated")
 
 	r := router.NewAuthRouter(manager)
 

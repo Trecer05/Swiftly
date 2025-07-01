@@ -7,16 +7,16 @@ import (
 )
 
 func (manager *Manager) SaveRefreshToken(token string, userId int) error {
-	expiredAt := time.Now().Add(time.Hour * 24 * 7).Unix()
+	expiredAt := time.Now().Add(time.Hour * 24 * 7)
 
-	_, err := manager.Conn.Exec(`INSERT INTO user_tokens (user_id, refresh, expired_at) VALUES ($1, $2, $3)`, userId, token, expiredAt)
+	_, err := manager.Conn.Exec(`INSERT INTO user_tokens (user_id, token, expired_at) VALUES ($1, $2, $3)`, userId, token, expiredAt)
 	return err
 }
 
 func (manager *Manager) GetRefreshToken(userId int) (auth.RefreshToken, error) {
 	var token auth.RefreshToken
 
-	if err := manager.Conn.QueryRow(`SELECT id, refresh, expired_at FROM user_tokens WHERE user_id = $1`, userId).Scan(&token.ID, &token.Token, &token.ExpiredAt); err != nil {
+	if err := manager.Conn.QueryRow(`SELECT id, token, expired_at FROM user_tokens WHERE user_id = $1`, userId).Scan(&token.ID, &token.Token, &token.ExpiredAt); err != nil {
 		return auth.RefreshToken{}, err
 	}
 
@@ -33,7 +33,7 @@ func (manager *Manager) DeleteRefreshToken(userId int, token string) error {
 }
 
 func (manager *Manager) UpdateRefreshToken(userId int, token string) error {
-	if _, err := manager.Conn.Exec(`UPDATE user_tokens SET expired_at = $1, refresh = $2 WHERE user_id = $3`, time.Now().Add(time.Hour*24*7).Unix(), token, userId); err != nil {
+	if _, err := manager.Conn.Exec(`UPDATE user_tokens SET expired_at = $1, token = $2 WHERE user_id = $3`, time.Now().Add(time.Hour*24*7).Unix(), token, userId); err != nil {
 		return err
 	}
 
