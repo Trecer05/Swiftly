@@ -15,6 +15,8 @@ type Message struct {
 }
 
 type Chat struct {
+	ID int
+	Name string
 	Lock sync.Mutex
 	WG  sync.WaitGroup
 	Broadcaster chan Message
