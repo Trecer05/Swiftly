@@ -4,6 +4,7 @@
 
 ## Подпакеты:
 - `postgres/` - Реализации для PostgreSQL
+- `migrations/` - PG миграции
 - `cache/` - Redis-кэш
 
 ## Принципы:
