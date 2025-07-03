@@ -14,18 +14,22 @@ type Message struct {
 	Time   time.Time `json:"time"`
 }
 
-type Chat struct {
+// OnChat, OnLeave - проверка, в чате ли пользователь конкретный, для функционала прочитанных сообщений
+type ChatRoom struct {
 	ID int
 	Name string
-	Lock sync.Mutex
-	WG  sync.WaitGroup
-	Broadcaster chan Message
-	Clients   map[*Client]bool
-	ErrCh    chan error
+	Lock sync.RWMutex
+	WG sync.WaitGroup
+	Users map[*Client]bool
+	Broadcast chan Message
+	OnChat chan *Client
+	OnLeave chan *Client
+	ErrCh chan error
 }
 
 type Client struct {
 	ID    int	`json:"id"`
 	Name  string `json:"name"`
+	Send  chan Message
 	Conn  *websocket.Conn
 }

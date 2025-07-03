@@ -1,67 +1,68 @@
 package chat
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
-	"time"
+	"strconv"
 
-	chatModels "github.com/Trecer05/Swiftly/internal/model/chat"
+	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
+	middleware "github.com/Trecer05/Swiftly/internal/handler"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	wsChat "github.com/Trecer05/Swiftly/internal/transport/websocket/chat"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
-func HandleConnection(w http.ResponseWriter, r *http.Request) {
-	var cl chatModels.Client
-	// тут получение айди и имени из сессии будет
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
+func InitChatRoutes(r *mux.Router, mgr *manager.Manager) {
+	r.Use(middleware.AuthMiddleware())
+
+	r.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+}
+
+func ChatHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	intId, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	// TODO: сделать функцию для получения комнаты
+	room := GetUserRoom(intId)
+	chatConnection(room, w, r)
+}
+
+func chatConnection(room models.ChatRoom, w http.ResponseWriter, r *http.Request) {
+	var id int
+	var ok bool
+
+	if id, ok = r.Context().Value("id").(int); !ok {
+		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
-	defer conn.Close()
 
-	chat := wsChat.NewChat()
-	cl.Conn = conn
+	user := &models.Client{
+		ID: id,
+		Conn: conn,
+		Send: make(chan models.Message, 256),
+	}
 
-	chat.Lock.Lock()
-	chat.Clients[&cl] = true
-	chat.Lock.Unlock()
+	room.OnChat <- user
 
-	chat.WG.Add(1)
-	go func() {
-		defer chat.WG.Done()
-		for {
-			_, msgBytes, err := conn.ReadMessage()
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Printf("error: %v", err)
-				}
-				break
-			}
-
-			var msg chatModels.Message
-			err = json.Unmarshal(msgBytes, &msg)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			msg.Time = time.Now()
-
-			chat.Broadcaster <- msg
-		}
-
-		chat.Lock.Lock()
-		delete(chat.Clients, &cl)
-		chat.Lock.Unlock()
-	}()
-
-	chat.WG.Wait()
+	go wsChat.ReadMessage(user, &room)
+	go wsChat.WriteMessage(user)
 }
