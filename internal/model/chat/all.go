@@ -2,8 +2,8 @@ package chat
 
 import "github.com/gorilla/websocket"
 
-type Chats struct {
+type ChatRooms struct {
 	Conn *websocket.Conn
 	Messages chan Message
-	Rooms map[int]*ChatRoom
+	Rooms []*ChatRoom
 }

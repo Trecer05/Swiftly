@@ -9,6 +9,8 @@ import (
 
 type Message struct {
 	ID     string    `json:"id"`
+	SenderID int      `json:"sender_id"`
+	ReceiverID int    `json:"receiver_id"`
 	Text   string    `json:"text"`
 	Author Client    `json:"author"`
 	Time   time.Time `json:"time"`
@@ -22,6 +24,7 @@ type ChatRoom struct {
 	WG sync.WaitGroup
 	Users map[*Client]bool
 	Broadcast chan Message
+	LastMessage *Message
 	OnChat chan *Client
 	OnLeave chan *Client
 	ErrCh chan error
