@@ -32,4 +32,9 @@ abstract final class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
+  static const LinearGradient gradient_4 = LinearGradient(
+    colors: [Color.fromRGBO(38, 98, 217, 1), Color.fromRGBO(23, 59, 130, 1)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }

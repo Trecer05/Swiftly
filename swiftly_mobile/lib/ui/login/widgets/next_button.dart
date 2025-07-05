@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
@@ -31,7 +32,7 @@ class _NextButtonState extends State<NextButton> {
         ),
         SizedBox(height: 12),
         GestureDetector(
-          onTap: policyAccepted ? () {print('yea!');} : null,
+          onTap: policyAccepted ? () {context.go('/home');} : null,
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'ui/core/themes/colors.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -20,6 +22,12 @@ class MyApp extends StatelessWidget {
       title: 'Sloyka bakery',
       theme: ThemeData(
         // scaffoldBackgroundColor: Colors.transparent,
+        navigationRailTheme: const NavigationRailThemeData(
+          selectedIconTheme: IconThemeData(color: AppColors.white),
+          selectedLabelTextStyle: TextStyle(color: AppColors.white),
+          unselectedIconTheme: IconThemeData(color: AppColors.white128),
+          unselectedLabelTextStyle: TextStyle(color: AppColors.white128),
+        ),
         textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
       ),
       routerConfig: router,

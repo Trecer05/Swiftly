@@ -13,7 +13,8 @@ class LeftPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.gradient_3
+        // gradient: AppColors.gradient_3
+        color: const Color.fromARGB(255, 8, 19, 55)
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:swiftly_mobile/routing/routers.dart';
+import 'package:swiftly_mobile/ui/core/ui/custom_navigation_rail.dart';
 import 'package:swiftly_mobile/ui/login/widgets/login_screen.dart';
 
 final GoRouter router = GoRouter(
@@ -20,7 +21,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routers.home,
       builder: (BuildContext context, GoRouterState state) {
-        return Placeholder();
+        return CustomNavigationRail();
       },
     ),
     GoRoute(
