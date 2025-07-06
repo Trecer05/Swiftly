@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:swiftly_mobile/ui/core/themes/colors.dart';
 import 'package:flutter_svg/svg.dart';
 
 class RightPanel extends StatelessWidget {
