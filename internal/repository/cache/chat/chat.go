@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (manager *Manager) ListenPubSub(chatId int) {
+func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message) {
 	manager.MU.Lock()
 	if manager.SubscribedChats[chatId] {
 		manager.MU.Unlock()
@@ -28,24 +28,29 @@ func (manager *Manager) ListenPubSub(chatId int) {
 				log.Println("Invalid pubsub message:", err)
 				continue
 			}
-			manager.SendLocalMessage(m.ReceiverID, m)
+			m.ChatID = chatId
+
+			msgCh <- m
 		}
 	}()
 }
 
-
-func (manager *Manager) AddUser(userId int, conn *websocket.Conn) {
+func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn) {
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	manager.Sessions[userId] = conn
+	if _, ok := manager.Sessions[chatId]; !ok {
+		manager.Sessions[chatId] = make(map[int]*websocket.Conn)
+	}
+
+	manager.Sessions[chatId][userId] = conn
 }
 
-func (manager *Manager) RemoveUser(userId int) error {
+func (manager *Manager) RemoveUser(userId, chatId int) error {
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	if conn, ok := manager.Sessions[userId]; ok {
+	if conn, ok := manager.Sessions[chatId][userId]; ok {
 		if err := conn.Close(); err != nil {
 			return err
 		} else {
@@ -57,12 +62,17 @@ func (manager *Manager) RemoveUser(userId int) error {
 	return nil
 }
 
-func (manager *Manager) SendLocalMessage(userId int, message models.Message) {
-	manager.MU.Lock()
-	defer manager.MU.Unlock()
+func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan models.Message) {
+	for message := range messages {
+		manager.MU.RLock()
+		conn, ok := manager.Sessions[chatId][userId]
+		manager.MU.RUnlock()
 
-	if conn, ok := manager.Sessions[userId]; ok {
-		conn.WriteJSON(message)
+		if ok {
+			if err := conn.WriteJSON(message); err != nil {
+				log.Println("write error:", err)
+			}
+		}
 	}
 }
 

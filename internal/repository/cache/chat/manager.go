@@ -12,7 +12,7 @@ type Manager struct {
 	WG   *sync.WaitGroup
 	MU   *sync.RWMutex
 	RDB  *redis.Client
-	Sessions map[int]*websocket.Conn
+	Sessions map[int]map[int]*websocket.Conn
 	SubscribedChats map[int]bool
 }
 
@@ -23,7 +23,8 @@ func NewChatManager(addr string) *Manager {
 		WG:   &sync.WaitGroup{},
 		MU:   &sync.RWMutex{},
 		RDB:  redis.NewClient(&redis.Options{Addr: addr}),
-		Sessions: map[int]*websocket.Conn{},
+		Sessions: make(map[int]map[int]*websocket.Conn),
+		SubscribedChats: make(map[int]bool),
 	}
 }
 

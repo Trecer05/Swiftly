@@ -10,12 +10,18 @@ import (
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	wsChat "github.com/Trecer05/Swiftly/internal/transport/websocket/chat"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
+// TODO: заменить на:
+// CheckOrigin: func(r *http.Request) bool {
+// 	origin := r.Header.Get("Origin")
+// 	return origin == "https://домен"
+// }
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
@@ -48,14 +54,18 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager) {
 		return
 	}
 
-	rds.AddUser(userId, conn)
+	rds.AddUser(userId, chatId, conn)
 	log.Println("User connected to chat", chatId, userId)
+	msgCh := make(chan models.Message)
 
-	go rds.ListenPubSub(chatId)
+	go rds.ListenPubSub(chatId, msgCh)
 
 	defer func() {
-		rds.RemoveUser(userId)
+		rds.RemoveUser(userId, chatId)
 	}()
 
+	go rds.SendLocalMessage(userId, chatId, msgCh)
 	wsChat.ReadMessage(chatId, conn, rds)
+
+	close(msgCh)
 }
