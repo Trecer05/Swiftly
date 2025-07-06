@@ -131,3 +131,8 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 
 	return messages, nil
 }
+
+func (manager *Manager) SaveChatMessage(message models.Message) error {
+	_, err := manager.Conn.Exec(`INSERT INTO chat_messages chat_id, user_id, text VALUES ($1, $2, $3)`, message.ChatID, message.Author.ID, message.Text)
+	return err
+}

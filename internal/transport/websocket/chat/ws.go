@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func ReadMessage(chatId int, conn *websocket.Conn, mgr *redis.Manager) {
+func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *manager.Manager) {
 	defer func() {
 		conn.Close()
 	}()
@@ -33,7 +33,11 @@ func ReadMessage(chatId int, conn *websocket.Conn, mgr *redis.Manager) {
 			break
 		}
 
-		mgr.SendToUser(chatId, message)
+		rds.SendToUser(chatId, message)
+		if err := manager.SaveChatMessage(message); err != nil {
+			log.Println(err)
+			break
+		}
 	}
 }
 

@@ -98,7 +98,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	}()
 
 	go rds.SendLocalMessage(userId, chatId, msgCh)
-	wsChat.ReadMessage(chatId, conn, rds)
+	wsChat.ReadMessage(chatId, conn, rds, mgr)
 
 	close(msgCh)
 }
