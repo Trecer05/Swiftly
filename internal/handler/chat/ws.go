@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
+	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	middleware "github.com/Trecer05/Swiftly/internal/handler"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
@@ -30,11 +31,11 @@ func InitChatRoutes(r *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
 	r.Use(middleware.AuthMiddleware())
 
 	r.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
-		ChatHandler(w, r, redis)
+		ChatHandler(w, r, redis, mgr)
 	})
 }
 
-func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager) {
+func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
@@ -48,6 +49,25 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager) {
 		return
 	}
 
+	var limit, offset int
+	strLimit, strOffset := r.URL.Query()["limit"], r.URL.Query()["offset"]
+	if strLimit == nil {
+		limit = 100
+	} else {
+		if limit, err = strconv.Atoi(strLimit[0]); err != nil {
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			return
+		}
+	}
+	if strOffset == nil {
+		offset = 0
+	} else {
+		if offset, err = strconv.Atoi(strOffset[0]); err != nil {
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			return
+		}
+	}
+
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
 		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
@@ -57,6 +77,19 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager) {
 	rds.AddUser(userId, chatId, conn)
 	log.Println("User connected to chat", chatId, userId)
 	msgCh := make(chan models.Message)
+
+	if err := wsChat.SendChatHistory(conn, mgr, chatId, limit, offset); err != nil {
+		if err == chatErrors.ErrNoMessages {
+			conn.WriteJSON(map[string]interface{}{
+				"type": "history",
+				"messages": []models.Message{},
+				"error": err.Error(),
+			})
+		} else {
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+		}
+	}
 
 	go rds.ListenPubSub(chatId, msgCh)
 

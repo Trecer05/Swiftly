@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
+	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 
@@ -33,4 +35,22 @@ func ReadMessage(chatId int, conn *websocket.Conn, mgr *redis.Manager) {
 
 		mgr.SendToUser(chatId, message)
 	}
+}
+
+func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, offset int) error {
+	messages, err := mgr.GetChatMessages(chatId, limit, offset)
+	if err != nil {
+		if err == chatErrors.ErrNoMessages {
+			return nil
+		}
+		return err
+	}
+
+	for _, msg := range messages {
+		if err := conn.WriteJSON(msg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

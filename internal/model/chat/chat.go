@@ -8,7 +8,7 @@ import (
 )
 
 type Message struct {
-	ID     string    `json:"id"`
+	ID     int    `json:"id"`
 	ChatID int    `json:"chat_id"`
 	SenderID int      `json:"sender_id"`
 	ReceiverID int    `json:"receiver_id"`

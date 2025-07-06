@@ -85,3 +85,49 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 	
 	return chatRooms, nil
 }
+
+func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Message, error) {
+	var messages []models.Message
+
+	rows, err := manager.Conn.Query(`SELECT 
+				cm.id AS message_id,
+				cm.text AS message_text,
+				cm.sent_at AS sent_time,
+				u.id AS user_id,
+				u.name AS user_name
+			FROM 
+				chat_messages cm
+			JOIN 
+				users u ON cm.user_id = u.id
+			WHERE 
+				cm.chat_id = $1
+			ORDER BY 
+				cm.sent_at DESC
+			LIMIT $2 OFFSET $3`, chatId, limit, offset)
+	if err != nil {
+		if err == sql.ErrNoRows { return messages, errors.ErrNoMessages } else { return messages, err }
+	}
+
+	for rows.Next() {
+		var message models.Message
+
+		err := rows.Scan(
+			&message.ID,
+			&message.Text,
+			&message.Time,
+			&message.Author.ID,
+			&message.Author.Name,
+		) 
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return messages, errors.ErrNoMessages
+			} else {
+				return messages, err
+			}
+		}
+
+		messages = append(messages, message)
+	}
+
+	return messages, nil
+}
