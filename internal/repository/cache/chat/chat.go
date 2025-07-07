@@ -9,16 +9,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message) {
+func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, chatType models.ChatType) {
 	manager.MU.Lock()
-	if manager.SubscribedChats[chatId] {
+	key := models.SessionKey{Type: chatType, ID: chatId}
+	if manager.SubscribedChats[key] {
 		manager.MU.Unlock()
 		return
 	}
-	manager.SubscribedChats[chatId] = true
+	manager.SubscribedChats[key] = true
 	manager.MU.Unlock()
 
-	pubsub := manager.RDB.Subscribe(ctx, "chat:"+strconv.Itoa(chatId))
+	pubsub := manager.RDB.Subscribe(ctx, string(key.Type) + ":" + strconv.Itoa(key.ID))
 	ch := pubsub.Channel()
 
 	go func() {
@@ -35,37 +36,37 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message) {
 	}()
 }
 
-func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn) {
+func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn, chatType models.ChatType) {
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	if _, ok := manager.Sessions[chatId]; !ok {
-		manager.Sessions[chatId] = make(map[int]*websocket.Conn)
+	if _, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}]; !ok {
+		manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}] = make(map[int]*websocket.Conn)
 	}
 
-	manager.Sessions[chatId][userId] = conn
+	manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId] = conn
 }
 
-func (manager *Manager) RemoveUser(userId, chatId int) error {
+func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType) error {
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	if conn, ok := manager.Sessions[chatId][userId]; ok {
-		if err := conn.Close(); err != nil {
-			return err
-		} else {
-			delete(manager.Sessions, userId)
-			return nil
+	key := models.SessionKey{Type: chatType, ID: chatId}
+	if conn, ok := manager.Sessions[key][userId]; ok {
+		conn.Close()
+		delete(manager.Sessions[key], userId)
+		if len(manager.Sessions[key]) == 0 {
+			delete(manager.Sessions, key)
 		}
 	}
 
 	return nil
 }
 
-func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan models.Message) {
+func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan models.Message, chatType models.ChatType) {
 	for message := range messages {
 		manager.MU.RLock()
-		conn, ok := manager.Sessions[chatId][userId]
+		conn, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId]
 		manager.MU.RUnlock()
 
 		if ok {
@@ -76,16 +77,13 @@ func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan mod
 	}
 }
 
-func (manager *Manager) SendToUser(chatId int, message models.Message) error {
+func (manager *Manager) SendToUser(chatId int, message models.Message, chatType models.ChatType) error {
 	data, err := json.Marshal(message)
 	if err != nil {
 		log.Println("Error marshalling message:", err)
 		return err
 	}
 
-	if err := manager.RDB.Publish(ctx, "chat:"+strconv.Itoa(chatId), data).Err(); err != nil {
-		log.Println("Error publishing message:", err)
-		return err
-	}
-	return nil
+	channel := string(chatType) + ":" + strconv.Itoa(chatId)
+    return manager.RDB.Publish(ctx, channel, data).Err()
 }

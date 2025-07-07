@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
+
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 )
@@ -12,8 +14,8 @@ type Manager struct {
 	WG   *sync.WaitGroup
 	MU   *sync.RWMutex
 	RDB  *redis.Client
-	Sessions map[int]map[int]*websocket.Conn
-	SubscribedChats map[int]bool
+	Sessions map[models.SessionKey]map[int]*websocket.Conn
+	SubscribedChats map[models.SessionKey]bool
 }
 
 var ctx = context.Background()
@@ -23,8 +25,8 @@ func NewChatManager(addr string) *Manager {
 		WG:   &sync.WaitGroup{},
 		MU:   &sync.RWMutex{},
 		RDB:  redis.NewClient(&redis.Options{Addr: addr}),
-		Sessions: make(map[int]map[int]*websocket.Conn),
-		SubscribedChats: make(map[int]bool),
+		Sessions: make(map[models.SessionKey]map[int]*websocket.Conn),
+		SubscribedChats: make(map[models.SessionKey]bool),
 	}
 }
 

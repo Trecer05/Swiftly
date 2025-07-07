@@ -5,14 +5,14 @@ import (
 	"log"
 
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
-	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 
 	"github.com/gorilla/websocket"
 )
 
-func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *manager.Manager) {
+func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *manager.Manager, chatType models.ChatType) {
 	defer func() {
 		conn.Close()
 	}()
@@ -35,10 +35,21 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 		
 		switch message.Type {
 		case models.Typing, models.StopTyping:
-			_ = rds.SendToUser(chatId, message)
+			_ = rds.SendToUser(chatId, message, chatType)
 		case models.Default:
-			_ = rds.SendToUser(chatId, message)
-			if err := manager.SaveChatMessage(message); err != nil {
+			_ = rds.SendToUser(chatId, message, chatType)
+
+			var dbType models.DBType
+			switch chatType {
+			case models.TypePrivate:
+				dbType = models.DBChat
+			case models.TypeGroup:
+				dbType = models.DBGroup
+			default:
+				log.Println("Chat type is not private or group")
+			}
+			
+			if err := manager.SaveMessage(message, dbType); err != nil {
 				log.Println("Failed to save message:", err)
 			}
 		default:
@@ -47,8 +58,16 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 	}
 }
 
-func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, offset int) error {
-	messages, err := mgr.GetChatMessages(chatId, limit, offset)
+func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, offset int, chatType models.ChatType) error {
+	var err error
+	var messages []models.Message
+
+	if chatType == models.TypePrivate {
+		messages, err = mgr.GetChatMessages(chatId, limit, offset)
+	}
+	if chatType == models.TypeGroup {
+		messages, err = mgr.GetGroupMessages(chatId, limit, offset)
+	}
 	if err != nil {
 		if err == chatErrors.ErrNoMessages {
 			return nil

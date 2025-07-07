@@ -2,9 +2,10 @@ package chat
 
 import (
 	"database/sql"
+	"fmt"
 
-	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
 )
 
 func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRooms, error) {
@@ -132,7 +133,53 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 	return messages, nil
 }
 
-func (manager *Manager) SaveChatMessage(message models.Message) error {
-	_, err := manager.Conn.Exec(`INSERT INTO chat_messages (chat_id, user_id, text) VALUES ($1, $2, $3)`, message.ChatID, message.Author.ID, message.Text)
+func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.Message, error) {
+	var messages []models.Message
+
+	rows, err := manager.Conn.Query(`SELECT 
+				gm.id AS message_id,
+				gm.text AS message_text,
+				gm.sent_at AS sent_time,
+				u.id AS user_id,
+				u.name AS user_name
+			FROM 
+				group_messages gm
+			JOIN 
+				users u ON gm.user_id = u.id
+			WHERE 
+				gm.chat_id = $1
+			ORDER BY 
+				gm.sent_at DESC
+			LIMIT $2 OFFSET $3`, groupId, limit, offset)
+	if err != nil {
+		if err == sql.ErrNoRows { return messages, errors.ErrNoMessages } else { return messages, err }
+	}
+
+	for rows.Next() {
+		var message models.Message
+
+		err := rows.Scan(
+			&message.ID,
+			&message.Text,
+			&message.Time,
+			&message.Author.ID,
+			&message.Author.Name,
+		) 
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return messages, errors.ErrNoMessages
+			} else {
+				return messages, err
+			}
+		}
+
+		messages = append(messages, message)
+	}
+
+	return messages, nil
+}
+
+func (manager *Manager) SaveMessage(message models.Message, chatType models.DBType) error {
+	_, err := manager.Conn.Exec(fmt.Sprintf(`INSERT INTO %s_messages (%s_id, user_id, text) VALUES ($1, $2, $3)`, chatType, chatType), message.ChatID, message.Author.ID, message.Text)
 	return err
 }
