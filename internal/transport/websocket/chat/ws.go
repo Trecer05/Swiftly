@@ -35,8 +35,7 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 
 		rds.SendToUser(chatId, message)
 		if err := manager.SaveChatMessage(message); err != nil {
-			log.Println(err)
-			break
+			log.Println("Failed to save message:", err)
 		}
 	}
 }
