@@ -10,6 +10,7 @@ import (
 type Message struct {
 	ID     int    `json:"id"`
 	ChatID int    `json:"chat_id"`
+	Type   MessageType `json:"type"`
 	Text   string    `json:"text"`
 	Author Client    `json:"author"`
 	Time   time.Time `json:"time"`

@@ -32,10 +32,17 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			log.Println(err)
 			break
 		}
-
-		rds.SendToUser(chatId, message)
-		if err := manager.SaveChatMessage(message); err != nil {
-			log.Println("Failed to save message:", err)
+		
+		switch message.Type {
+		case models.Typing, models.StopTyping:
+			_ = rds.SendToUser(chatId, message)
+		case models.Default:
+			_ = rds.SendToUser(chatId, message)
+			if err := manager.SaveChatMessage(message); err != nil {
+				log.Println("Failed to save message:", err)
+			}
+		default:
+			log.Println("Unknown message type:", message.Type)
 		}
 	}
 }
