@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:swiftly_mobile/ui/login/widgets/left_panel.dart';
-import 'package:swiftly_mobile/ui/login/widgets/right_panel.dart';
+import 'package:swiftly_mobile/ui/auth/widgets/left_panel.dart';
+import 'package:swiftly_mobile/ui/auth/widgets/right_panel.dart';
 
 import '../../core/themes/colors.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class AuthScreen extends StatelessWidget {
+  const AuthScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

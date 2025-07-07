@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:swiftly_mobile/ui/verify_code/widgets/verify_code_screen.dart';
 
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
@@ -7,7 +8,9 @@ import 'privacy_policy_widget.dart';
 
 class NextButton extends StatefulWidget {
   final String buttonText;
-  const NextButton({super.key, required this.buttonText});
+  final String? pathScreen;
+  final ValueChanged<Widget>? onTap;
+  const NextButton({super.key, required this.buttonText, this.pathScreen, this.onTap});
 
   @override
   State<NextButton> createState() => _NextButtonState();
@@ -32,7 +35,14 @@ class _NextButtonState extends State<NextButton> {
         ),
         SizedBox(height: 12),
         GestureDetector(
-          onTap: policyAccepted ? () {context.go('/home');} : null,
+          onTap: policyAccepted ? () {
+          if (widget.onTap != null) {
+            widget.onTap!(VerifyCodeScreen());
+          } else if (widget.pathScreen != null) {
+            context.go(widget.pathScreen!);
+          }
+        }
+      : null,
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(

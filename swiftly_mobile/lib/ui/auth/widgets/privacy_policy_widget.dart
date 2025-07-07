@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:swiftly_mobile/ui/login/widgets/custom_radio.dart';
+import 'package:swiftly_mobile/ui/auth/widgets/custom_radio.dart';
 import '../../core/themes/theme.dart';
 
 class PrivacyPolicyWidget extends StatelessWidget {
