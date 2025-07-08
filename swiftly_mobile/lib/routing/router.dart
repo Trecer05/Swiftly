@@ -4,7 +4,12 @@ import 'package:swiftly_mobile/routing/routers.dart';
 import 'package:swiftly_mobile/ui/auth/widgets/auth_screen.dart';
 import 'package:swiftly_mobile/ui/verify_code/widgets/verify_code_screen.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom_navigation_rail.dart';
+import 'package:swiftly_mobile/ui/home/widgets/home_screen.dart';
+import 'package:swiftly_mobile/ui/code/widgets/code_screen.dart';
+import 'package:swiftly_mobile/ui/board/widgets/board_screen.dart';
 import 'package:swiftly_mobile/ui/cloud/widgets/cloud_screen.dart';
+import 'package:swiftly_mobile/ui/figma/widgets/figma_screen.dart';
+import 'package:swiftly_mobile/ui/settings/widgets/settings_screen.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
@@ -16,7 +21,7 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routers.home,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return HomeScreen();
           },
         ),
         GoRoute(
@@ -28,7 +33,7 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routers.code,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return CodeScreen();
           },
         ),
         GoRoute(
@@ -40,19 +45,19 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routers.figma,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return FigmaScreen();
           },
         ),
         GoRoute(
           path: Routers.board,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return BoardScreen();
           },
         ),
         GoRoute(
           path: Routers.settings,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return SettingsScreen();
           },
         ),
       ],
