@@ -8,5 +8,6 @@ abstract final class Routers {
   static const code = '/code';
   static const cloud = '/cloud';
   static const figma = '/figma';
-  static const board = '/board';   
+  static const board = '/board';
+  static const settings = '/settings';   
 }

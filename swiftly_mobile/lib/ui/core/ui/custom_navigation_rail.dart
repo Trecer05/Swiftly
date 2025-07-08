@@ -1,90 +1,52 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
+import '../../../routing/routers.dart';
 import '../themes/colors.dart';
+
+enum NavItem {
+  home(Routers.home, Icons.home, 'Главная'),
+  chat(Routers.chat, Icons.chat, 'Чат'),
+  code(Routers.code, Icons.code, 'Код'),
+  cloud(Routers.cloud, Icons.cloud, 'Облако'),
+  figma(Routers.figma, Icons.pan_tool, 'Фигма'),
+  board(Routers.board, Icons.task, 'Задачи'),
+  settings(Routers.settings, Icons.settings, 'Настройки');
+
+  final String route;
+  final IconData icon;
+  final String label;
+
+  const NavItem(this.route, this.icon, this.label);
+
+  static final _routeMap = {for (var item in NavItem.values) item.route: item};
+
+  static NavItem? fromRoute(String route) => _routeMap[route];
+}
 
 class NavigationState {
   final bool showLabels;
-  final int? selectedIndex;
 
-  NavigationState({required this.showLabels, this.selectedIndex});
+  const NavigationState({required this.showLabels});
 }
 
 class CustomNavigationRail extends StatefulWidget {
-  final ValueNotifier<NavigationState> stateNotifier =
-      ValueNotifier<NavigationState>(
-        NavigationState(showLabels: true, selectedIndex: 0),
-      );
-  late final List<ItemWidget> itemWidget;
-  CustomNavigationRail({super.key}) {
-    itemWidget = [
-      ItemWidget(
-        iconData: Icons.sort,
-        isController: true,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.home,
-        label: 'Главная',
-        index: 0,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.chat,
-        label: 'Чат',
-        index: 1,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.code,
-        label: 'Код',
-        index: 2,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.cloud,
-        label: 'Облако',
-        index: 3,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.pan_tool,
-        label: 'Фигма',
-        index: 4,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.task,
-        label: 'Задачи',
-        index: 5,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-      ItemWidget(
-        iconData: Icons.settings,
-        label: 'Settings',
-        index: 6,
-        isController: false,
-        stateNotifier: stateNotifier,
-      ),
-    ];
-  }
+  final Widget child;
+
+  const CustomNavigationRail({super.key, required this.child});
 
   @override
   State<CustomNavigationRail> createState() => _CustomNavigationRailState();
 }
 
 class _CustomNavigationRailState extends State<CustomNavigationRail> {
+  final ValueNotifier<NavigationState> _stateNotifier = ValueNotifier(
+    const NavigationState(showLabels: true),
+  );
   final double expandedWidth = 200;
-  final double collapsedWidth = 60;
 
   @override
   void dispose() {
-    widget.stateNotifier.dispose();
+    _stateNotifier.dispose();
     super.dispose();
   }
 
@@ -92,53 +54,61 @@ class _CustomNavigationRailState extends State<CustomNavigationRail> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           ValueListenableBuilder<NavigationState>(
-            valueListenable: widget.stateNotifier,
+            valueListenable: _stateNotifier,
             builder: (_, state, __) {
               return Container(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 width: state.showLabels ? expandedWidth : null,
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 3, 13, 55),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 10,
                 ),
-                child: IntrinsicWidth(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (int i = 0; i < widget.itemWidget.length - 1; i++)
-                        widget.itemWidget[i],
-                      const Spacer(),
-                      widget.itemWidget.last,
-                    ],
-                  ),
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 3, 13, 55),
+                ),
+                child: Column(
+                  children: [
+                    NavItemWidget(
+                      icon: Icons.sort,
+                      isController: true,
+                      stateNotifier: _stateNotifier,
+                    ),
+                    ...NavItem.values.where((item) => item != NavItem.settings)
+                        .map((item) => NavItemWidget(
+                              item: item,
+                              stateNotifier: _stateNotifier,
+                            )),
+                    const Spacer(),
+                    NavItemWidget(
+                      item: NavItem.settings,
+                      stateNotifier: _stateNotifier,
+                    ),
+                  ],
                 ),
               );
             },
           ),
+          Expanded(child: widget.child),
         ],
       ),
     );
   }
 }
 
-class ItemWidget extends StatelessWidget {
-  final IconData iconData;
-  final String? label;
-  final int? index;
-  final ValueNotifier<NavigationState> stateNotifier;
+class NavItemWidget extends StatelessWidget {
+  final NavItem? item;
+  final IconData? icon;
   final bool isController;
+  final ValueNotifier<NavigationState> stateNotifier;
 
-  const ItemWidget({
+  const NavItemWidget({
     super.key,
-    required this.iconData,
-    this.label,
-    this.index,
+    this.item,
+    this.icon,
+    this.isController = false,
     required this.stateNotifier,
-    required this.isController,
-  });
+  }) : assert(item != null || icon != null);
 
   @override
   Widget build(BuildContext context) {
@@ -146,40 +116,29 @@ class ItemWidget extends StatelessWidget {
       valueListenable: stateNotifier,
       builder: (_, state, __) {
         final isSelected =
-            !isController && index != null && state.selectedIndex == index;
+            !isController &&
+            item != null &&
+            _isCurrentRoute(context, item!.route);
 
         return GestureDetector(
-          onTap: () {
-            if (isController) {
-              stateNotifier.value = NavigationState(
-                showLabels: !state.showLabels,
-                selectedIndex: state.selectedIndex,
-              );
-            } else if (index != null) {
-              stateNotifier.value = NavigationState(
-                showLabels: state.showLabels,
-                selectedIndex: index,
-              );
-            }
-          },
+          onTap: () => _handleTap(context),
           child: Container(
             padding: const EdgeInsets.all(8),
-            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
               gradient: isSelected ? AppColors.gradient_4 : null,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  iconData,
+                  item?.icon ?? icon,
                   color: isSelected ? AppColors.white : AppColors.white128,
                 ),
-                if (state.showLabels && label != null) ...[
+                if (state.showLabels && item != null) ...[
                   const SizedBox(width: 8),
                   Text(
-                    label!,
+                    item!.label,
                     style: TextStyle(
                       color: isSelected ? AppColors.white : AppColors.white128,
                     ),
@@ -191,5 +150,19 @@ class ItemWidget extends StatelessWidget {
         );
       },
     );
+  }
+
+  bool _isCurrentRoute(BuildContext context, String route) {
+    return GoRouterState.of(context).uri.toString() == route;
+  }
+
+  void _handleTap(BuildContext context) {
+    if (isController) {
+      stateNotifier.value = NavigationState(
+        showLabels: !stateNotifier.value.showLabels,
+      );
+    } else if (item != null) {
+      GoRouter.of(context).go(item!.route);
+    }
   }
 }
