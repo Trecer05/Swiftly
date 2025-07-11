@@ -10,7 +10,7 @@ class ContainerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 36,
-      padding: EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.white15,
         borderRadius: BorderRadius.circular(12),

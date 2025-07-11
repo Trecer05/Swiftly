@@ -26,12 +26,13 @@ class _LeftPanelState extends State<LeftPanel> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         // gradient: AppColors.gradient_3
-        color: const Color.fromARGB(255, 8, 19, 55),
+        // color: Color.fromARGB(255, 8, 19, 55),
+        color: Colors.transparent,
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,

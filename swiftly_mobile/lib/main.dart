@@ -7,10 +7,26 @@ import 'ui/core/themes/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await windowManager.ensureInitialized();
   await windowManager.setMinimumSize(const Size(700, 500));
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    const ProviderScope(
+      child: 
+      // MaterialApp(
+      //   home: Scaffold(
+      //     body: Stack(
+      //       children: [
+      //         Positioned.fill(
+      //           child: Image.asset('assets/vk_logo.png', fit: BoxFit.cover),
+      //         ),
+              MyApp(),
+      //       ],
+      //     ),
+      //   ),
+      // ),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,7 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Sloyka bakery',
+      title: 'Swiftly',
       theme: ThemeData(
         // scaffoldBackgroundColor: Colors.transparent,
         navigationRailTheme: const NavigationRailThemeData(
@@ -28,7 +44,9 @@ class MyApp extends StatelessWidget {
           unselectedIconTheme: IconThemeData(color: AppColors.white128),
           unselectedLabelTextStyle: TextStyle(color: AppColors.white128),
         ),
-        textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.white,
+        ),
       ),
       routerConfig: router,
     );

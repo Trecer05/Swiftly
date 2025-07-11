@@ -5,10 +5,11 @@ abstract class AppFontWeights {
   static const FontWeight bolt = FontWeight.bold;
   static const FontWeight bolt_1 = FontWeight.w500;
   static const FontWeight bolt_2 = FontWeight.w400;
+  static const FontWeight bolt_3 = FontWeight.w600;
 }
 
 abstract class AppFontSizes {
-  static const double impressive = 36;
+  static const double impressive = 32;
   static const double big = 26;
   static const double giant = 22;
   static const double large = 20;
@@ -42,6 +43,31 @@ abstract class AppTextStyles {
   );
   static const TextStyle text_5 = TextStyle(
     color: Color.fromARGB(255, 36, 29, 244),
+    fontSize: AppFontSizes.hm,
+    fontWeight: AppFontWeights.bolt_1,
+  );
+  static const TextStyle text_6 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.impressive,
+    fontWeight: AppFontWeights.bolt_1,
+  );
+  static const TextStyle text_7 = TextStyle(
+    color: AppColors.white128,
+    fontSize: AppFontSizes.medium,
+    fontWeight: AppFontWeights.bolt_1,
+  );
+  static const TextStyle text_8 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.medium,
+    fontWeight: AppFontWeights.bolt_3,
+  );
+  static const TextStyle text_9 = TextStyle(
+    color: AppColors.white128,
+    fontSize: AppFontSizes.hm,
+    fontWeight: AppFontWeights.bolt_1,
+  );
+  static const TextStyle text_10 = TextStyle(
+    color: AppColors.wanderingThrus1,
     fontSize: AppFontSizes.hm,
     fontWeight: AppFontWeights.bolt_1,
   );

@@ -7,10 +7,10 @@ class RightPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 16),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.only(left: 16),
+      decoration: const BoxDecoration(
         // gradient: AppColors.gradient_2
-        color: const Color.fromARGB(255, 64, 64, 64)
+        color: Color.fromARGB(255, 64, 64, 64)
       ),
       child: SvgPicture.asset('assets/test.svg'),
     );
