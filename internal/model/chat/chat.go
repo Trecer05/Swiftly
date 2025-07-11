@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -16,18 +15,12 @@ type Message struct {
 	Time   time.Time `json:"time"`
 }
 
-// OnChat, OnLeave - проверка, в чате ли пользователь конкретный, для функционала прочитанных сообщений
 type ChatRoom struct {
 	ID int
 	Name string
-	Lock sync.RWMutex
-	WG sync.WaitGroup
 	Users map[*Client]bool
-	Broadcast chan Message
 	LastMessage *Message
-	OnChat chan *Client
-	OnLeave chan *Client
-	ErrCh chan error
+	Type ChatType
 }
 
 type Client struct {

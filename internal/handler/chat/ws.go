@@ -37,6 +37,10 @@ func InitChatRoutes(r *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
 	r.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
 		GroupHandler(w, r, redis, mgr)
 	})
+
+	r.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
+		MainConnectionHandler(w, r, redis, mgr)
+	})
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
@@ -176,5 +180,48 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	go rds.SendLocalMessage(userId, groupId, msgCh, chatType)
 	wsChat.ReadMessage(groupId, conn, rds, mgr, chatType)
 
+	close(msgCh)
+}
+
+func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
+	var err error
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	msgCh := make(chan models.Message)
+
+	chats, err := mgr.GetUserRooms(userId)
+	switch {
+		case err == chatErrors.ErrNoRooms:
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case err != nil:
+			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+	}
+
+	for _, room := range chats.Rooms {
+		go rds.ListenPubSub(room.ID, msgCh, room.Type)
+
+		if room.LastMessage != nil {
+			room.LastMessage.Type = models.LastMessage
+			room.LastMessage.ChatID = room.ID
+			msgCh <- *room.LastMessage
+		}
+	}
+
+	go wsChat.SendAllUserMessages(conn, msgCh)
+
+	conn.Close()
 	close(msgCh)
 }

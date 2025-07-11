@@ -6,6 +6,7 @@ const (
 	Typing      MessageType = "typing"
 	StopTyping  MessageType = "stop_typing"
 	Default     MessageType = "message"
+	LastMessage MessageType = "last_message"
 )
 
 type ChatType string

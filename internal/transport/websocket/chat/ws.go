@@ -83,3 +83,11 @@ func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, 
 
 	return nil
 }
+
+func SendAllUserMessages(conn *websocket.Conn, msgCh <-chan models.Message) {
+	for msg := range msgCh {
+		if err := conn.WriteJSON(msg); err != nil {
+			log.Println("Failed to send message:", err)
+		}
+	}
+}
