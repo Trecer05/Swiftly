@@ -13,60 +13,149 @@ class BoardScreen extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IntrinsicWidth(
+              SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('To do', style: TextStyle(color: Colors.white, fontSize: 18),),
+                    Text(
+                      'To do',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
                     SizedBox(height: 10),
-                    CartWidget(categoryWidget: CategoryWidget(name: 'аналитика'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.high,),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'аналитика'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.high,
+                    ),
                     SizedBox(height: 10),
-                    CartWidget(categoryWidget: CategoryWidget(name: 'программирование'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.medium,),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'программирование'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.medium,
+                    ),
                     SizedBox(height: 10),
-                    CartWidget(categoryWidget: CategoryWidget(name: 'аналитика'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.low,),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'аналитика'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.low,
+                    ),
                   ],
                 ),
               ),
               SizedBox(width: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('In progress', style: TextStyle(color: Colors.white, fontSize: 18),),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'дизайн'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.medium,),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'аналитика'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.high,),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'программирование'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.high,),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'программирование'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.medium,),
-                ],
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'In progress',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'дизайн'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.medium,
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'аналитика'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.high,
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'программирование'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.high,
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'программирование'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.medium,
+                    ),
+                  ],
+                ),
               ),
               SizedBox(width: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Completed', style: TextStyle(color: Colors.white, fontSize: 18),),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'дизайн'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.low,),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'аналитика'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.high,),
-                ],
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Completed',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'дизайн'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.low,
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'аналитика'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.high,
+                    ),
+                  ],
+                ),
               ),
               SizedBox(width: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('In review', style: TextStyle(color: Colors.white, fontSize: 18),),
-                  SizedBox(height: 10),
-                  CartWidget(categoryWidget: CategoryWidget(name: 'программирование'), name: 'Lorem ipsum', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', data: '5 aug', priority: Priority.low,),
-                ],
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'In review',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    SizedBox(height: 10),
+                    CartWidget(
+                      categoryWidget: CategoryWidget(name: 'программирование'),
+                      name: 'Lorem ipsum',
+                      description:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+                      data: '5 aug',
+                      priority: Priority.low,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }
