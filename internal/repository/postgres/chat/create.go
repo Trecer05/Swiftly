@@ -27,16 +27,22 @@ func (manager *Manager) CreateGroup(group models.GroupCreate) (int, error) {
 		return 0, fmt.Errorf("failed to create group: %v", err)
 	}
 
-	userIDs := make([]int, 0, len(group.Users))
+	userIDs := make(map[int]struct{})
 	for _, user := range group.Users {
-        userIDs = append(userIDs, user.ID)
-    }
+		userIDs[user.ID] = struct{}{}
+	}
+	userIDs[group.OwnerID] = struct{}{}
+
+	idSlice := make([]int, 0, len(userIDs))
+	for id := range userIDs {
+		idSlice = append(idSlice, id)
+	}
 
 	_, err = tx.Exec(`
         INSERT INTO group_users (group_id, user_id)
         SELECT $1, unnest($2::bigint[])
         ON CONFLICT (group_id, user_id) DO NOTHING`,
-        groupId, pq.Array(userIDs),
+        groupId, pq.Array(idSlice),
     )
     if err != nil {
         return 0, fmt.Errorf("failed to add users to group: %v", err)

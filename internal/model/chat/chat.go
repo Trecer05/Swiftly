@@ -27,7 +27,7 @@ type GroupCreate struct {
 	Name string `json:"name"`
 	Description string `json:"description"`
 	Users []Client `json:"users"`
-	OwnerID int `json:"owner_id"`
+	OwnerID int
 }
 
 type Client struct {
