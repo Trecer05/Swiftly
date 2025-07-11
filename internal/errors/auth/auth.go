@@ -11,4 +11,5 @@ var (
 	ErrNumberExists = errors.New("number already exists")
 
 	ErrUnauthorized = errors.New("unauthorized")
+	ErrGroupForbidden = errors.New("you are not allowed to delete this group")
 )

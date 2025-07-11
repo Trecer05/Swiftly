@@ -54,3 +54,8 @@ func (manager *Manager) CreateGroup(group models.GroupCreate) (int, error) {
 
     return groupId, nil
 }
+
+func (manager *Manager) DeleteGroup(groupId int) error {
+	_, err := manager.Conn.Exec("DELETE FROM groups WHERE id = $1", groupId)
+	return err
+}

@@ -41,6 +41,14 @@ func InitChatRoutes(r *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
 	r.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
 		MainConnectionHandler(w, r, redis, mgr)
 	})
+
+	r.HandleFunc("/group", func(w http.ResponseWriter, r *http.Request) {
+		CreateGroupHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
+
+	r.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
+		DeleteGroupHandler(w, r, mgr)
+	}).Methods(http.MethodDelete)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

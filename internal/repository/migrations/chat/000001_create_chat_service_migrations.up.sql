@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS chat_users (
     chat_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     PRIMARY KEY (chat_id, user_id),
-    FOREIGN KEY (chat_id) REFERENCES chats(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS groups (
@@ -26,15 +26,15 @@ CREATE TABLE IF NOT EXISTS groups (
     name VARCHAR(100) NOT NULL,
     description VARCHAR(200) NOT NULL,
     owner_id BIGINT NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id)
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS group_users (
     group_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     PRIMARY KEY (group_id, user_id),
-    FOREIGN KEY (group_id) REFERENCES groups(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS chat_messages (
@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     user_id BIGINT NOT NULL,
     text TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT NOW(),
-    FOREIGN KEY (chat_id) REFERENCES chats(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS group_messages (
@@ -53,6 +53,6 @@ CREATE TABLE IF NOT EXISTS group_messages (
     user_id BIGINT NOT NULL,
     text TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT NOW(),
-    FOREIGN KEY (group_id) REFERENCES groups(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

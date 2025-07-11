@@ -232,3 +232,17 @@ func (manager *Manager) SaveMessage(message models.Message, chatType models.DBTy
 	_, err := manager.Conn.Exec(fmt.Sprintf(`INSERT INTO %s_messages (%s_id, user_id, text) VALUES ($1, $2, $3)`, chatType, chatType), message.ChatID, message.Author.ID, message.Text)
 	return err
 }
+
+func (manager *Manager) ValidateOwnerId(groupId int, userId int) (bool, error) {
+	var id int
+
+	err := manager.Conn.QueryRow("SELECT owner_id FROM groups WHERE id = $1", groupId).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, errors.ErrNoGroupFound
+		}
+		return false, err
+	}
+
+	return id == userId, err
+}
