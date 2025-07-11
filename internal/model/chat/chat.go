@@ -23,6 +23,13 @@ type ChatRoom struct {
 	Type ChatType
 }
 
+type GroupCreate struct {
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Users []Client `json:"users"`
+	OwnerID int `json:"owner_id"`
+}
+
 type Client struct {
 	ID    int	`json:"id"`
 	Name  string `json:"name"`
