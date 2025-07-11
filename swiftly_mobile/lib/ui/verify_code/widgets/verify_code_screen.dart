@@ -9,7 +9,7 @@ class VerifyCodeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
         children: [
           Text('Введите код из письма', style: AppTextStyles.text_1),
           Row(

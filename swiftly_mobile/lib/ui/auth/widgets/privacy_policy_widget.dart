@@ -13,10 +13,10 @@ class PrivacyPolicyWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         CustomRadio(isChecked: isChecked, onPressed: onPressed),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         GestureDetector(
           onTap: () {},
-          child: Text(
+          child: const Text(
             'Согласен с политикой конфиденциальности',
             style: AppTextStyles.text_2,
           ),

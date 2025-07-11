@@ -10,8 +10,17 @@ abstract final class AppColors {
   static const Color red = Colors.red;
   static const Color green = Colors.green;
   static const Color blue = Color.fromARGB(255, 19, 92, 236);
-
+  static const Color yellow = Colors.yellow;
   static const Color grey = Colors.grey;
+
+  static const Color wanderingThrus1 = Color.fromARGB(255, 31, 217, 186);
+  static const Color wanderingThrus2 = Color.fromARGB(51, 31, 217, 186);
+  static const Color green1 = Color.fromARGB(255, 31, 217, 72);
+  static const Color green2 = Color.fromARGB(51, 31, 217, 72);
+  static const Color yellow1 = Color.fromARGB(255, 217, 167, 31);
+  static const Color yellow2 = Color.fromARGB(51, 217, 167, 31);
+  static const Color red1 = Color.fromARGB(255, 217, 31, 31);
+  static const Color red2 = Color.fromARGB(51, 217, 31, 31);
 
   static const Color transparent = Colors.transparent;
 

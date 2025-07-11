@@ -43,11 +43,11 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
                   onPressed: toggleObscureText,
                 )
                 : widget.suffixIconWidget,
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           borderSide: BorderSide.none,
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           borderSide: BorderSide(color: Colors.white),
         ),
@@ -68,7 +68,7 @@ class CheckFillWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 10, right: 10, bottom: 10, left: 10),
+      padding: const EdgeInsets.only(top: 10, right: 10, bottom: 10, left: 10),
       child: Container(
         width: 12,
         height: 12,
@@ -79,7 +79,7 @@ class CheckFillWidget extends StatelessWidget {
         child:
             ok
                 ? const Icon(Icons.check, color: AppColors.white, size: 14)
-                : Icon(Icons.clear, color: AppColors.white, size: 14),
+                : const Icon(Icons.clear, color: AppColors.white, size: 14),
       ),
     );
   }

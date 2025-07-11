@@ -21,43 +21,43 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routers.home,
           builder: (BuildContext context, GoRouterState state) {
-            return HomeScreen();
+            return const HomeScreen();
           },
         ),
         GoRoute(
           path: Routers.chat,
           builder: (BuildContext context, GoRouterState state) {
-            return Placeholder();
+            return const Placeholder();
           },
         ),
         GoRoute(
           path: Routers.code,
           builder: (BuildContext context, GoRouterState state) {
-            return CodeScreen();
+            return const CodeScreen();
           },
         ),
         GoRoute(
           path: Routers.cloud,
           builder: (BuildContext context, GoRouterState state) {
-            return CloudScreen();
+            return const CloudScreen();
           },
         ),
         GoRoute(
           path: Routers.figma,
           builder: (BuildContext context, GoRouterState state) {
-            return FigmaScreen();
+            return const FigmaScreen();
           },
         ),
         GoRoute(
           path: Routers.board,
           builder: (BuildContext context, GoRouterState state) {
-            return BoardScreen();
+            return const BoardScreen();
           },
         ),
         GoRoute(
           path: Routers.settings,
           builder: (BuildContext context, GoRouterState state) {
-            return SettingsScreen();
+            return const SettingsScreen();
           },
         ),
       ],
@@ -65,25 +65,25 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routers.auth,
       builder: (BuildContext context, GoRouterState state) {
-        return AuthScreen();
+        return const AuthScreen();
       },
     ),
     GoRoute(
       path: Routers.login,
       builder: (BuildContext context, GoRouterState state) {
-        return Placeholder();
+        return const Placeholder();
       },
     ),
     GoRoute(
       path: Routers.register,
       builder: (BuildContext context, GoRouterState state) {
-        return Placeholder();
+        return const Placeholder();
       },
     ),
     GoRoute(
       path: Routers.verifyCode,
       builder: (BuildContext context, GoRouterState state) {
-        return VerifyCodeScreen();
+        return const VerifyCodeScreen();
       },
     ),
   ],

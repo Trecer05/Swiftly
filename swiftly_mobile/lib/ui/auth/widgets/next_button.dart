@@ -33,11 +33,11 @@ class _NextButtonState extends State<NextButton> {
           isChecked: policyAccepted,
           onPressed: toogleexcludeFromSemantics,
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         GestureDetector(
           onTap: policyAccepted ? () {
           if (widget.onTap != null) {
-            widget.onTap!(VerifyCodeScreen());
+            widget.onTap!(const VerifyCodeScreen());
           } else if (widget.pathScreen != null) {
             context.go(widget.pathScreen!);
           }
@@ -50,7 +50,7 @@ class _NextButtonState extends State<NextButton> {
               gradient: policyAccepted ? AppColors.gradient_1 : null,
               borderRadius: BorderRadius.circular(12),
             ),
-            padding: EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Center(
               child: Text(widget.buttonText, style: AppTextStyles.text_2),
             ),
