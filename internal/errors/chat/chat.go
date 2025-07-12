@@ -9,4 +9,7 @@ var (
 	ErrNoGroupFound = errors.New("no group found")
 
 	ErrInvalidGroupData = errors.New("invalid group data")
+
+	ErrUserAlreadyInGroup = errors.New("user already in group")
+	ErrUserNotInGroup = errors.New("user not in group")
 )

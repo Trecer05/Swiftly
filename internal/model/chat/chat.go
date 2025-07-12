@@ -2,8 +2,6 @@ package chat
 
 import (
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 type Message struct {
@@ -23,16 +21,7 @@ type ChatRoom struct {
 	Type ChatType
 }
 
-type GroupCreate struct {
-	Name string `json:"name"`
-	Description string `json:"description"`
-	Users []Client `json:"users"`
-	OwnerID int
-}
-
 type Client struct {
 	ID    int	`json:"id"`
 	Name  string `json:"name"`
-	Send  chan Message
-	Conn  *websocket.Conn
 }

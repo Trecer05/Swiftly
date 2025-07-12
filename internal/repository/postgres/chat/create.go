@@ -1,8 +1,10 @@
 package chat
 
 import (
+	"database/sql"
 	"fmt"
 
+	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	errors "github.com/Trecer05/Swiftly/internal/errors/postgres"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 
@@ -58,4 +60,107 @@ func (manager *Manager) CreateGroup(group models.GroupCreate) (int, error) {
 func (manager *Manager) DeleteGroup(groupId int) error {
 	_, err := manager.Conn.Exec("DELETE FROM groups WHERE id = $1", groupId)
 	return err
+}
+
+func (manager *Manager) DeleteUsersFromGroup(users models.Users, groupId int) error {
+	tx, err := manager.Conn.Begin()
+    if err != nil {
+        return errors.ErrFailedBeginTx
+    }
+    defer tx.Rollback()
+
+	idSlice := make([]int, 0, len(users.Users))
+	for _, user := range users.Users {
+		idSlice = append(idSlice, user.ID)
+	}
+
+	var count int
+    err = tx.QueryRow(`
+        SELECT COUNT(*) 
+        FROM unnest($1::bigint[]) AS user_id 
+        WHERE NOT EXISTS (
+            SELECT 1 FROM group_users 
+            WHERE group_id = $2 AND group_users.user_id = user_id
+        )`,
+        pq.Array(idSlice), groupId,
+    ).Scan(&count)
+    if err != nil {
+        return err
+    }
+    if count > 0 {
+        return chatErrors.ErrUserNotInGroup
+    }
+
+	result, err := tx.Exec(`
+        DELETE FROM group_users 
+        WHERE group_id = $1 AND user_id = ANY($2)`,
+        groupId, pq.Array(idSlice),
+    )
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+    if rowsAffected != int64(len(idSlice)) {
+        return chatErrors.ErrUserNotInGroup
+    }
+
+	if err := tx.Commit(); err != nil {
+        return errors.ErrFailedCommitTx
+    }
+
+	return nil
+}
+
+func (manager *Manager) AddUsersToGroup(users models.Users, groupId int) error {
+	tx, err := manager.Conn.Begin()
+    if err != nil {
+        return errors.ErrFailedBeginTx
+    }
+    defer tx.Rollback()
+
+	idSlice := make([]int, 0, len(users.Users))
+	for _, user := range users.Users {
+		idSlice = append(idSlice, user.ID)
+	}
+
+	var count int
+    err = tx.QueryRow(`
+        SELECT COUNT(*) 
+        FROM unnest($1::bigint[]) AS user_id 
+        WHERE EXISTS (
+            SELECT 1 FROM group_users 
+            WHERE group_id = $2 AND group_users.user_id = user_id
+        )`,
+        pq.Array(idSlice), groupId,
+    ).Scan(&count)
+    if err != nil {
+        return err
+    }
+    if count > 0 {
+        return chatErrors.ErrUserAlreadyInGroup
+    }
+
+	_, err = tx.Exec(`
+		INSERT INTO group_users (group_id, user_id)
+		SELECT $1, unnest($2::bigint[])
+		ON CONFLICT (group_id, user_id) DO NOTHING`,
+		groupId, pq.Array(idSlice),
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return chatErrors.ErrUserAlreadyInGroup
+		} else {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+        return errors.ErrFailedCommitTx
+    }
+
+	return nil
 }
