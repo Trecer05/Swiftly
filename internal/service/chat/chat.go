@@ -2,6 +2,7 @@ package chat
 
 import (
 	"net/http"
+	"strconv"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -26,4 +27,26 @@ func ValidateGroupOwner(groupId int, r *http.Request, mgr *manager.Manager) (int
 		return http.StatusForbidden, errors.ErrGroupForbidden
 	}
 	return http.StatusOK, nil
+}
+
+func ValidateLimitOffset(r *http.Request) (int, int, error) {
+	var limit, offset int
+	vars := r.URL.Query()
+	if vars["limit"] != nil {
+		if l, err := strconv.Atoi(vars["limit"][0]); err == nil {
+			limit = l
+		} else {
+			return 0, 0, chatErrors.ErrInvalidLimit
+		}
+	}
+
+	if vars["offset"] != nil {
+		if o, err := strconv.Atoi(vars["offset"][0]); err == nil {
+			offset = o
+		} else {
+			return 0, 0, chatErrors.ErrInvalidOffset
+		}
+	}
+
+	return limit, offset, nil
 }

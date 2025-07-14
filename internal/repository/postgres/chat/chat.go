@@ -8,8 +8,16 @@ import (
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 )
 
-func (manager *Manager) GetUserRooms(userId int) (models.ChatRooms, error) {
+func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRooms, error) {
 	var chatRooms models.ChatRooms
+	new := 0
+	if limit == 0 {
+		new := "NULL"
+		new = new
+	} else {
+		new := limit
+		new = new
+	}
 
 	rows, err := manager.Conn.Query(`WITH user_private_chats AS (
 				SELECT 
@@ -84,7 +92,8 @@ func (manager *Manager) GetUserRooms(userId int) (models.ChatRooms, error) {
 			SELECT *
 			FROM combined_rooms
 			ORDER BY COALESCE(last_message_time, NOW()) DESC
-			`, userId)
+			LIMIT $2 OFFSET $3
+			`, userId, new, offset)
 	if err != nil {
 		if err == sql.ErrNoRows { return models.ChatRooms{}, errors.ErrNoRooms }
 		return models.ChatRooms{}, err

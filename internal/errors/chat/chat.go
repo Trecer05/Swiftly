@@ -12,4 +12,7 @@ var (
 
 	ErrUserAlreadyInGroup = errors.New("user already in group")
 	ErrUserNotInGroup = errors.New("user not in group")
+
+	ErrInvalidLimit = errors.New("invalid limit")
+	ErrInvalidOffset = errors.New("invalid offset")
 )

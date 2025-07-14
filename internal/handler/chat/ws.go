@@ -208,7 +208,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 
 	msgCh := make(chan models.Message)
 
-	chats, err := mgr.GetUserRooms(userId)
+	chats, err := mgr.GetUserRooms(userId, 0, 0)
 	switch {
 		case err == chatErrors.ErrNoRooms:
 			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)

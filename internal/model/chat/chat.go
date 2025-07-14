@@ -14,11 +14,10 @@ type Message struct {
 }
 
 type ChatRoom struct {
-	ID int
-	Name string
-	Users map[*Client]bool
-	LastMessage *Message
-	Type ChatType
+	ID int `json:"id"`
+	Name string `json:"name"`
+	LastMessage *Message `json:"last_message"`
+	Type ChatType `json:"type"`
 }
 
 type Client struct {
