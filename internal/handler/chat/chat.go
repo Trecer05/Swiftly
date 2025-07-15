@@ -37,3 +37,24 @@ func UserChatsInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.M
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(rooms)
 }
+
+func UserInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	userId, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	userInfo, err := mgr.GetUserInfo(userId)
+	switch {
+	case err == chatErrors.ErrNoUser:
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userInfo)
+}

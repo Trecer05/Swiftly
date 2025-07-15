@@ -15,4 +15,6 @@ var (
 
 	ErrInvalidLimit = errors.New("invalid limit")
 	ErrInvalidOffset = errors.New("invalid offset")
+
+	ErrNoUser = errors.New("user not found")
 )
