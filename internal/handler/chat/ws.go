@@ -27,34 +27,35 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-func InitChatRoutes(r *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
-	r.Use(middleware.AuthMiddleware())
+func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
+	apiSecure := router.PathPrefix("/api/v1").Subrouter()
+	apiSecure.Use(middleware.AuthMiddleware())
 
-	r.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
 		ChatHandler(w, r, redis, mgr)
 	})
 
-	r.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
 		GroupHandler(w, r, redis, mgr)
 	})
 
-	r.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
 		MainConnectionHandler(w, r, redis, mgr)
 	})
 
-	r.HandleFunc("/group", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/group", func(w http.ResponseWriter, r *http.Request) {
 		CreateGroupHandler(w, r, mgr)
 	}).Methods(http.MethodPost)
 
-	r.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
 		DeleteGroupHandler(w, r, mgr)
 	}).Methods(http.MethodDelete)
 
-	r.HandleFunc("/chats", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/chats", func(w http.ResponseWriter, r *http.Request) {
 		UserChatsInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
 
-	r.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
 		UserInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
 }
