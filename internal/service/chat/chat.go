@@ -7,6 +7,7 @@ import (
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	"github.com/gorilla/mux"
 )
 
 func ValidateGroupOwner(groupId int, r *http.Request, mgr *manager.Manager) (int, error) {
@@ -49,4 +50,10 @@ func ValidateLimitOffset(r *http.Request) (int, int, error) {
 	}
 
 	return limit, offset, nil
+}
+
+func GetUserIdFromVars(r *http.Request) (int, error) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	return strconv.Atoi(id)
 }
