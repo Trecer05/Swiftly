@@ -13,8 +13,8 @@ abstract final class AppColors {
   static const Color yellow = Colors.yellow;
   static const Color grey = Colors.grey;
 
-  static const Color wanderingThrus1 = Color.fromARGB(255, 31, 217, 186);
-  static const Color wanderingThrus2 = Color.fromARGB(51, 31, 217, 186);
+  static const Color wanderingThrus = Color.fromARGB(255, 31, 217, 186);
+  static const Color amaranthMagenta = Color.fromARGB(255, 217, 31, 192);
   static const Color green1 = Color.fromARGB(255, 31, 217, 72);
   static const Color green2 = Color.fromARGB(51, 31, 217, 72);
   static const Color yellow1 = Color.fromARGB(255, 217, 167, 31);

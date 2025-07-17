@@ -20,7 +20,7 @@ class CustomButton extends StatelessWidget {
           children: [
             Icon(Icons.add, color: AppColors.white128),
             SizedBox(width: 5),
-            Text('Пригласить', style: AppTextStyles.text_3),
+            Text('Пригласить', style: AppTextStyles.style3),
           ],
         ),
       ),

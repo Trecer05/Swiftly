@@ -1,39 +1,26 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Card;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'ui/core/themes/colors.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await windowManager.ensureInitialized();
   await windowManager.setMinimumSize(const Size(700, 500));
-  runApp(
-    const ProviderScope(
-      child: 
-      // MaterialApp(
-      //   home: Scaffold(
-      //     body: Stack(
-      //       children: [
-      //         Positioned.fill(
-      //           child: Image.asset('assets/vk_logo.png', fit: BoxFit.cover),
-      //         ),
-              MyApp(),
-      //       ],
-      //     ),
-      //   ),
-      // ),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(cardNotifierProvider.notifier).loadCarts();
+    });
     return MaterialApp.router(
       title: 'Swiftly',
       theme: ThemeData(

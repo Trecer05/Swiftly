@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text('Главная', style: AppTextStyles.text_6),
+                Text('Главная', style: AppTextStyles.style6),
                 Spacer(),
                 Expanded(child: SearchField(hintText: 'Поиск')),
                 SizedBox(width: 5),
