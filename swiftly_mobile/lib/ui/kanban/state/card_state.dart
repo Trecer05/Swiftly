@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../widgets/card_item.dart';
+import '../../../domain/kanban/models/card_item.dart';
 
 part 'card_state.freezed.dart';
 

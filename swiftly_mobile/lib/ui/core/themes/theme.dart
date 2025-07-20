@@ -9,6 +9,7 @@ abstract class AppFontWeights {
 }
 
 abstract class AppFontSizes {
+  static const double size40 = 40;
   static const double size32 = 32;
   static const double size26 = 26;
   static const double size22 = 22;
@@ -49,7 +50,7 @@ abstract class AppTextStyles {
   static const TextStyle style6 = TextStyle(
     color: AppColors.white,
     fontSize: AppFontSizes.size32,
-    fontWeight: AppFontWeights.bolt500,
+    fontWeight: AppFontWeights.bolt,
   );
   static const TextStyle style7 = TextStyle(
     color: AppColors.white128,
@@ -69,6 +70,11 @@ abstract class AppTextStyles {
   static const TextStyle style10 = TextStyle(
     color: AppColors.white,
     fontSize: AppFontSizes.size20,
+    fontWeight: AppFontWeights.bolt600,
+  );
+  static const TextStyle style11 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.size40,
     fontWeight: AppFontWeights.bolt600,
   );
 }

@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-part 'card_item.freezed.dart';
+import 'priority.dart';
 
-enum Priority { low, medium, high }
+part 'card_item.freezed.dart';
 
 @freezed
 class CardItem with _$CardItem {
@@ -12,8 +12,8 @@ class CardItem with _$CardItem {
     required String title,
     required String description,
     required DateTime createdAt,
-    required Priority priority,
-    required String category,
+    required Priority? priority,
+    required String? category,
     required String columnId,
   }) = _CardItem;
 
@@ -28,8 +28,8 @@ class CardItem with _$CardItem {
     title: title ?? 'Новая задача',
     description: description ?? 'Пустое описание',
     createdAt: DateTime.now(),
-    priority: priority ?? Priority.low,
-    category: category ?? 'Нет категории',
+    priority: priority,
+    category: category,
     columnId: columnId,
   );
 }

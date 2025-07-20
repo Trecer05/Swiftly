@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../widgets/card_item.dart';
-import '../widgets/card_state.dart';
+import '../../../domain/kanban/models/card_item.dart';
+import '../../../domain/kanban/models/priority.dart';
+import 'card_state.dart';
 
 class CardNotifier extends StateNotifier<CardState> {
   CardNotifier() : super(CardState.initial());

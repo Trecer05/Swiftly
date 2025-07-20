@@ -4,7 +4,7 @@ import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
-import 'card_item.dart';
+import '../../../domain/kanban/models/card_item.dart';
 import 'card_item_widget.dart';
 
 class ColumnWidget extends ConsumerWidget {
@@ -27,7 +27,7 @@ class ColumnWidget extends ConsumerWidget {
           Text(title, style: AppTextStyles.style10),
           const SizedBox(height: 10),
           cards.isEmpty
-              ? AddCardWidget(onCreate: () => _handleCreate(ref))
+              ? AddCardWidget(onCreate: () => _handleCreate(ref, columnId))
               : Column(
                 children: [
                   ...cards
@@ -52,16 +52,12 @@ class ColumnWidget extends ConsumerWidget {
     ref.read(cardNotifierProvider.notifier).removeCart(id);
   }
 
-  void _handleCreate(WidgetRef ref) {
+  void _handleCreate(WidgetRef ref, String columnId) {
     ref
         .read(cardNotifierProvider.notifier)
         .addCart(
           CardItem.create(
-            title: 'Задача 1',
-            description:
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-            priority: Priority.high,
-            columnId: 'todo',
+            columnId: columnId,
           ),
         );
   }

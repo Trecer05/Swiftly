@@ -1,15 +1,23 @@
-import 'package:flutter/material.dart' hide Card;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'ui/core/themes/colors.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await windowManager.ensureInitialized();
-  await windowManager.setMinimumSize(const Size(700, 500));
+  if (!kIsWeb) {
+    try {
+      await windowManager.ensureInitialized();
+      await windowManager.setMinimumSize(const Size(700, 500));
+    } catch (e) {
+      debugPrint('Ошибка инициализации windowManager: $e');
+    }
+  }
   runApp(const ProviderScope(child: MyApp()));
 }
 

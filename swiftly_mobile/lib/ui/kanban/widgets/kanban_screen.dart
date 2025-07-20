@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'column_widget.dart';
 
-class BoardScreen extends StatelessWidget {
-  const BoardScreen({super.key});
+class KanbanScreen extends StatelessWidget {
+  const KanbanScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

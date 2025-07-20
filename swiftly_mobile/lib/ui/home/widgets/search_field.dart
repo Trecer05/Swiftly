@@ -15,6 +15,10 @@ class SearchField extends StatelessWidget {
     return TextField(
       style: AppTextStyles.style4,
       decoration: InputDecoration(
+        constraints: const BoxConstraints(
+          maxWidth: 256,
+          maxHeight: 40
+        ),
         filled: true,
         fillColor: AppColors.white15,
         prefixIcon: const Icon(Icons.search, color: AppColors.white128),
