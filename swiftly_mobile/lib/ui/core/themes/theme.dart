@@ -77,4 +77,14 @@ abstract class AppTextStyles {
     fontSize: AppFontSizes.size40,
     fontWeight: AppFontWeights.bolt600,
   );
+  static const TextStyle style12 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.size20,
+    fontWeight: AppFontWeights.bolt500,
+  );
+  static const TextStyle style13 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.size14,
+    fontWeight: AppFontWeights.bolt500,
+  );
 }

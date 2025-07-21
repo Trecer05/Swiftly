@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
 import '../../../domain/kanban/models/card_item.dart';
-import 'category_widget.dart';
+import '../../core/ui/label_item_widget.dart';
 import 'date_widget.dart';
 import 'priority_widget.dart';
 
@@ -17,6 +17,7 @@ class CardItemWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onDelete,
       child: Container(
+        width: 300,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.white15,
@@ -28,9 +29,8 @@ class CardItemWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                if (card.category != null) CategoryWidget(
-                  name: card.category!,
-                  color: AppColors.amaranthMagenta,
+                if (card.category != null) LabelItemWidget(
+                  labelItem: card.category!,
                 ),
                 const Spacer(),
                 DateWidget(date: card.createdAt),

@@ -49,14 +49,15 @@ class ColumnWidget extends ConsumerWidget {
   }
 
   void _handleDelete(WidgetRef ref, String id) {
-    ref.read(cardNotifierProvider.notifier).removeCart(id);
+    ref.read(cardNotifierProvider.notifier).removeCard(id);
   }
 
   void _handleCreate(WidgetRef ref, String columnId) {
     ref
         .read(cardNotifierProvider.notifier)
-        .addCart(
+        .addCard(
           CardItem.create(
+            userId: 'aaa',
             columnId: columnId,
           ),
         );

@@ -5,6 +5,8 @@ abstract final class AppColors {
   static const Color black = Color.fromARGB(255, 0, 0, 0);
 
   static const Color white15 = Color.fromARGB(15, 255, 255, 255);
+  static const Color white38 = Color.fromARGB(38, 255, 255, 255);
+  static const Color white64 = Color.fromARGB(64, 255, 255, 255);
   static const Color white128 = Color.fromARGB(128, 255, 255, 255);
 
   static const Color red = Colors.red;

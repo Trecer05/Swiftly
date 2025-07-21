@@ -18,11 +18,12 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$CardItem {
   String get id => throw _privateConstructorUsedError;
+  String get userId => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   Priority? get priority => throw _privateConstructorUsedError;
-  String? get category => throw _privateConstructorUsedError;
+  LabelItem? get category => throw _privateConstructorUsedError;
   String get columnId => throw _privateConstructorUsedError;
 
   /// Create a copy of CardItem
@@ -39,11 +40,12 @@ abstract class $CardItemCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
+    String userId,
     String title,
     String description,
     DateTime createdAt,
     Priority? priority,
-    String? category,
+    LabelItem? category,
     String columnId,
   });
 }
@@ -64,6 +66,7 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
   @override
   $Res call({
     Object? id = null,
+    Object? userId = null,
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
@@ -77,6 +80,11 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
                 null == id
                     ? _value.id
                     : id // ignore: cast_nullable_to_non_nullable
+                        as String,
+            userId:
+                null == userId
+                    ? _value.userId
+                    : userId // ignore: cast_nullable_to_non_nullable
                         as String,
             title:
                 null == title
@@ -102,7 +110,7 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
                 freezed == category
                     ? _value.category
                     : category // ignore: cast_nullable_to_non_nullable
-                        as String?,
+                        as LabelItem?,
             columnId:
                 null == columnId
                     ? _value.columnId
@@ -125,11 +133,12 @@ abstract class _$$CardItemImplCopyWith<$Res>
   @useResult
   $Res call({
     String id,
+    String userId,
     String title,
     String description,
     DateTime createdAt,
     Priority? priority,
-    String? category,
+    LabelItem? category,
     String columnId,
   });
 }
@@ -149,6 +158,7 @@ class __$$CardItemImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? userId = null,
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
@@ -162,6 +172,11 @@ class __$$CardItemImplCopyWithImpl<$Res>
             null == id
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
+                    as String,
+        userId:
+            null == userId
+                ? _value.userId
+                : userId // ignore: cast_nullable_to_non_nullable
                     as String,
         title:
             null == title
@@ -187,7 +202,7 @@ class __$$CardItemImplCopyWithImpl<$Res>
             freezed == category
                 ? _value.category
                 : category // ignore: cast_nullable_to_non_nullable
-                    as String?,
+                    as LabelItem?,
         columnId:
             null == columnId
                 ? _value.columnId
@@ -203,6 +218,7 @@ class __$$CardItemImplCopyWithImpl<$Res>
 class _$CardItemImpl implements _CardItem {
   const _$CardItemImpl({
     required this.id,
+    required this.userId,
     required this.title,
     required this.description,
     required this.createdAt,
@@ -214,6 +230,8 @@ class _$CardItemImpl implements _CardItem {
   @override
   final String id;
   @override
+  final String userId;
+  @override
   final String title;
   @override
   final String description;
@@ -222,13 +240,13 @@ class _$CardItemImpl implements _CardItem {
   @override
   final Priority? priority;
   @override
-  final String? category;
+  final LabelItem? category;
   @override
   final String columnId;
 
   @override
   String toString() {
-    return 'CardItem(id: $id, title: $title, description: $description, createdAt: $createdAt, priority: $priority, category: $category, columnId: $columnId)';
+    return 'CardItem(id: $id, userId: $userId, title: $title, description: $description, createdAt: $createdAt, priority: $priority, category: $category, columnId: $columnId)';
   }
 
   @override
@@ -237,6 +255,7 @@ class _$CardItemImpl implements _CardItem {
         (other.runtimeType == runtimeType &&
             other is _$CardItemImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -254,6 +273,7 @@ class _$CardItemImpl implements _CardItem {
   int get hashCode => Object.hash(
     runtimeType,
     id,
+    userId,
     title,
     description,
     createdAt,
@@ -274,16 +294,19 @@ class _$CardItemImpl implements _CardItem {
 abstract class _CardItem implements CardItem {
   const factory _CardItem({
     required final String id,
+    required final String userId,
     required final String title,
     required final String description,
     required final DateTime createdAt,
     required final Priority? priority,
-    required final String? category,
+    required final LabelItem? category,
     required final String columnId,
   }) = _$CardItemImpl;
 
   @override
   String get id;
+  @override
+  String get userId;
   @override
   String get title;
   @override
@@ -293,7 +316,7 @@ abstract class _CardItem implements CardItem {
   @override
   Priority? get priority;
   @override
-  String? get category;
+  LabelItem? get category;
   @override
   String get columnId;
 
