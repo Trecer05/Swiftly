@@ -65,7 +65,12 @@ class UserNotifier extends StateNotifier<UserState> {
 }
 
 final mockUsers = [
-  User.create(id: 'hhh', name: 'Павел'),
+  User.create(
+    id: 'hhh',
+    name: 'Павел',
+    image:
+        'https://65.mchs.gov.ru/uploads/resize_cache/news/2021-08-25/pravila-povedeniya-pri-vstreche-s-medvedem_1629847892112633638__800x800.jpg',
+  ),
   User.create(
     id: 'bbb',
     name: 'Вася',
@@ -82,6 +87,8 @@ final mockUsers = [
     id: 'ddd',
     name: 'Анастасия',
     lastName: 'Петровна',
+    image:
+        'https://cs13.pikabu.ru/post_img/big/2024/03/06/5/1709705621175092550.png',
     role: LabelItem(title: 'аналитик', color: AppColors.wanderingThrus),
   ),
   User.create(

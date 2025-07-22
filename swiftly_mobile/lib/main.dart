@@ -33,7 +33,7 @@ class MyApp extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(userNotifierProvider.notifier).loadUsers();
       ref.read(cardNotifierProvider.notifier).loadCards();
-      final user = User.create(id: 'aaa', name: 'Иван', role: LabelItem(title: 'flutter', color: AppColors.amaranthMagenta));
+      final user = User.create(id: 'aaa', name: 'Иван', image: 'https://givotniymir.ru/wp-content/uploads/2016/05/enot-poloskun-obraz-zhizni-i-sreda-obitaniya-enota-poloskuna-1.jpg', role: LabelItem(title: 'flutter', color: AppColors.amaranthMagenta));
       ref.read(userNotifierProvider.notifier).addUser(user);
       ref.read(currentUserProvider.notifier).state = user;
 

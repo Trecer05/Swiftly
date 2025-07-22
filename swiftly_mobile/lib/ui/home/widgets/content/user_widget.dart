@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/ui/home/widgets/call_made_widget.dart';
+import 'package:swiftly_mobile/ui/home/widgets/content/avatar_widget.dart';
 
 import '../../../../domain/user/models/user.dart';
 import '../../../../providers/card_notifier_provider.dart';
@@ -34,16 +35,12 @@ class UserWidget extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.account_circle_outlined,
-                size: 40,
-                color: AppColors.white,
-              ),
+              AvatarWidget(imageUrl: user.image),
               const SizedBox(width: 5),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(

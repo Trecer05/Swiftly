@@ -4,6 +4,7 @@ abstract final class AppColors {
   static const Color white = Color.fromARGB(255, 255, 255, 255);
   static const Color black = Color.fromARGB(255, 0, 0, 0);
 
+  static const Color black168 = Color.fromARGB(168, 8, 8, 8);
   static const Color white15 = Color.fromARGB(15, 255, 255, 255);
   static const Color white38 = Color.fromARGB(38, 255, 255, 255);
   static const Color white64 = Color.fromARGB(64, 255, 255, 255);
@@ -45,7 +46,7 @@ abstract final class AppColors {
   );
   static const LinearGradient gradient_4 = LinearGradient(
     colors: [Color.fromRGBO(38, 98, 217, 1), Color.fromRGBO(23, 59, 130, 1)],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+    begin: Alignment.centerRight,
+    end: Alignment.centerLeft,
   );
 }

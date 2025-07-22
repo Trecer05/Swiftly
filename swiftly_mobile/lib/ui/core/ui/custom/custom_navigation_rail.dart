@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../routing/routers.dart';
-import '../themes/colors.dart';
+import '../../../../routing/routers.dart';
+import '../../themes/colors.dart';
 
 enum NavItem {
   home(Routers.home, Icons.home, 'Главная'),
