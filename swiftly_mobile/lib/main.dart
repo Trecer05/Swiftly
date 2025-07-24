@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
+
 import 'ui/core/themes/colors.dart';
 
 void main() async {
@@ -10,6 +12,13 @@ void main() async {
 
   await windowManager.ensureInitialized();
   await windowManager.setMinimumSize(const Size(700, 500));
+
+  await acrylic.Window.initialize();
+  await acrylic.Window.setEffect(
+    effect: acrylic.WindowEffect.acrylic, // или mica для Win11
+    color: Colors.transparent,
+  );
+  
   runApp(
     const ProviderScope(
       child: 
@@ -35,6 +44,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'Swiftly',
       theme: ThemeData(
         // scaffoldBackgroundColor: Colors.transparent,
