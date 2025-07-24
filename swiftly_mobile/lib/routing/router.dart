@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:swiftly_mobile/routing/routers.dart';
 import 'package:swiftly_mobile/ui/auth/widgets/auth_screen.dart';
+import 'package:swiftly_mobile/ui/chat/chat.dart';
 import 'package:swiftly_mobile/ui/verify_code/widgets/verify_code_screen.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom_navigation_rail.dart';
 import 'package:swiftly_mobile/ui/home/widgets/home_screen.dart';
@@ -27,7 +28,7 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routers.chat,
           builder: (BuildContext context, GoRouterState state) {
-            return const Placeholder();
+            return const ChatScreen();
           },
         ),
         GoRoute(

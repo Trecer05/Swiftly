@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/window_effect.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
@@ -15,10 +16,9 @@ void main() async {
 
   await acrylic.Window.initialize();
   await acrylic.Window.setEffect(
-    effect: acrylic.WindowEffect.acrylic, // или mica для Win11
-    color: Colors.transparent,
+    effect: WindowEffect.transparent
   );
-  
+
   runApp(
     const ProviderScope(
       child: 
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Swiftly',
       theme: ThemeData(
-        // scaffoldBackgroundColor: Colors.transparent,
+        scaffoldBackgroundColor: Colors.transparent,
         navigationRailTheme: const NavigationRailThemeData(
           selectedIconTheme: IconThemeData(color: AppColors.white),
           selectedLabelTextStyle: TextStyle(color: AppColors.white),
