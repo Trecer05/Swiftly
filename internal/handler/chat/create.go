@@ -9,8 +9,8 @@ import (
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
-	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
+	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 
 	"github.com/gorilla/mux"
 )
@@ -20,34 +20,34 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 
 	err := json.NewDecoder(r.Body).Decode(&group)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	if group.Name == "" || group.OwnerID == 0 {
-		serviceHttp.NewHeaderBody(w, "application/json", chatErrors.ErrInvalidGroupData, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", chatErrors.ErrInvalidGroupData, http.StatusBadRequest)
 		return
 	}
 
 	ownerID, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 	group.OwnerID = ownerID
 
 	id, err := mgr.CreateGroup(group)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
-		"group" : map[string]interface{}{
-			"id" : id,
-			"name" : group.Name,
+		"group": map[string]interface{}{
+			"id":   id,
+			"name": group.Name,
 		},
 	})
 }
@@ -56,19 +56,19 @@ func DeleteGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 	vars := mux.Vars(r)
 	groupId, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	status, err := serviceChat.ValidateGroupOwner(groupId, r, mgr)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, status)
+		serviceHttp.NewErrorBody(w, "application/json", err, status)
 		return
 	}
 
 	err = mgr.DeleteGroup(groupId)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -82,28 +82,28 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.
 	vars := mux.Vars(r)
 	groupId, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	status, err := serviceChat.ValidateGroupOwner(groupId, r, mgr)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, status)
+		serviceHttp.NewErrorBody(w, "application/json", err, status)
 		return
 	}
 
 	var users models.Users
 	if err := json.NewDecoder(r.Body).Decode(&users); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	err = mgr.AddUsersToGroup(users, groupId)
 	if err != nil {
 		if err == chatErrors.ErrUserAlreadyInGroup {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusConflict)
 		} else {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -118,28 +118,28 @@ func DeleteUserFromGroupHandler(w http.ResponseWriter, r *http.Request, mgr *man
 	vars := mux.Vars(r)
 	groupId, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	status, err := serviceChat.ValidateGroupOwner(groupId, r, mgr)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, status)
+		serviceHttp.NewErrorBody(w, "application/json", err, status)
 		return
 	}
 
 	var users models.Users
 	if err := json.NewDecoder(r.Body).Decode(&users); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	err = mgr.DeleteUsersFromGroup(users, groupId)
 	if err != nil {
 		if err == chatErrors.ErrUserNotInGroup {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusConflict)
 		} else {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -147,5 +147,34 @@ func DeleteUserFromGroupHandler(w http.ResponseWriter, r *http.Request, mgr *man
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
+	})
+}
+
+func CreateChatHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	us1Id, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	us2Id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	chatId, err := mgr.CreateChat(us1Id, us2Id)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"chat": map[string]interface{}{
+			"id": chatId,
+		},
 	})
 }

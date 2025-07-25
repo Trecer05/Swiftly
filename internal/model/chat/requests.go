@@ -10,3 +10,8 @@ type GroupCreate struct {
 type Users struct {
 	Users []Client `json:"users"`
 }
+
+type ChatCreate struct {
+	UserSender string `json:"user_sender"`
+	UserReceiver string `json:"user_receiver"`
+}

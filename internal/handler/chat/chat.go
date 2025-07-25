@@ -7,30 +7,30 @@ import (
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
-	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
+	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 )
 
 func UserChatsInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	limit, offset, err := serviceChat.ValidateLimitOffset(r)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	rooms, err := mgr.GetUserRooms(userId, limit, offset)
 	switch {
 	case err == chatErrors.ErrNoRooms:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		return
 	case err != nil:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -41,17 +41,17 @@ func UserChatsInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.M
 func UserInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	userInfo, err := mgr.GetUserInfo(userId)
 	switch {
 	case err == chatErrors.ErrNoUser:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		return
 	case err != nil:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -60,22 +60,43 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manage
 }
 
 func AnotherUserInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
-	id, err := serviceChat.GetUserIdFromVars(r)
+	id, err := serviceChat.GetIdFromVars(r)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	userInfo, err := mgr.GetUserInfo(id)
 	switch {
 	case err == chatErrors.ErrNoUser:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		return
 	case err != nil:
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(userInfo)
+}
+
+func GroupUsersHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	users, err := mgr.GetGroupUsers(id)
+	switch {
+	case err == chatErrors.ErrNoUsers:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
 }

@@ -8,10 +8,10 @@ import (
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	middleware "github.com/Trecer05/Swiftly/internal/handler"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
-	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	wsChat "github.com/Trecer05/Swiftly/internal/transport/websocket/chat"
 
 	"github.com/gorilla/mux"
@@ -19,10 +19,11 @@ import (
 )
 
 // TODO: заменить на:
-// CheckOrigin: func(r *http.Request) bool {
-// 	origin := r.Header.Get("Origin")
-// 	return origin == "https://домен"
-// }
+//
+//	CheckOrigin: func(r *http.Request) bool {
+//		origin := r.Header.Get("Origin")
+//		return origin == "https://домен"
+//	}
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
@@ -51,6 +52,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 		DeleteGroupHandler(w, r, mgr)
 	}).Methods(http.MethodDelete)
 
+	apiSecure.HandleFunc("/group/{id}/users", func(w http.ResponseWriter, r *http.Request) {
+		GroupUsersHandler(w, r, mgr)
+	}).Methods(http.MethodGet)
+
 	apiSecure.HandleFunc("/chats", func(w http.ResponseWriter, r *http.Request) {
 		UserChatsInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
@@ -62,19 +67,23 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/user/{id}", func(w http.ResponseWriter, r *http.Request) {
 		AnotherUserInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
+		CreateChatHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	vars := mux.Vars(r)
 	chatId, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +93,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 		limit = 100
 	} else {
 		if limit, err = strconv.Atoi(strLimit[0]); err != nil {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 			return
 		}
 	}
@@ -92,14 +101,14 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 		offset = 0
 	} else {
 		if offset, err = strconv.Atoi(strOffset[0]); err != nil {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 			return
 		}
 	}
 
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
@@ -112,12 +121,12 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	if err := wsChat.SendChatHistory(conn, mgr, chatId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
 			conn.WriteJSON(map[string]interface{}{
-				"type": "history",
+				"type":     "history",
 				"messages": []models.Message{},
-				"error": err.Error(),
+				"error":    err.Error(),
 			})
 		} else {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -137,14 +146,14 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	vars := mux.Vars(r)
 	groupId, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
@@ -154,7 +163,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 		limit = 100
 	} else {
 		if limit, err = strconv.Atoi(strLimit[0]); err != nil {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 			return
 		}
 	}
@@ -162,14 +171,14 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 		offset = 0
 	} else {
 		if offset, err = strconv.Atoi(strOffset[0]); err != nil {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 			return
 		}
 	}
 
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
@@ -182,12 +191,12 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	if err := wsChat.SendChatHistory(conn, mgr, groupId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
 			conn.WriteJSON(map[string]interface{}{
-				"type": "history",
+				"type":     "history",
 				"messages": []models.Message{},
-				"error": err.Error(),
+				"error":    err.Error(),
 			})
 		} else {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -209,13 +218,13 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	userId, ok := r.Context().Value("id").(int)
 	if !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
@@ -223,12 +232,12 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 
 	chats, err := mgr.GetUserRooms(userId, 0, 0)
 	switch {
-		case err == chatErrors.ErrNoRooms:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
-			return
-		case err != nil:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
-			return
+	case err == chatErrors.ErrNoRooms:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
 	}
 
 	for _, room := range chats.Rooms {

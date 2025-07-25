@@ -44,20 +44,20 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	if err := mgr.Login(&user); err != nil {
 		switch err {
 		case errors.ErrInvalidPassword:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusUnauthorized)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusUnauthorized)
 			return
 		case errors.ErrNoUser:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusNotFound)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 			return
 		default:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -68,11 +68,11 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 		if err == jwt.ErrTokenExpired {
 			refreshToken, err = tokens.GenerateRefreshToken(mgr, user.ID)
 			if err != nil {
-				serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+				serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 				return
 			}
 		} else {
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -87,7 +87,7 @@ func Login(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -103,27 +103,27 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var err error
 
 	if err = json.NewDecoder(r.Body).Decode(&user); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
 	if err = mgr.Register(&user); err != nil {
 		switch err {
 		case errors.ErrEmailExists:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusConflict)
 			return
 		case errors.ErrNumberExists:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusConflict)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusConflict)
 			return
 		default:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
 
 	refreshToken, err := tokens.GenerateRefreshToken(mgr, user.ID)
 	if err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -134,7 +134,7 @@ func Register(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 	var accessToken string
 	if accessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -152,21 +152,21 @@ func Logout(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var ok bool
 
 	if id, ok = r.Context().Value("id").(int); !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	if token, err = tokens.ValidateRefreshToken(mgr, id); err != nil {
 		if err == jwt.ErrTokenExpired {
-			serviceHttp.NewHeaderBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
+			serviceHttp.NewErrorBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
 			return
 		}
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	if err := mgr.DeleteRefreshToken(id, token.Token); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -182,12 +182,12 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var ok bool
 
 	if id, ok = r.Context().Value("id").(int); !ok {
-		serviceHttp.NewHeaderBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusBadRequest)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
 
@@ -195,10 +195,10 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	if err != nil {
 		switch err {
 		case jwt.ErrTokenExpired:
-			serviceHttp.NewHeaderBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
+			serviceHttp.NewErrorBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
 			return
 		default:
-			serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -210,7 +210,7 @@ func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	}
 
 	if t.AccessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		serviceHttp.NewHeaderBody(w, "application/json", err, http.StatusInternalServerError)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 

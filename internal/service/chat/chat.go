@@ -52,7 +52,7 @@ func ValidateLimitOffset(r *http.Request) (int, int, error) {
 	return limit, offset, nil
 }
 
-func GetUserIdFromVars(r *http.Request) (int, error) {
+func GetIdFromVars(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	return strconv.Atoi(id)
