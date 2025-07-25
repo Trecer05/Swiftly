@@ -15,7 +15,7 @@ class ChatPopupMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<int>(
-      color: const Color(0xFF1E3A8A), // Глубокий синий фон (как на картинке)
+      color: const Color(0xFF1E3A8A),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       icon: const Icon(Icons.more_vert, color: Colors.white),
       itemBuilder: (context) => [
@@ -44,12 +44,12 @@ class ChatPopupMenu extends StatelessWidget {
       value: value,
       child: Row(
         children: [
-          Icon(icon, color: Colors.red, size: 20), // Белые иконки
+          Icon(icon, color: Colors.red, size: 20),
           const SizedBox(width: 8),
           Text(
             text,
             style: const TextStyle(
-              color: Colors.red, // Белый текст
+              color: Colors.red,
               fontWeight: FontWeight.w500,
             ),
           ),

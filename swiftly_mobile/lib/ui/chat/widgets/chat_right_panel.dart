@@ -73,7 +73,7 @@ class ChatRightPanel extends StatelessWidget {
                 ),
               ),
 
-              // Аватар и имя
+              
               Center(
                 child: Column(
                   children: [
@@ -99,7 +99,7 @@ class ChatRightPanel extends StatelessWidget {
                 ),
               ),
 
-              // Кнопки
+              
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 12),
