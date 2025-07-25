@@ -10,7 +10,7 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-        backgroundColor: AppColors.blue,
+        backgroundColor: AppColors.transparent,
         body: Row(
           children: [Expanded(child: LeftPanel()), Expanded(child: RightPanel())],
         ),
