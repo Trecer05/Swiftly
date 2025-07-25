@@ -36,7 +36,6 @@ class ColumnWidget extends ConsumerWidget {
                           const SizedBox(height: 10),
                           CardItemWidget(
                             card: card,
-                            onDelete: () => _handleDelete(ref, card.id),
                           ),
                         ],
                       )

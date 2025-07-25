@@ -24,14 +24,9 @@ class ActiveTasks extends ConsumerWidget {
         ...cards.map(
           (card) => CardItemWidget(
             card: card,
-            onDelete: () => _handleDelete(ref, card.id),
           ),
         ),
       ],
     );
-  }
-
-  void _handleDelete(WidgetRef ref, String id) {
-    ref.read(cardNotifierProvider.notifier).removeCard(id);
   }
 }

@@ -6,13 +6,14 @@ class AvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (imageUrl == null || imageUrl!.isEmpty) {
+    final url = imageUrl;
+    if (url == null || url.isEmpty) {
       return _buildPlaceholder();
     }
 
     return ClipOval(
       child: Image.network(
-        imageUrl!,
+        url,
         width: 40,
         height: 40,
         fit: BoxFit.cover,

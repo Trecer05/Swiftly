@@ -4,18 +4,23 @@ import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
 import '../../../domain/kanban/models/card_item.dart';
 import '../../core/ui/label_item_widget.dart';
+import 'card_details_widgets/cart_details_widget.dart';
 import 'date_widget.dart';
 import 'priority_widget.dart';
 
 class CardItemWidget extends StatelessWidget {
   final CardItem card;
-  final VoidCallback onDelete;
-  const CardItemWidget({super.key, required this.card, required this.onDelete});
+  const CardItemWidget({super.key, required this.card});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onDelete,
+      onTap: (){
+        showDialog(
+      context: context,
+      builder: (_) => CartDetailsWidget(card: card),
+    );
+      },
       child: Container(
         width: 300,
         padding: const EdgeInsets.all(10),
@@ -33,7 +38,7 @@ class CardItemWidget extends StatelessWidget {
                   labelItem: card.category!,
                 ),
                 const Spacer(),
-                DateWidget(date: card.createdAt),
+                DateWidget(date: card.createdAt, color: AppColors.white15,),
               ],
             ),
             const SizedBox(height: 5),
