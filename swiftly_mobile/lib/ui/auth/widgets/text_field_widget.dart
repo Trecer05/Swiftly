@@ -29,13 +29,13 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      style: AppTextStyles.text_4,
+      style: AppTextStyles.style4,
       obscureText: obscureText,
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.white15,
         hintText: widget.hintText,
-        hintStyle: AppTextStyles.text_3,
+        hintStyle: AppTextStyles.style3,
         suffixIcon:
             widget.isPasswordField
                 ? VisibilityWidget(

@@ -13,13 +13,17 @@ class SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      style: AppTextStyles.text_4,
+      style: AppTextStyles.style4,
       decoration: InputDecoration(
+        constraints: const BoxConstraints(
+          maxWidth: 256,
+          maxHeight: 40
+        ),
         filled: true,
         fillColor: AppColors.white15,
         prefixIcon: const Icon(Icons.search, color: AppColors.white128),
         hintText: hintText,
-        hintStyle: AppTextStyles.text_3,
+        hintStyle: AppTextStyles.style3,
 
         enabledBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),

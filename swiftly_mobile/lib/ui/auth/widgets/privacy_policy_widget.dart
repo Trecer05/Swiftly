@@ -18,7 +18,7 @@ class PrivacyPolicyWidget extends StatelessWidget {
           onTap: () {},
           child: const Text(
             'Согласен с политикой конфиденциальности',
-            style: AppTextStyles.text_2,
+            style: AppTextStyles.style2,
           ),
         ),
       ],

@@ -52,7 +52,7 @@ class _NextButtonState extends State<NextButton> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Center(
-              child: Text(widget.buttonText, style: AppTextStyles.text_2),
+              child: Text(widget.buttonText, style: AppTextStyles.style2),
             ),
           ),
         ),

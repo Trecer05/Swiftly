@@ -11,15 +11,15 @@ class VerifyCodeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Column(
         children: [
-          Text('Введите код из письма', style: AppTextStyles.text_1),
+          Text('Введите код из письма', style: AppTextStyles.style1),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Код придет на alesha@gmail.com',
-                style: AppTextStyles.text_2,
+                style: AppTextStyles.style2,
               ),
-              Text(' изменить', style: AppTextStyles.text_5),
+              Text(' изменить', style: AppTextStyles.style5),
             ],
           ),
           SizedBox(height: 12),
@@ -31,7 +31,7 @@ class VerifyCodeScreen extends StatelessWidget {
           SizedBox(height: 12),
           Text(
             'Получить новый код можно через 00:30',
-            style: AppTextStyles.text_2,
+            style: AppTextStyles.style2,
           ),
           SizedBox(height: 12),
           NextButton(buttonText: 'Продолжить', pathScreen: '/home'),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../routing/routers.dart';
-import '../themes/colors.dart';
+import '../../../../routing/routers.dart';
+import '../../themes/colors.dart';
 
 enum NavItem {
   home(Routers.home, Icons.home, 'Главная'),
@@ -96,7 +96,7 @@ class _CustomNavigationRailState extends State<CustomNavigationRail> {
   }
 }
 
-class NavItemWidget extends StatelessWidget {
+class NavItemWidget extends StatefulWidget {
   final NavItem? item;
   final IconData? icon;
   final bool isController;
@@ -111,40 +111,56 @@ class NavItemWidget extends StatelessWidget {
   }) : assert(item != null || icon != null);
 
   @override
+  State<NavItemWidget> createState() => _NavItemWidgetState();
+}
+
+class _NavItemWidgetState extends State<NavItemWidget> {
+  bool isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<NavigationState>(
-      valueListenable: stateNotifier,
+      valueListenable: widget.stateNotifier,
       builder: (_, state, __) {
-        final isSelected =
-            !isController &&
-            item != null &&
-            _isCurrentRoute(context, item!.route);
+        final isSelected = !widget.isController &&
+            widget.item != null &&
+            _isCurrentRoute(context, widget.item!.route);
 
-        return GestureDetector(
-          onTap: () => _handleTap(context),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.gradient_4 : null,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  item?.icon ?? icon,
-                  color: isSelected ? AppColors.white : AppColors.white128,
+        return MouseRegion(
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: () => _handleTap(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                gradient: isSelected ? AppColors.gradient_4 : null,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isHovered && !widget.isController && !isSelected ? AppColors.white : AppColors.transparent,
                 ),
-                if (state.showLabels && item != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    item!.label,
-                    style: TextStyle(
-                      color: isSelected ? AppColors.white : AppColors.white128,
-                    ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.item?.icon ?? widget.icon,
+                    color:
+                        isSelected ? AppColors.white : AppColors.white128,
                   ),
+                  if (state.showLabels && widget.item != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.item!.label,
+                      style: TextStyle(
+                        color: isSelected
+                            ? AppColors.white
+                            : AppColors.white128,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -157,12 +173,12 @@ class NavItemWidget extends StatelessWidget {
   }
 
   void _handleTap(BuildContext context) {
-    if (isController) {
-      stateNotifier.value = NavigationState(
-        showLabels: !stateNotifier.value.showLabels,
+    if (widget.isController) {
+      widget.stateNotifier.value = NavigationState(
+        showLabels: !widget.stateNotifier.value.showLabels,
       );
-    } else if (item != null) {
-      GoRouter.of(context).go(item!.route);
+    } else if (widget.item != null) {
+      GoRouter.of(context).go(widget.item!.route);
     }
   }
 }

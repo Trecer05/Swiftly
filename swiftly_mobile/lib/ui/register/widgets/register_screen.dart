@@ -14,12 +14,12 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text('Создайте аккаунт', style: AppTextStyles.text_1),
+        const Text('Создайте аккаунт', style: AppTextStyles.style1),
         const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('или', style: AppTextStyles.text_2),
-            Text(' войдите', style: AppTextStyles.text_5),
+            Text('или', style: AppTextStyles.style2),
+            Text(' войдите', style: AppTextStyles.style5),
           ],
         ),
         const SizedBox(height: 12),
