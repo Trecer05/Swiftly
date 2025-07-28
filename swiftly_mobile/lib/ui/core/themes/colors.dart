@@ -27,7 +27,9 @@ abstract final class AppColors {
   static const Color red1 = Color.fromARGB(255, 217, 31, 31);
   static const Color red2 = Color.fromARGB(51, 217, 31, 31);
 
-  static const Color transparent = Colors.transparent;
+  static const Color transparent = Color.fromARGB(0, 0, 0, 0);
+  static const Color transparent168 = Color.fromARGB(168, 8, 8, 8);
+  static const Color transparent191 = Color.fromARGB(191, 8, 8, 8);
 
   static const Color background = Color.fromARGB(190, 16, 25, 131);
 

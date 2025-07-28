@@ -31,7 +31,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
               color: isHovered ? AppColors.white : AppColors.transparent,
             ),
           ),
-          child: Text(widget.title),
+          child: Text(widget.title, style: const TextStyle(color: AppColors.white),),
         ),
       ),
     );

@@ -66,35 +66,35 @@ class UserNotifier extends StateNotifier<UserState> {
 
 final mockUsers = [
   User.create(
-    id: 'hhh',
+    id: '1',
     name: 'Павел',
     image:
         'https://65.mchs.gov.ru/uploads/resize_cache/news/2021-08-25/pravila-povedeniya-pri-vstreche-s-medvedem_1629847892112633638__800x800.jpg',
   ),
   User.create(
-    id: 'bbb',
+    id: '2',
     name: 'Вася',
     lastName: 'Пупкин',
-    role: LabelItem(title: 'программист', color: AppColors.amaranthMagenta),
+    role: LabelItem.create(cardId: '2', userId: 'a', title: 'программист', color: AppColors.amaranthMagenta),
   ),
   User.create(
-    id: 'ccc',
+    id: '3',
     name: 'Алеша',
     lastName: 'Попович',
-    role: LabelItem(title: 'дизайнер', color: AppColors.wanderingThrus),
+    role: LabelItem.create(cardId: '2', userId: 'a', title: 'дизайнер', color: AppColors.wanderingThrus),
   ),
   User.create(
-    id: 'ddd',
+    id: '4',
     name: 'Анастасия',
     lastName: 'Петровна',
     image:
         'https://cs13.pikabu.ru/post_img/big/2024/03/06/5/1709705621175092550.png',
-    role: LabelItem(title: 'аналитик', color: AppColors.wanderingThrus),
+    role: LabelItem.create(cardId: '2', userId: 'a', title: 'аналитик', color: AppColors.wanderingThrus),
   ),
   User.create(
-    id: 'eee',
+    id: '5',
     name: 'Алексей',
     lastName: 'Семеныч',
-    role: LabelItem(title: 'программист', color: AppColors.amaranthMagenta),
+    role: LabelItem.create(cardId: '2', userId: 'a', title: 'программист', color: AppColors.amaranthMagenta),
   ),
 ];

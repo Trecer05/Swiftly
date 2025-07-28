@@ -3,6 +3,7 @@ import 'package:flutter_acrylic/window_effect.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/domain/models/label_item.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
+import 'package:swiftly_mobile/providers/label_notifier_provider.dart';
 import 'package:swiftly_mobile/providers/user_notifier_provider.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
@@ -17,31 +18,14 @@ import 'ui/core/themes/colors.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await windowManager.ensureInitialized();
-  await windowManager.setMinimumSize(const Size(700, 500));
-
   await acrylic.Window.initialize();
   await acrylic.Window.setEffect(
-    effect: WindowEffect.transparent
+    effect: WindowEffect.hudWindow,
+    color: Colors.transparent,
   );
 
-  runApp(
-    const ProviderScope(
-      child: 
-      // MaterialApp(
-      //   home: Scaffold(
-      //     body: Stack(
-      //       children: [
-      //         Positioned.fill(
-      //           child: Image.asset('assets/vk_logo.png', fit: BoxFit.cover),
-      //         ),
-              MyApp(),
-      //       ],
-      //     ),
-      //   ),
-      // ),
-    ),
-  );
+  // acrylic.Window.makeWindowFullyTransparent();
+
   if (!kIsWeb) {
     try {
       await windowManager.ensureInitialized();
@@ -60,11 +44,17 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(userNotifierProvider.notifier).loadUsers();
-      ref.read(cardNotifierProvider.notifier).loadCards();
-      final user = User.create(id: 'aaa', name: 'Иван', image: 'https://givotniymir.ru/wp-content/uploads/2016/05/enot-poloskun-obraz-zhizni-i-sreda-obitaniya-enota-poloskuna-1.jpg', role: LabelItem(title: 'flutter', color: AppColors.amaranthMagenta));
+      ref.read(cardNotifierProvider.notifier).loadCards(ref);
+      // ref.read(labelNotifierProvider.notifier).loadLabels();
+      final user = User.create(
+        id: 'aaa',
+        name: 'Иван',
+        image:
+            'https://givotniymir.ru/wp-content/uploads/2016/05/enot-poloskun-obraz-zhizni-i-sreda-obitaniya-enota-poloskuna-1.jpg',
+        role: LabelItem.create(cardId: '1', userId: 'a', title: 'flutter', color: AppColors.amaranthMagenta),
+      );
       ref.read(userNotifierProvider.notifier).addUser(user);
       ref.read(currentUserProvider.notifier).state = user;
-
     });
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,

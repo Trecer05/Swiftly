@@ -19,12 +19,11 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$CardItem {
   String get id => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
+  String get columnId => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   Priority? get priority => throw _privateConstructorUsedError;
-  LabelItem? get category => throw _privateConstructorUsedError;
-  String get columnId => throw _privateConstructorUsedError;
 
   /// Create a copy of CardItem
   /// with the given fields replaced by the non-null parameter values.
@@ -41,12 +40,11 @@ abstract class $CardItemCopyWith<$Res> {
   $Res call({
     String id,
     String userId,
+    String columnId,
     String title,
     String description,
     DateTime createdAt,
     Priority? priority,
-    LabelItem? category,
-    String columnId,
   });
 }
 
@@ -67,12 +65,11 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
   $Res call({
     Object? id = null,
     Object? userId = null,
+    Object? columnId = null,
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
     Object? priority = freezed,
-    Object? category = freezed,
-    Object? columnId = null,
   }) {
     return _then(
       _value.copyWith(
@@ -85,6 +82,11 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
                 null == userId
                     ? _value.userId
                     : userId // ignore: cast_nullable_to_non_nullable
+                        as String,
+            columnId:
+                null == columnId
+                    ? _value.columnId
+                    : columnId // ignore: cast_nullable_to_non_nullable
                         as String,
             title:
                 null == title
@@ -106,16 +108,6 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
                     ? _value.priority
                     : priority // ignore: cast_nullable_to_non_nullable
                         as Priority?,
-            category:
-                freezed == category
-                    ? _value.category
-                    : category // ignore: cast_nullable_to_non_nullable
-                        as LabelItem?,
-            columnId:
-                null == columnId
-                    ? _value.columnId
-                    : columnId // ignore: cast_nullable_to_non_nullable
-                        as String,
           )
           as $Val,
     );
@@ -134,12 +126,11 @@ abstract class _$$CardItemImplCopyWith<$Res>
   $Res call({
     String id,
     String userId,
+    String columnId,
     String title,
     String description,
     DateTime createdAt,
     Priority? priority,
-    LabelItem? category,
-    String columnId,
   });
 }
 
@@ -159,12 +150,11 @@ class __$$CardItemImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? userId = null,
+    Object? columnId = null,
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
     Object? priority = freezed,
-    Object? category = freezed,
-    Object? columnId = null,
   }) {
     return _then(
       _$CardItemImpl(
@@ -177,6 +167,11 @@ class __$$CardItemImplCopyWithImpl<$Res>
             null == userId
                 ? _value.userId
                 : userId // ignore: cast_nullable_to_non_nullable
+                    as String,
+        columnId:
+            null == columnId
+                ? _value.columnId
+                : columnId // ignore: cast_nullable_to_non_nullable
                     as String,
         title:
             null == title
@@ -198,16 +193,6 @@ class __$$CardItemImplCopyWithImpl<$Res>
                 ? _value.priority
                 : priority // ignore: cast_nullable_to_non_nullable
                     as Priority?,
-        category:
-            freezed == category
-                ? _value.category
-                : category // ignore: cast_nullable_to_non_nullable
-                    as LabelItem?,
-        columnId:
-            null == columnId
-                ? _value.columnId
-                : columnId // ignore: cast_nullable_to_non_nullable
-                    as String,
       ),
     );
   }
@@ -219,18 +204,19 @@ class _$CardItemImpl implements _CardItem {
   const _$CardItemImpl({
     required this.id,
     required this.userId,
+    required this.columnId,
     required this.title,
     required this.description,
     required this.createdAt,
     required this.priority,
-    required this.category,
-    required this.columnId,
   });
 
   @override
   final String id;
   @override
   final String userId;
+  @override
+  final String columnId;
   @override
   final String title;
   @override
@@ -239,14 +225,10 @@ class _$CardItemImpl implements _CardItem {
   final DateTime createdAt;
   @override
   final Priority? priority;
-  @override
-  final LabelItem? category;
-  @override
-  final String columnId;
 
   @override
   String toString() {
-    return 'CardItem(id: $id, userId: $userId, title: $title, description: $description, createdAt: $createdAt, priority: $priority, category: $category, columnId: $columnId)';
+    return 'CardItem(id: $id, userId: $userId, columnId: $columnId, title: $title, description: $description, createdAt: $createdAt, priority: $priority)';
   }
 
   @override
@@ -256,17 +238,15 @@ class _$CardItemImpl implements _CardItem {
             other is _$CardItemImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.columnId, columnId) ||
+                other.columnId == columnId) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.priority, priority) ||
-                other.priority == priority) &&
-            (identical(other.category, category) ||
-                other.category == category) &&
-            (identical(other.columnId, columnId) ||
-                other.columnId == columnId));
+                other.priority == priority));
   }
 
   @override
@@ -274,12 +254,11 @@ class _$CardItemImpl implements _CardItem {
     runtimeType,
     id,
     userId,
+    columnId,
     title,
     description,
     createdAt,
     priority,
-    category,
-    columnId,
   );
 
   /// Create a copy of CardItem
@@ -295,18 +274,19 @@ abstract class _CardItem implements CardItem {
   const factory _CardItem({
     required final String id,
     required final String userId,
+    required final String columnId,
     required final String title,
     required final String description,
     required final DateTime createdAt,
     required final Priority? priority,
-    required final LabelItem? category,
-    required final String columnId,
   }) = _$CardItemImpl;
 
   @override
   String get id;
   @override
   String get userId;
+  @override
+  String get columnId;
   @override
   String get title;
   @override
@@ -315,10 +295,6 @@ abstract class _CardItem implements CardItem {
   DateTime get createdAt;
   @override
   Priority? get priority;
-  @override
-  LabelItem? get category;
-  @override
-  String get columnId;
 
   /// Create a copy of CardItem
   /// with the given fields replaced by the non-null parameter values.

@@ -13,7 +13,6 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(right: 16, left: 16, bottom: 16, top: 48),
-      color: AppColors.black168,
       width: double.infinity,
       height: 104,
       child: Row(

@@ -41,6 +41,8 @@ abstract class $UserCopyWith<$Res> {
     String? image,
     LabelItem? role,
   });
+
+  $LabelItemCopyWith<$Res>? get role;
 }
 
 /// @nodoc
@@ -95,6 +97,20 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           as $Val,
     );
   }
+
+  /// Create a copy of User
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $LabelItemCopyWith<$Res>? get role {
+    if (_value.role == null) {
+      return null;
+    }
+
+    return $LabelItemCopyWith<$Res>(_value.role!, (value) {
+      return _then(_value.copyWith(role: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -112,6 +128,9 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     String? image,
     LabelItem? role,
   });
+
+  @override
+  $LabelItemCopyWith<$Res>? get role;
 }
 
 /// @nodoc

@@ -59,13 +59,11 @@ class _CustomNavigationRailState extends State<CustomNavigationRail> {
             valueListenable: _stateNotifier,
             builder: (_, state, __) {
               return Container(
+                color: AppColors.transparent168,
                 width: state.showLabels ? expandedWidth : null,
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
                   horizontal: 10,
-                ),
-                decoration: const BoxDecoration(
-                  color: Color.fromARGB(255, 3, 13, 55),
                 ),
                 child: Column(
                   children: [
