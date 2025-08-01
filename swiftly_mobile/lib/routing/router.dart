@@ -6,7 +6,7 @@ import 'package:swiftly_mobile/ui/chat/chat.dart';
 import 'package:swiftly_mobile/ui/verify_code/widgets/verify_code_screen.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom/custom_navigation_rail.dart';
 import 'package:swiftly_mobile/ui/home/widgets/home_screen.dart';
-import 'package:swiftly_mobile/ui/code/widgets/code_screen.dart';
+import 'package:swiftly_mobile/ui/code/code_screen.dart';
 import 'package:swiftly_mobile/ui/kanban/widgets/kanban_screen.dart';
 import 'package:swiftly_mobile/ui/cloud/widgets/cloud_screen.dart';
 import 'package:swiftly_mobile/ui/figma/widgets/figma_screen.dart';
