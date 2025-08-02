@@ -92,4 +92,18 @@ abstract class AppTextStyles {
     fontSize: AppFontSizes.size16,
     fontWeight: AppFontWeights.bolt,
   );
+
+  static BoxDecoration _blueGradientSubMenu({double opacity = 0.2}) {
+    return const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xAA0D1B3B),
+          Color(0xAA0B1730),
+          Color(0x66081824),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    );
+  }
 }

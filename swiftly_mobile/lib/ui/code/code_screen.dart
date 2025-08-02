@@ -20,10 +20,11 @@ class CodeScreen extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                const EditorTabBar(),
+                const EditorTabBarTop(),
+                const BottomEditorToolbar(),
                 Expanded(
                   child: Container(
-                    color: const Color(0xFF1E293B),
+                    color: const Color.fromRGBO(2, 10, 23, 1),
                     child: ValueListenableBuilder<String>(
                       valueListenable: activeTab,
                       builder: (context, file, _) {
@@ -54,8 +55,8 @@ class CodeScreen extends StatelessWidget {
                           children: [
                             Container(
                               width: 40,
-                              color: const Color(0xFF1E293B),
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+                              color: const Color.fromRGBO(37, 58, 102, 0.25),
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
                               child: ListView.builder(
                                 itemCount: lines.length,
                                 itemBuilder: (context, index) {
