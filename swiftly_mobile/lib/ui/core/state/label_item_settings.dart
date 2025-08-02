@@ -84,12 +84,10 @@ class LabelItemSettings extends ConsumerWidget {
   }
 
   void _handleSave(BuildContext context, WidgetRef ref, String labelId) {
-    print('title = ${_titleController.text}');
     final newTitle = _titleController.text;
     final newColor = currentColor;
 
     ref.read(labelNotifierProvider.notifier).updateTitle(labelId, newTitle);
-    print('new title = ${labelItem.title}');
     ref.read(labelNotifierProvider.notifier).updateColor(labelId, newColor);
 
     Navigator.of(context).pop();

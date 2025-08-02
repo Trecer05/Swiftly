@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:swiftly_mobile/ui/core/themes/theme.dart';
 
-import '../../themes/colors.dart';
-
 class CustomAppBar extends StatelessWidget {
   final String title;
   final int? quantity;

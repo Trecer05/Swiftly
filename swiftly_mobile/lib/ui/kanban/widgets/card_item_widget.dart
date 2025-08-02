@@ -75,8 +75,7 @@ class _CardItemWidgetState extends ConsumerState<CardItemWidget> {
               const SizedBox(height: 5),
               Text(widget.card.description, style: AppTextStyles.style9),
               const SizedBox(height: 5),
-              if (widget.card.priority != null)
-                PriorityWidget(priority: widget.card.priority!),
+              PriorityWidget(priority: widget.card.priority),
             ],
           ),
         ),

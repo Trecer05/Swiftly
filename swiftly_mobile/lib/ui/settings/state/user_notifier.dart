@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:swiftly_mobile/domain/models/label_item.dart';
 
 import '../../../domain/user/models/user.dart';
-import '../../core/themes/colors.dart';
 import 'user_state.dart';
 
 class UserNotifier extends StateNotifier<UserState> {

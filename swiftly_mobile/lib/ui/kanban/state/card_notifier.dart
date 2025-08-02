@@ -1,11 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:swiftly_mobile/domain/models/label_item.dart';
 
 import '../../../domain/kanban/models/card_item.dart';
 import '../../../domain/kanban/models/priority.dart';
-import '../../../providers/label_notifier_provider.dart';
-import '../../../utils/create_and_register.dart';
-import '../../core/themes/colors.dart';
 import 'card_state.dart';
 
 class CardNotifier extends StateNotifier<CardState> {

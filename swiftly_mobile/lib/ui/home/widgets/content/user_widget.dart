@@ -8,7 +8,6 @@ import '../../../../providers/card_notifier_provider.dart';
 import '../../../../providers/current_user_provider.dart';
 import '../../../core/themes/colors.dart';
 import '../../../core/themes/theme.dart';
-import '../../../core/ui/label_item_widget.dart';
 
 class UserWidget extends ConsumerWidget {
   final User user;

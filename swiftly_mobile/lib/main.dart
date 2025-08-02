@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:swiftly_mobile/domain/models/label_item.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
-import 'package:swiftly_mobile/providers/label_notifier_provider.dart';
 import 'package:swiftly_mobile/providers/user_notifier_provider.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
@@ -23,8 +21,6 @@ void main() async {
     effect: WindowEffect.hudWindow,
     color: Colors.transparent,
   );
-
-  // acrylic.Window.makeWindowFullyTransparent();
 
   if (!kIsWeb) {
     try {
