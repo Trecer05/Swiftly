@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swiftly_mobile/ui/core/themes/theme.dart';
 
 final ValueNotifier<List<String>> openTabs = ValueNotifier(["CameraViewModel.swift"]);
 final ValueNotifier<String> activeTab = ValueNotifier("CameraViewModel.swift");
@@ -37,12 +38,7 @@ class _ExplorerSidebarState extends State<ExplorerSidebar> {
   Widget build(BuildContext context) {
     return Container(
       width: 250,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A), // deep blue-gray from second screenshot
-        border: const Border(
-          right: BorderSide(color: Color(0xFF1E293B)),
-        ),
-      ),
+      decoration: _blueGradientSubMenu(opacity: 0.15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -115,6 +111,19 @@ class _ExplorerSidebarState extends State<ExplorerSidebar> {
             ),
           ),
         ],
+      ),
+    );
+  }
+  BoxDecoration _blueGradientSubMenu({double opacity = 0.2}) {
+    return const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xAA0D1B3B),
+          Color(0xAA0B1730),
+          Color(0x66081824),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
     );
   }
