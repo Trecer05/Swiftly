@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/label_item.dart';
-import '../themes/colors.dart';
 import 'label_state.dart';
 
 class LabelNotifier extends StateNotifier<LabelState> {
@@ -38,17 +37,4 @@ class LabelNotifier extends StateNotifier<LabelState> {
           }).toList(),
     );
   }
-
-  // void loadLabels() async {
-  //   state = state.copyWith(isLoading: true);
-  //   await Future.delayed(const Duration(seconds: 1));
-  //   state = state.copyWith(
-  //     labels: [...state.labels, ...mockLabels],
-  //     isLoading: false,
-  //   );
-  // }
 }
-
-// final mockLabels = [
-//   LabelItem.create(cardId: '3', userId: '1', title: 'чет другое', color: AppColors.yellow),
-// ];

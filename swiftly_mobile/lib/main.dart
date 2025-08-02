@@ -51,7 +51,6 @@ class MyApp extends ConsumerWidget {
         name: 'Иван',
         image:
             'https://givotniymir.ru/wp-content/uploads/2016/05/enot-poloskun-obraz-zhizni-i-sreda-obitaniya-enota-poloskuna-1.jpg',
-        role: LabelItem.create(cardId: '1', userId: 'a', title: 'flutter', color: AppColors.amaranthMagenta),
       );
       ref.read(userNotifierProvider.notifier).addUser(user);
       ref.read(currentUserProvider.notifier).state = user;

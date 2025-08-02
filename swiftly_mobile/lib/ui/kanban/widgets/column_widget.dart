@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftly_mobile/domain/kanban/models/priority.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
+import 'package:swiftly_mobile/providers/current_user_provider.dart';
 
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
 import '../../../domain/kanban/models/card_item.dart';
+import 'card_details_widgets/cart_details_widget.dart';
 import 'card_item_widget.dart';
 
 class ColumnWidget extends ConsumerWidget {
@@ -27,16 +30,16 @@ class ColumnWidget extends ConsumerWidget {
           Text(title, style: AppTextStyles.style10),
           const SizedBox(height: 10),
           cards.isEmpty
-              ? AddCardWidget(onCreate: () => _handleCreate(ref, columnId))
+              ? AddCardWidget(
+                onCreate: () => _handleCreateCard(context, ref, columnId),
+              )
               : Column(
                 children: [
                   ...cards
                       .expand(
                         (card) => [
                           const SizedBox(height: 10),
-                          CardItemWidget(
-                            card: card,
-                          ),
+                          CardItemWidget(card: card),
                         ],
                       )
                       .skip(1),
@@ -47,16 +50,24 @@ class ColumnWidget extends ConsumerWidget {
     );
   }
 
-  void _handleCreate(WidgetRef ref, String columnId) {
-    ref
-        .read(cardNotifierProvider.notifier)
-        .addCard(
-          CardItem.create(
-            id: '1',
-            userId: 'aaa',
-            columnId: columnId,
+  void _handleCreateCard(BuildContext context, WidgetRef ref, String columnId) {
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser == null) return;
+    final newCard = CardItem.create(
+      userId: currentUser.id,
+      priority: Priority.low,
+      columnId: columnId,
+    );
+    ref.read(cardNotifierProvider.notifier).addCard(newCard);
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            backgroundColor: Colors.transparent,
+            child: CartDetailsWidget(card: newCard),
           ),
-        );
+    );
   }
 }
 

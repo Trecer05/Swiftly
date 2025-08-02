@@ -23,7 +23,7 @@ mixin _$CardItem {
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
-  Priority? get priority => throw _privateConstructorUsedError;
+  Priority get priority => throw _privateConstructorUsedError;
 
   /// Create a copy of CardItem
   /// with the given fields replaced by the non-null parameter values.
@@ -44,7 +44,7 @@ abstract class $CardItemCopyWith<$Res> {
     String title,
     String description,
     DateTime createdAt,
-    Priority? priority,
+    Priority priority,
   });
 }
 
@@ -69,7 +69,7 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
-    Object? priority = freezed,
+    Object? priority = null,
   }) {
     return _then(
       _value.copyWith(
@@ -104,10 +104,10 @@ class _$CardItemCopyWithImpl<$Res, $Val extends CardItem>
                     : createdAt // ignore: cast_nullable_to_non_nullable
                         as DateTime,
             priority:
-                freezed == priority
+                null == priority
                     ? _value.priority
                     : priority // ignore: cast_nullable_to_non_nullable
-                        as Priority?,
+                        as Priority,
           )
           as $Val,
     );
@@ -130,7 +130,7 @@ abstract class _$$CardItemImplCopyWith<$Res>
     String title,
     String description,
     DateTime createdAt,
-    Priority? priority,
+    Priority priority,
   });
 }
 
@@ -154,7 +154,7 @@ class __$$CardItemImplCopyWithImpl<$Res>
     Object? title = null,
     Object? description = null,
     Object? createdAt = null,
-    Object? priority = freezed,
+    Object? priority = null,
   }) {
     return _then(
       _$CardItemImpl(
@@ -189,10 +189,10 @@ class __$$CardItemImplCopyWithImpl<$Res>
                 : createdAt // ignore: cast_nullable_to_non_nullable
                     as DateTime,
         priority:
-            freezed == priority
+            null == priority
                 ? _value.priority
                 : priority // ignore: cast_nullable_to_non_nullable
-                    as Priority?,
+                    as Priority,
       ),
     );
   }
@@ -224,7 +224,7 @@ class _$CardItemImpl implements _CardItem {
   @override
   final DateTime createdAt;
   @override
-  final Priority? priority;
+  final Priority priority;
 
   @override
   String toString() {
@@ -278,7 +278,7 @@ abstract class _CardItem implements CardItem {
     required final String title,
     required final String description,
     required final DateTime createdAt,
-    required final Priority? priority,
+    required final Priority priority,
   }) = _$CardItemImpl;
 
   @override
@@ -294,7 +294,7 @@ abstract class _CardItem implements CardItem {
   @override
   DateTime get createdAt;
   @override
-  Priority? get priority;
+  Priority get priority;
 
   /// Create a copy of CardItem
   /// with the given fields replaced by the non-null parameter values.

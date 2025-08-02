@@ -18,8 +18,8 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$LabelItem {
   String get id => throw _privateConstructorUsedError;
-  String get cardId => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
+  String? get cardId => throw _privateConstructorUsedError;
+  String? get userId => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   Color get color => throw _privateConstructorUsedError;
 
@@ -37,8 +37,8 @@ abstract class $LabelItemCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
-    String cardId,
-    String userId,
+    String? cardId,
+    String? userId,
     String title,
     Color color,
   });
@@ -60,8 +60,8 @@ class _$LabelItemCopyWithImpl<$Res, $Val extends LabelItem>
   @override
   $Res call({
     Object? id = null,
-    Object? cardId = null,
-    Object? userId = null,
+    Object? cardId = freezed,
+    Object? userId = freezed,
     Object? title = null,
     Object? color = null,
   }) {
@@ -73,15 +73,15 @@ class _$LabelItemCopyWithImpl<$Res, $Val extends LabelItem>
                     : id // ignore: cast_nullable_to_non_nullable
                         as String,
             cardId:
-                null == cardId
+                freezed == cardId
                     ? _value.cardId
                     : cardId // ignore: cast_nullable_to_non_nullable
-                        as String,
+                        as String?,
             userId:
-                null == userId
+                freezed == userId
                     ? _value.userId
                     : userId // ignore: cast_nullable_to_non_nullable
-                        as String,
+                        as String?,
             title:
                 null == title
                     ? _value.title
@@ -109,8 +109,8 @@ abstract class _$$LabelItemImplCopyWith<$Res>
   @useResult
   $Res call({
     String id,
-    String cardId,
-    String userId,
+    String? cardId,
+    String? userId,
     String title,
     Color color,
   });
@@ -131,8 +131,8 @@ class __$$LabelItemImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? cardId = null,
-    Object? userId = null,
+    Object? cardId = freezed,
+    Object? userId = freezed,
     Object? title = null,
     Object? color = null,
   }) {
@@ -144,15 +144,15 @@ class __$$LabelItemImplCopyWithImpl<$Res>
                 : id // ignore: cast_nullable_to_non_nullable
                     as String,
         cardId:
-            null == cardId
+            freezed == cardId
                 ? _value.cardId
                 : cardId // ignore: cast_nullable_to_non_nullable
-                    as String,
+                    as String?,
         userId:
-            null == userId
+            freezed == userId
                 ? _value.userId
                 : userId // ignore: cast_nullable_to_non_nullable
-                    as String,
+                    as String?,
         title:
             null == title
                 ? _value.title
@@ -182,9 +182,9 @@ class _$LabelItemImpl implements _LabelItem {
   @override
   final String id;
   @override
-  final String cardId;
+  final String? cardId;
   @override
-  final String userId;
+  final String? userId;
   @override
   final String title;
   @override
@@ -223,8 +223,8 @@ class _$LabelItemImpl implements _LabelItem {
 abstract class _LabelItem implements LabelItem {
   const factory _LabelItem({
     required final String id,
-    required final String cardId,
-    required final String userId,
+    required final String? cardId,
+    required final String? userId,
     required final String title,
     required final Color color,
   }) = _$LabelItemImpl;
@@ -232,9 +232,9 @@ abstract class _LabelItem implements LabelItem {
   @override
   String get id;
   @override
-  String get cardId;
+  String? get cardId;
   @override
-  String get userId;
+  String? get userId;
   @override
   String get title;
   @override

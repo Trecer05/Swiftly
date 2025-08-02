@@ -73,15 +73,13 @@ final mockUsers = [
   ),
   User.create(
     id: '2',
-    name: 'Вася',
-    lastName: 'Пупкин',
-    role: LabelItem.create(cardId: '2', userId: 'a', title: 'программист', color: AppColors.amaranthMagenta),
+    name: 'Добрыня',
+    lastName: 'Никитич',
   ),
   User.create(
     id: '3',
     name: 'Алеша',
     lastName: 'Попович',
-    role: LabelItem.create(cardId: '2', userId: 'a', title: 'дизайнер', color: AppColors.wanderingThrus),
   ),
   User.create(
     id: '4',
@@ -89,12 +87,10 @@ final mockUsers = [
     lastName: 'Петровна',
     image:
         'https://cs13.pikabu.ru/post_img/big/2024/03/06/5/1709705621175092550.png',
-    role: LabelItem.create(cardId: '2', userId: 'a', title: 'аналитик', color: AppColors.wanderingThrus),
   ),
   User.create(
     id: '5',
     name: 'Алексей',
     lastName: 'Семеныч',
-    role: LabelItem.create(cardId: '2', userId: 'a', title: 'программист', color: AppColors.amaranthMagenta),
   ),
 ];

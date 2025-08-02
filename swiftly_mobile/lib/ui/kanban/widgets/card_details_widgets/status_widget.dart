@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import '../../../core/themes/colors.dart';
 import '../kanban_status.dart';
 
-class StatusWidget extends StatefulWidget {
+class DropDownMenuWidget extends StatefulWidget {
   final String statusId;
   final ValueChanged<String> onChanged;
 
-  const StatusWidget({
+  const DropDownMenuWidget({
     super.key,
     required this.statusId,
     required this.onChanged,
   });
 
   @override
-  State<StatusWidget> createState() => _StatusWidgetState();
+  State<DropDownMenuWidget> createState() => _DropDownMenuWidgetState();
 }
 
-class _StatusWidgetState extends State<StatusWidget> {
+class _DropDownMenuWidgetState extends State<DropDownMenuWidget> {
   late String _selectedStatusId;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;

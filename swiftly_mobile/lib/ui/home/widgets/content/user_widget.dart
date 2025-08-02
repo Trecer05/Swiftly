@@ -50,8 +50,8 @@ class UserWidget extends ConsumerWidget {
                       maxLines: 1,
                       softWrap: false,
                     ),
-                    if (user.role != null)
-                      LabelItemWidget(labelItem: user.role!),
+                    // if (user.role != null)
+                    //   LabelItemWidget(labelItem: user.role!),
                   ],
                 ),
               ),

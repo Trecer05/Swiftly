@@ -57,32 +57,42 @@ class CardNotifier extends StateNotifier<CardState> {
     );
   }
 
+  void updatePriority(String cardId, Priority newPriority) {
+    state = state.copyWith(
+      cards:
+          state.cards.map((card) {
+            return card.id == cardId
+                ? card.copyWith(priority: newPriority)
+                : card;
+          }).toList(),
+    );
+  }
+
   Future<void> loadCards(WidgetRef ref) async {
     state = state.copyWith(isLoading: true);
     await Future.delayed(const Duration(seconds: 1));
-     final newLabel = LabelItem.create(cardId: '3', userId: '1', title: 'дизайн', color: AppColors.yellow);
-    ref.read(labelNotifierProvider.notifier).addLabel(newLabel);
 
     final cards = [
       CardItem.create(
-        id: '1',
         userId: '1',
         title: 'Задача 1',
         description: 'Lorem ipsum',
         priority: Priority.high,
         columnId: 'todo',
       ),
-      CardItem.create(id: '2', userId: 'bbb', columnId: 'progress'),
       CardItem.create(
-        id: '3',
-        userId: '1',
+        userId: '2',
+        priority: Priority.low,
+        columnId: 'progress',
+      ),
+      CardItem.create(
+        userId: 'aaa',
         title: 'Задача 2',
         description: 'Сделать что-то',
         priority: Priority.medium,
         columnId: 'progress',
       ),
       CardItem.create(
-        id: '4',
         userId: '3',
         title: 'Задача 1',
         description: 'Lorem ipsum',

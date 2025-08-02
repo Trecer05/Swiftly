@@ -21,7 +21,6 @@ mixin _$User {
   String get name => throw _privateConstructorUsedError;
   String? get lastName => throw _privateConstructorUsedError;
   String? get image => throw _privateConstructorUsedError;
-  LabelItem? get role => throw _privateConstructorUsedError;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -34,15 +33,7 @@ abstract class $UserCopyWith<$Res> {
   factory $UserCopyWith(User value, $Res Function(User) then) =
       _$UserCopyWithImpl<$Res, User>;
   @useResult
-  $Res call({
-    String id,
-    String name,
-    String? lastName,
-    String? image,
-    LabelItem? role,
-  });
-
-  $LabelItemCopyWith<$Res>? get role;
+  $Res call({String id, String name, String? lastName, String? image});
 }
 
 /// @nodoc
@@ -64,7 +55,6 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? name = null,
     Object? lastName = freezed,
     Object? image = freezed,
-    Object? role = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -88,28 +78,9 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                     ? _value.image
                     : image // ignore: cast_nullable_to_non_nullable
                         as String?,
-            role:
-                freezed == role
-                    ? _value.role
-                    : role // ignore: cast_nullable_to_non_nullable
-                        as LabelItem?,
           )
           as $Val,
     );
-  }
-
-  /// Create a copy of User
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $LabelItemCopyWith<$Res>? get role {
-    if (_value.role == null) {
-      return null;
-    }
-
-    return $LabelItemCopyWith<$Res>(_value.role!, (value) {
-      return _then(_value.copyWith(role: value) as $Val);
-    });
   }
 }
 
@@ -121,16 +92,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   ) = __$$UserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String name,
-    String? lastName,
-    String? image,
-    LabelItem? role,
-  });
-
-  @override
-  $LabelItemCopyWith<$Res>? get role;
+  $Res call({String id, String name, String? lastName, String? image});
 }
 
 /// @nodoc
@@ -149,7 +111,6 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? name = null,
     Object? lastName = freezed,
     Object? image = freezed,
-    Object? role = freezed,
   }) {
     return _then(
       _$UserImpl(
@@ -173,11 +134,6 @@ class __$$UserImplCopyWithImpl<$Res>
                 ? _value.image
                 : image // ignore: cast_nullable_to_non_nullable
                     as String?,
-        role:
-            freezed == role
-                ? _value.role
-                : role // ignore: cast_nullable_to_non_nullable
-                    as LabelItem?,
       ),
     );
   }
@@ -191,7 +147,6 @@ class _$UserImpl implements _User {
     required this.name,
     required this.lastName,
     required this.image,
-    required this.role,
   });
 
   @override
@@ -202,12 +157,10 @@ class _$UserImpl implements _User {
   final String? lastName;
   @override
   final String? image;
-  @override
-  final LabelItem? role;
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, lastName: $lastName, image: $image, role: $role)';
+    return 'User(id: $id, name: $name, lastName: $lastName, image: $image)';
   }
 
   @override
@@ -219,12 +172,11 @@ class _$UserImpl implements _User {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
-            (identical(other.image, image) || other.image == image) &&
-            (identical(other.role, role) || other.role == role));
+            (identical(other.image, image) || other.image == image));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, lastName, image, role);
+  int get hashCode => Object.hash(runtimeType, id, name, lastName, image);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -241,7 +193,6 @@ abstract class _User implements User {
     required final String name,
     required final String? lastName,
     required final String? image,
-    required final LabelItem? role,
   }) = _$UserImpl;
 
   @override
@@ -252,8 +203,6 @@ abstract class _User implements User {
   String? get lastName;
   @override
   String? get image;
-  @override
-  LabelItem? get role;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.

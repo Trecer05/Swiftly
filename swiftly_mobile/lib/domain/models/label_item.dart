@@ -9,22 +9,25 @@ part 'label_item.freezed.dart';
 class LabelItem with _$LabelItem{
   const factory LabelItem({
     required String id,
-    required String cardId,
-    required String userId,
+    required String? cardId,
+    required String? userId,
     required String title,
     required Color color,
   }) = _LabelItem;
 
   factory LabelItem.create({
-    required String cardId,
-    required String userId,
+    String? cardId,
+    String? userId,
     required String title,
     required Color color,
-  }) => LabelItem(
+  }) {
+    assert((cardId == null) != (userId == null), 'Exactly one of cardId or userId must be non-null.');
+    return LabelItem(
     id: const Uuid().v4(),
     cardId: cardId,
     userId: userId,
     title: title,
     color: color,
   );
+  }
 }

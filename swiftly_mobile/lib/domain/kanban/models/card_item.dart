@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-// import 'package:uuid/uuid.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../models/label_item.dart';
 import 'priority.dart';
 
 part 'card_item.freezed.dart';
@@ -15,18 +14,17 @@ class CardItem with _$CardItem {
     required String title,
     required String description,
     required DateTime createdAt,
-    required Priority? priority,
+    required Priority priority,
   }) = _CardItem;
 
   factory CardItem.create({
-    required String id,
     required String userId,
     required String columnId,
     String? title,
     String? description,
-    Priority? priority,
+    required Priority priority,
   }) => CardItem(
-    id: id,
+    id: const Uuid().v4(),
     userId: userId,
     columnId: columnId,
     title: title ?? 'Новая задача',
@@ -38,7 +36,20 @@ class CardItem with _$CardItem {
 
 extension ShortDateFormat on DateTime {
   String toShortDate() {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '$day ${monthNames[month - 1]}';
   }
 }

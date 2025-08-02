@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftly_mobile/domain/kanban/models/card_item.dart';
+import 'package:swiftly_mobile/domain/kanban/models/priority.dart';
 
 import '../../../providers/card_notifier_provider.dart';
+import '../../../providers/current_user_provider.dart';
 import '../../core/themes/colors.dart';
 import '../../core/ui/custom/custom_app_bar.dart';
 import '../../core/ui/custom/custom_button.dart';
+import 'card_details_widgets/cart_details_widget.dart';
 import 'column_widget.dart';
 import 'kanban_status.dart';
 
@@ -31,7 +35,7 @@ class KanbanScreen extends ConsumerWidget {
                 prefixIcon: Icons.add,
                 text: 'Добавить',
                 gradient: true,
-                onTap: () {},
+                onTap: () => _handleCreateCard(context, ref),
               ),
             ],
           ),
@@ -64,6 +68,26 @@ class KanbanScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _handleCreateCard(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser == null) return;
+    final newCard = CardItem.create(
+      userId: currentUser.id,
+      priority: Priority.low,
+      columnId: 'todo',
+    );
+    ref.read(cardNotifierProvider.notifier).addCard(newCard);
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            backgroundColor: Colors.transparent,
+            child: CartDetailsWidget(card: newCard),
+          ),
     );
   }
 }
