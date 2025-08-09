@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	pgErrors "github.com/Trecer05/Swiftly/internal/errors/postgres"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 )
 
@@ -96,4 +97,15 @@ func (manager *Manager) GetGroupInfo(groupId int) (models.Group, error) {
 	}
 
 	return group, nil
+}
+
+func (manager *Manager) CreateUser(user models.RegisterUser, id int) (error) {
+	err := manager.Conn.QueryRow(`INSERT INTO users (id, name, username, description)`, id, user.Name, user.Username, user.Description).Err()
+	switch {
+	case err == pgErrors.ErrUserIdDuplicate || err == pgErrors.ErrUserIdRusDuplicate:
+		return pgErrors.ErrUserIdDuplicate
+	case err != nil:
+		return err
+	}
+	return nil
 }

@@ -64,6 +64,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 		UserInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
 
+	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		CreateUserHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
+
 	apiSecure.HandleFunc("/user/{id}", func(w http.ResponseWriter, r *http.Request) {
 		AnotherUserInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)

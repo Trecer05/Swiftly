@@ -6,3 +6,9 @@ type User struct {
 	Username string `json:"username"`
 	Description string `json:"description"`
 }
+
+type RegisterUser struct {
+	Username string `json:"username"`
+	Name string `json:"name"`
+	Description string `json:"description"`
+}
