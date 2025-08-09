@@ -84,4 +84,16 @@ func (manager *Manager) CreateChat(id1, id2 int) (int, error) {
 	return chatID, nil
 }
 
-func (manager *Manager) GetGroupInfo(groupId int) (models.Group, error) {}
+func (manager *Manager) GetGroupInfo(groupId int) (models.Group, error) {
+	var group models.Group
+
+	if err := manager.Conn.QueryRow(`SELECT name, description FROM groups WHERE id = $1`, groupId).Scan(&group.Name, &group.Description); err != nil {
+		if err == sql.ErrNoRows {
+			return group, errors.ErrNoGroupFound
+		} else {
+			return group, err
+		}
+	}
+
+	return group, nil
+}
