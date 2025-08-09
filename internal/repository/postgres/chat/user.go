@@ -83,3 +83,5 @@ func (manager *Manager) CreateChat(id1, id2 int) (int, error) {
 
 	return chatID, nil
 }
+
+func (manager *Manager) GetGroupInfo(groupId int) (models.Group, error) {}

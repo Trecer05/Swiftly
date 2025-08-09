@@ -100,3 +100,45 @@ func GroupUsersHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
+
+func GroupInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	info, err := mgr.GetGroupInfo(id)
+	switch {
+	case err == chatErrors.ErrNoGroupFound:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+
+func ChatInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+    info, err := mgr.GetUserInfo(id)
+	switch {
+	case err == chatErrors.ErrNoGroupFound:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
