@@ -7,8 +7,10 @@ import (
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	globalErrors "github.com/Trecer05/Swiftly/internal/errors/global"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	fileManager "github.com/Trecer05/Swiftly/internal/filemanager"
 	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 
@@ -18,8 +20,14 @@ import (
 func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 	var group models.GroupCreate
 
-	err := json.NewDecoder(r.Body).Decode(&group)
-	if err != nil {
+	r.ParseMultipartForm(10 << 20)
+	jsonData := r.FormValue("json")
+	if jsonData == ""{
+		serviceHttp.NewErrorBody(w, "application/json", globalErrors.ErrNoJsonData, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.Unmarshal([]byte(jsonData), &group); err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
@@ -41,6 +49,16 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
+
+	if _, _, err := r.FormFile("photo"); err == nil {
+        if err := fileManager.AddGroupPhoto(r, id); err != nil {
+            serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+            return
+        }
+    } else if err != http.ErrMissingFile {
+        serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+        return
+    }
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -67,6 +85,12 @@ func DeleteGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 	}
 
 	err = mgr.DeleteGroup(groupId)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	err = fileManager.DeleteGroupPhoto(groupId)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return

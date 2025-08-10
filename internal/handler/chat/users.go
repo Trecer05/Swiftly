@@ -33,13 +33,17 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		return
 	}
 
-	err := fileManager.AddUserPhoto(r, id)
-	if err != nil {
-		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-		return
-	}
+	if _, _, err := r.FormFile("photo"); err == nil {
+        if err := fileManager.AddUserPhoto(r, id); err != nil {
+            serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+            return
+        }
+    } else if err != http.ErrMissingFile {
+        serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+        return
+    }
 
-	err = mgr.CreateUser(user, id)
+	err := mgr.CreateUser(user, id)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
