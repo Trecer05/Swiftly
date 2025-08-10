@@ -60,6 +60,12 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
         return
     }
 
+	err = fileManager.CreateGroupMessagesFolder(id)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
@@ -189,6 +195,12 @@ func CreateChatHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 	}
 
 	chatId, err := mgr.CreateChat(us1Id, us2Id)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	err = fileManager.CreateChatMessagesFolder(chatId)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
