@@ -91,6 +91,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/group/{id}/delete", func(w http.ResponseWriter, r *http.Request) {
 		DeleteUserFromGroupHandler(w, r, mgr)
 	}).Methods(http.MethodDelete)
+
+	apiSecure.HandleFunc("/group/{id}/leave", func(w http.ResponseWriter, r *http.Request) {
+		ExitGroupHandler(w, r, mgr)
+	}).Methods(http.MethodDelete)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

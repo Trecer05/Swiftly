@@ -36,7 +36,8 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 					cm.chat_id,
 					cm.text,
 					cm.sent_at,
-					cm.user_id
+					cm.user_id,
+					cm.read
 				FROM chat_messages cm
 				ORDER BY cm.chat_id, cm.sent_at DESC
 			),
@@ -57,7 +58,8 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 					gm.group_id,
 					gm.text,
 					gm.sent_at,
-					gm.user_id
+					gm.user_id,
+					gm.read
 				FROM group_messages gm
 				ORDER BY gm.group_id, gm.sent_at DESC
 			),
@@ -67,6 +69,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 					pc.chat_name,
 					pc.chat_type,
 					lpm.text AS last_message_text,
+					lpm.read,
 					u.name AS sender_name,
 					lpm.sent_at AS last_message_time
 				FROM 
@@ -81,6 +84,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 					ug.chat_name,
 					ug.chat_type,
 					lgm.text AS last_message_text,
+					lgm.read,
 					u.name AS sender_name,
 					lgm.sent_at AS last_message_time
 				FROM 
@@ -106,12 +110,14 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 		var senderName sql.NullString
 		var lastMessageTime sql.NullTime
 		var chatType string
+		var read bool
 
 		err := rows.Scan(
 			&id,
 			&chatName,
 			&chatType,
 			&lastMessageText,
+			&read,
 			&senderName,
 			&lastMessageTime,
 		)
@@ -138,6 +144,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 				Author: models.Client{
 					Name: senderName.String,
 				},
+				Read: read,
 			},
 		})
 	}
@@ -152,6 +159,7 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 				cm.id AS message_id,
 				cm.text AS message_text,
 				cm.sent_at AS sent_time,
+				cm.read AS read,
 				u.id AS user_id,
 				u.name AS user_name
 			FROM 
@@ -174,6 +182,7 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 			&message.ID,
 			&message.Text,
 			&message.Time,
+			&message.Read,
 			&message.Author.ID,
 			&message.Author.Name,
 		) 
@@ -198,6 +207,7 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 				gm.id AS message_id,
 				gm.text AS message_text,
 				gm.sent_at AS sent_time,
+				gm.read AS read,
 				u.id AS user_id,
 				u.name AS user_name
 			FROM 
@@ -220,6 +230,7 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 			&message.ID,
 			&message.Text,
 			&message.Time,
+			&message.Read,
 			&message.Author.ID,
 			&message.Author.Name,
 		) 
@@ -254,4 +265,15 @@ func (manager *Manager) ValidateOwnerId(groupId int, userId int) (bool, error) {
 	}
 
 	return id == userId, err
+}
+
+func (manager *Manager) UpdateMessageStatus(messageId int, read bool) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE chat_messages
+		SET read = $1
+		WHERE id = $2`, read, messageId); err != nil {
+		return err
+	}
+
+	return nil
 }
