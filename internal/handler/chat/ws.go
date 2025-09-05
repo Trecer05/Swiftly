@@ -83,6 +83,14 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/group/{id}/info", func(w http.ResponseWriter, r *http.Request) {
 		GroupInfoHandler(w, r, mgr)
 	})
+
+	apiSecure.HandleFunc("/group/{id}/add", func(w http.ResponseWriter, r *http.Request) {
+		AddUserToGroupHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/delete", func(w http.ResponseWriter, r *http.Request) {
+		DeleteUserFromGroupHandler(w, r, mgr)
+	}).Methods(http.MethodDelete)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
