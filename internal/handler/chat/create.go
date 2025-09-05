@@ -214,3 +214,29 @@ func CreateChatHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		},
 	})
 }
+
+func ExitGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	userId, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	groupId, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	err = mgr.ExitGroup(userId, groupId)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}

@@ -164,3 +164,15 @@ func (manager *Manager) AddUsersToGroup(users models.Users, groupId int) error {
 
 	return nil
 }
+
+func (manager *Manager) ExitGroup(userId, groupId int) error {
+    _, err := manager.Conn.Exec(`
+        DELETE FROM group_users
+        WHERE user_id = $1 and group_id = $2`,
+        userId, groupId)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
