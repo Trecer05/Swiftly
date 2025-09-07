@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'widgets/chat_menu.dart';
 import 'widgets/chat_content_panel.dart';
 import 'widgets/chat_right_panel.dart';
+import 'mob/mob_chat_page.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
+bool _isDesktopLike(BuildContext context) {
+  const double kDesktopBreakpoint = 900;
+  final w = MediaQuery.of(context).size.width;
+  if (kIsWeb) return w >= kDesktopBreakpoint;
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.macOS:
+    case TargetPlatform.windows:
+    case TargetPlatform.linux:
+      return true;
+    default:
+      return w >= kDesktopBreakpoint;
+  }
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class ChatScreenDesktop extends StatefulWidget {
+  const ChatScreenDesktop({super.key});
+
+  @override
+  State<ChatScreenDesktop> createState() => _ChatScreenDesktopState();
+}
+
+class _ChatScreenDesktopState extends State<ChatScreenDesktop> {
   ChatItem? selectedChat;
   bool showRightPanel = false;
 
@@ -41,7 +57,6 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: Colors.transparent,
       body: Row(
         children: [
-          // Левая панель
           SizedBox(
             width: menuWidth,
             child: ChatMenuPanel(
@@ -91,4 +106,16 @@ class _ChatScreenState extends State<ChatScreen> {
     ChatItem(name: 'Ярослав Хохлов', message: 'До связи!', time: '13:37', unread: 0),
     ChatItem(name: 'Иван Дорн', message: 'Почему дизайнер ничего...', time: 'Tu', unread: 13),
   ];
+}
+
+/// Adaptive entry: показывает десктопный shell или мобильную страницу.
+class ChatScreen extends StatelessWidget {
+  const ChatScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _isDesktopLike(context)
+        ? const ChatScreenDesktop()
+        : const MobileChatPage();
+  }
 }
