@@ -92,6 +92,26 @@ abstract class AppTextStyles {
     fontSize: AppFontSizes.size16,
     fontWeight: AppFontWeights.bolt,
   );
+  static const TextStyle style15 = TextStyle(
+    color: AppColors.unselectedItemMobile,
+    fontSize: AppFontSizes.size12,
+    fontWeight: AppFontWeights.bolt500,
+  );
+  static const TextStyle style16 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.size12,
+    fontWeight: AppFontWeights.bolt600,
+  );
+  static const TextStyle style17 = TextStyle(
+    color: AppColors.white,
+    fontSize: AppFontSizes.size16,
+    fontWeight: AppFontWeights.bolt500,
+  );
+  static const TextStyle style18 = TextStyle(
+    color: AppColors.white128,
+    fontSize: AppFontSizes.size20,
+    fontWeight: AppFontWeights.bolt600,
+  );
 
   static BoxDecoration _blueGradientSubMenu({double opacity = 0.2}) {
     return const BoxDecoration(

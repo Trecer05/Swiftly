@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:swiftly_mobile/domain/kanban/models/card_item.dart';
 
-import '../../core/themes/theme.dart';
+import '../../themes/theme.dart';
 
 class DateWidget extends StatelessWidget {
   final DateTime date;

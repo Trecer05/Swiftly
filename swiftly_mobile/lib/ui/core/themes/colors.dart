@@ -7,6 +7,7 @@ abstract final class AppColors {
   static const Color black168 = Color.fromARGB(168, 8, 8, 8);
   static const Color white15 = Color.fromARGB(15, 255, 255, 255);
   static const Color white26 = Color.fromARGB(26, 255, 255, 255);
+  static const Color white31 = Color.fromARGB(31, 255, 255, 255);
   static const Color white38 = Color.fromARGB(38, 255, 255, 255);
   static const Color white64 = Color.fromARGB(64, 255, 255, 255);
   static const Color white128 = Color.fromARGB(128, 255, 255, 255);
@@ -16,6 +17,7 @@ abstract final class AppColors {
   static const Color blue = Color.fromARGB(255, 19, 92, 236);
   static const Color yellow = Colors.yellow;
   static const Color grey = Colors.grey;
+  static const Color unselectedItemMobile = Color.fromARGB(255, 153, 153, 153);
 
   static const Color wanderingThrus = Color.fromARGB(255, 31, 217, 186);
   static const Color amaranthMagenta = Color.fromARGB(255, 217, 31, 192);

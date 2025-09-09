@@ -4,16 +4,20 @@ import 'package:swiftly_mobile/domain/kanban/models/priority.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 import 'package:swiftly_mobile/providers/current_user_provider.dart';
 
-import '../../core/themes/colors.dart';
-import '../../core/themes/theme.dart';
-import '../../../domain/kanban/models/card_item.dart';
-import 'card_details_widgets/cart_details_widget.dart';
-import 'card_item_widget.dart';
+import '../../../core/themes/colors.dart';
+import '../../../core/themes/theme.dart';
+import '../../../../domain/kanban/models/card_item.dart';
+import '../card_details_widgets/cart_details_widget.dart';
+import '../../../core/ui/card_item/card_item_desktop.dart';
 
-class ColumnWidget extends ConsumerWidget {
+class ColumnWidgetDesktop extends ConsumerWidget {
   final String columnId;
   final String title;
-  const ColumnWidget({super.key, required this.columnId, required this.title});
+  const ColumnWidgetDesktop({
+    super.key,
+    required this.columnId,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,7 +27,7 @@ class ColumnWidget extends ConsumerWidget {
             .cards
             .where((card) => card.columnId == columnId)
             .toList();
-    return IntrinsicWidth(
+    return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,7 +43,7 @@ class ColumnWidget extends ConsumerWidget {
                       .expand(
                         (card) => [
                           const SizedBox(height: 10),
-                          CardItemWidget(card: card),
+                          CardItemDesktop(card: card),
                         ],
                       )
                       .skip(1),
@@ -71,24 +75,36 @@ class ColumnWidget extends ConsumerWidget {
   }
 }
 
-class AddCardWidget extends StatelessWidget {
+class AddCardWidget extends StatefulWidget {
   final VoidCallback onCreate;
   const AddCardWidget({super.key, required this.onCreate});
 
   @override
+  State<AddCardWidget> createState() => _AddCardWidgetState();
+}
+
+class _AddCardWidgetState extends State<AddCardWidget> {
+  bool isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onCreate,
-      child: Container(
-        width: 300,
-        height: 100,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.white15,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Center(
-          child: Icon(Icons.add, color: AppColors.white, size: 18),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onCreate,
+        child: Container(
+          width: double.infinity,
+          height: 131,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: isHovered ? AppColors.white31 : AppColors.white15,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: const Center(
+            child: Icon(Icons.add, color: AppColors.white, size: 18),
+          ),
         ),
       ),
     );

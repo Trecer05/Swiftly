@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/card_notifier_provider.dart';
 import '../../../../providers/current_user_provider.dart';
-import '../../../kanban/widgets/card_item_widget.dart';
+import '../../../core/ui/card_item/card_item_desktop.dart';
 
 class ActiveTasks extends ConsumerWidget {
   const ActiveTasks({super.key});
@@ -22,7 +22,7 @@ class ActiveTasks extends ConsumerWidget {
       runSpacing: 10,
       children: [
         ...cards.map(
-          (card) => CardItemWidget(
+          (card) => CardItemDesktop(
             card: card,
           ),
         ),

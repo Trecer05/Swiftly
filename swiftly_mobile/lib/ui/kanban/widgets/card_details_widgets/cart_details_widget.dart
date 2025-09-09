@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/ui/core/ui/label_item_widget.dart';
 import 'package:swiftly_mobile/ui/kanban/widgets/card_details_widgets/priority_selector.dart';
 import 'package:swiftly_mobile/ui/kanban/widgets/card_details_widgets/status_widget.dart';
-import 'package:swiftly_mobile/ui/kanban/widgets/date_widget.dart';
+import 'package:swiftly_mobile/ui/core/ui/card_item/date_widget.dart';
 
 import '../../../../domain/kanban/models/card_item.dart';
 import '../../../../domain/kanban/models/priority.dart';

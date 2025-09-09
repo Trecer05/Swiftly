@@ -28,6 +28,7 @@ class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
       child: Semantics(
@@ -35,7 +36,7 @@ class _CustomButtonState extends State<CustomButton> {
         child: GestureDetector(
           onTap: widget.onTap,
           child: Container(
-            padding: const EdgeInsets.all(5),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             height: 40,
             decoration: BoxDecoration(
               gradient: widget.gradient ? AppColors.gradient_4 : null,
@@ -46,10 +47,12 @@ class _CustomButtonState extends State<CustomButton> {
               ),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.prefixIcon != null)
                   Icon(
                     widget.prefixIcon,
+                    size: 24,
                     color:
                         widget.gradient ? AppColors.white : AppColors.white128,
                   ),
@@ -61,8 +64,8 @@ class _CustomButtonState extends State<CustomButton> {
                         widget.text!,
                         style:
                             widget.gradient
-                                ? AppTextStyles.style4
-                                : AppTextStyles.style3,
+                                ? AppTextStyles.style17
+                                : AppTextStyles.style7,
                       ),
                     ],
                   ),
@@ -72,6 +75,7 @@ class _CustomButtonState extends State<CustomButton> {
                       const SizedBox(width: 5),
                       Icon(
                         widget.suffixIcon,
+                        size: 24,
                         color:
                             widget.gradient
                                 ? AppColors.white

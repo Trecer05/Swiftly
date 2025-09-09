@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:swiftly_mobile/ui/cloud/widgets/left_panel.dart';
-import 'package:swiftly_mobile/ui/core/ui/custom/custom_app_bar.dart';
+import 'package:swiftly_mobile/ui/core/ui/custom/custom_app_bar_desktop.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom/custom_button.dart';
 
 class CloudScreen extends StatefulWidget {
@@ -34,7 +34,7 @@ class _CloudScreenState extends State<CloudScreen> {
           Expanded(
             child: Column(
               children: [
-                CustomAppBar(title: 'Файлы', quantity: 16, buttons: [CustomButton(prefixIcon: Icons.search, gradient: false, onTap: (){}), CustomButton(prefixIcon: Icons.sort, text: 'По названию', suffixIcon: Icons.keyboard_arrow_down, gradient: false, onTap: (){}), CustomButton(prefixIcon: Icons.add, text: 'Добавить', gradient: true, onTap: (){})]),
+                CustomAppBarDesktop(title: 'Файлы', quantity: 16, buttons: [CustomButton(prefixIcon: Icons.search, gradient: false, onTap: (){}), CustomButton(prefixIcon: Icons.sort, text: 'По названию', suffixIcon: Icons.keyboard_arrow_down, gradient: false, onTap: (){}), CustomButton(prefixIcon: Icons.add, text: 'Добавить', gradient: true, onTap: (){})]),
                 Expanded(
                   child: Container(
                     color: Colors.white,

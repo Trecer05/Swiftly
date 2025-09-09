@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:swiftly_mobile/ui/core/ui/custom/custom_app_bar.dart';
+import 'package:swiftly_mobile/ui/core/ui/custom/custom_app_bar_desktop.dart';
 import 'package:swiftly_mobile/ui/home/widgets/search_field.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom/custom_button.dart';
 
@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: AppColors.transparent168,
       body: Column(
         children: [
-          CustomAppBar(
+          CustomAppBarDesktop(
             title: 'Главная',
             buttons: [
               const Expanded(child: SearchField(hintText: 'Поиск')),

@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'domain/user/models/user.dart';
 import 'providers/current_user_provider.dart';
 import 'ui/core/themes/colors.dart';
@@ -16,16 +17,18 @@ import 'ui/core/themes/colors.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await acrylic.Window.initialize();
-  await acrylic.Window.setEffect(
-    effect: WindowEffect.hudWindow,
-    color: Colors.transparent,
-  );
+  if (!Platform.isIOS && !Platform.isAndroid && !kIsWeb) {
+    await acrylic.Window.initialize();
+    await acrylic.Window.setEffect(
+      effect: WindowEffect.hudWindow,
+      color: Colors.transparent,
+    );
+  }
 
   if (!kIsWeb) {
     try {
       await windowManager.ensureInitialized();
-      await windowManager.setMinimumSize(const Size(700, 500));
+      await windowManager.setMinimumSize(const Size(1000, 500));
     } catch (e) {
       debugPrint('Ошибка инициализации windowManager: $e');
     }

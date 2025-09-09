@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/kanban/models/priority.dart';
-import '../../core/themes/colors.dart';
-import '../../core/themes/theme.dart';
+import '../../../../domain/kanban/models/priority.dart';
+import '../../themes/colors.dart';
+import '../../themes/theme.dart';
 
 class PriorityWidget extends StatelessWidget {
   final Priority priority;

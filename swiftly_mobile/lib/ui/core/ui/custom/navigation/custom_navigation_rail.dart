@@ -1,27 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../routing/routers.dart';
-import '../../themes/colors.dart';
-
-enum NavItem {
-  home(Routers.home, Icons.home, 'Главная'),
-  chat(Routers.chat, Icons.chat, 'Чат'),
-  code(Routers.code, Icons.code, 'Код'),
-  cloud(Routers.cloud, Icons.cloud, 'Облако'),
-  figma(Routers.figma, Icons.pan_tool, 'Фигма'),
-  board(Routers.board, Icons.task, 'Задачи'),
-  settings(Routers.settings, Icons.settings, 'Настройки');
-
-  final String route;
-  final IconData icon;
-  final String label;
-
-  const NavItem(this.route, this.icon, this.label);
-
-  static final _routeMap = {for (var item in NavItem.values) item.route: item};
-
-  static NavItem? fromRoute(String route) => _routeMap[route];
-}
+import '../../../themes/colors.dart';
+import 'nav_item.dart';
 
 class NavigationState {
   final bool showLabels;
@@ -125,6 +105,7 @@ class _NavItemWidgetState extends State<NavItemWidget> {
             _isCurrentRoute(context, widget.item!.route);
 
         return MouseRegion(
+          cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => isHovered = true),
           onExit: (_) => setState(() => isHovered = false),
           child: GestureDetector(
@@ -134,10 +115,8 @@ class _NavItemWidgetState extends State<NavItemWidget> {
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
                 gradient: isSelected ? AppColors.gradient_4 : null,
+                color: isHovered && !widget.isController && !isSelected ? AppColors.white15 : null,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isHovered && !widget.isController && !isSelected ? AppColors.white : AppColors.transparent,
-                ),
               ),
               child: Row(
                 children: [
