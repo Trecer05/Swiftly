@@ -120,7 +120,6 @@ class MobileChatPage extends StatelessWidget {
   }
 }
 
-/* ----------------------- helper widgets + thread ----------------------- */
 
 class MobileChatThreadScreen extends StatelessWidget {
   final String title;
@@ -240,9 +239,11 @@ class MobileChatThreadScreen extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                reverse: true,
                 itemCount: messages.length + 1,
                 itemBuilder: (context, index) {
-                  if (index == 1) {
+                  const int dateReverseIndex = 2;
+                  if (index == dateReverseIndex) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Center(
@@ -258,8 +259,11 @@ class MobileChatThreadScreen extends StatelessWidget {
                       ),
                     );
                   }
-                  final adj = index > 1 ? index - 1 : index;
-                  final m = messages[adj];
+
+                  final int revWithoutChip = index > dateReverseIndex ? index - 1 : index;
+                  final int srcIndex = messages.length - 1 - revWithoutChip;
+                  final m = messages[srcIndex];
+
                   final isMine = m.$2;
                   final bg = const Color(0x0FFFFFFF);
                   final radius = BorderRadius.only(
@@ -386,9 +390,6 @@ class _Chat {
   const _Chat(this.title, this.last, this.time, this.unread, this.online);
 }
 
-/// Public mobile screens used by the router while backend is not ready:
-/// - MobileChatThreadScreen — chat thread placeholder with mock messages
-/// - MobileChatProfileScreen — filled profile placeholder
 class MobileChatProfileScreen extends StatefulWidget {
   final String title;
   const MobileChatProfileScreen({super.key, required this.title});
@@ -399,7 +400,7 @@ class MobileChatProfileScreen extends StatefulWidget {
 
 class _MobileChatProfileScreenState extends State<MobileChatProfileScreen> {
   bool _notificationsEnabled = true;
-  int _tabIndex = 0; // 0: Медиа, 1: Файлы, 2: Аудио, 3: Ссылки
+  int _tabIndex = 0;
 
   @override
   Widget build(BuildContext context) {

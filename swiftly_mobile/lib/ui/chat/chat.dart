@@ -13,7 +13,7 @@ bool _isDesktopLike(BuildContext context) {
     case TargetPlatform.macOS:
     case TargetPlatform.windows:
     case TargetPlatform.linux:
-      return true;
+      return w >= kDesktopBreakpoint;
     default:
       return w >= kDesktopBreakpoint;
   }
@@ -108,7 +108,6 @@ class _ChatScreenDesktopState extends State<ChatScreenDesktop> {
   ];
 }
 
-/// Adaptive entry: показывает десктопный shell или мобильную страницу.
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
