@@ -7,8 +7,8 @@ final ValueNotifier<String> activeTab = ValueNotifier("CameraViewModel.swift");
 final ValueNotifier<List<String>> openTabs = ValueNotifier(["CameraViewModel.swift"]);
 final ValueNotifier<Directory?> rootDir = ValueNotifier<Directory?>(null);
 final ValueNotifier<String?> activeFilePath = ValueNotifier<String?>(null);
-final Map<String, String> openedFiles = {}; // path -> content
-final Map<String, TextEditingController> editors = {}; // path -> controller
+final Map<String, String> openedFiles = {};
+final Map<String, TextEditingController> editors = {};
 
 final ValueNotifier<double> explorerWidth = ValueNotifier<double>(260);
 
@@ -473,15 +473,15 @@ class _EditorAreaState extends State<_EditorArea> {
           return AnimatedBuilder(
             animation: controller,
             builder: (context, __) {
-              final int linesCount = controller.text.split('\n').length + 1; // extra caret line
+              final int linesCount = controller.text.split('\n').length + 1;
               final lines = List.generate(linesCount, (index) => '${index + 1}'.padLeft(3));
-              final double _lineFontSize = 14.0; // same as editor
-              final double _lineHeight = 1.5;    // same as editor
+              final double _lineFontSize = 14.0;
+              final double _lineHeight = 1.5;
               final double _linePixelHeight = _lineFontSize * _lineHeight;
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final double _lineFontSize = 14.0; // must match the editor style
-                  final double _lineHeight = 1.5;    // must match the editor style
+                  final double _lineFontSize = 14.0;
+                  final double _lineHeight = 1.5;
                   final double _linePixelHeight = _lineFontSize * _lineHeight;
                   final int minVisibleLines = (constraints.maxHeight / _linePixelHeight).ceil();
                   final int renderLines = lines.length < minVisibleLines ? minVisibleLines : lines.length;
