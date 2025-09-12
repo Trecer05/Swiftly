@@ -10,6 +10,7 @@ type Message struct {
 	Type   MessageType `json:"type"`
 	Read   bool `json:"read"`
 	Text   string    `json:"text"`
+	Status Status `json:"status"`
 	Author Client    `json:"author"`
 	Time   time.Time `json:"time"`
 	FileURL   *string    `json:"file_url,omitempty"`
@@ -18,6 +19,12 @@ type Message struct {
     FileMIME  string    `json:"file_mime"`
 	FileType  FileType `json:"file_type"`
     FileSize  int64     `json:"file_size"`
+}
+
+type Status struct {
+	Type string `json:"type"`
+	User_ID int `json:"user_id"`
+	Online bool `json:"online"`
 }
 
 type ChatRoom struct {

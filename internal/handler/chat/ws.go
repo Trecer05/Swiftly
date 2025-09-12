@@ -221,6 +221,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	rds.AddUser(userId, chatId, conn, chatType)
 	log.Println("User connected to chat", chatId, userId)
 	msgCh := make(chan models.Message)
+	statusCh := make(chan models.Status)
 
 	if err := wsChat.SendChatHistory(conn, mgr, chatId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
@@ -235,16 +236,18 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 		}
 	}
 
-	go rds.ListenPubSub(chatId, msgCh, chatType)
+	go rds.ListenPubSub(chatId, msgCh, statusCh, chatType)
 
 	defer func() {
 		rds.RemoveUser(userId, chatId, chatType)
 	}()
 
 	go rds.SendLocalMessage(userId, chatId, msgCh, chatType)
+	go rds.SendLocalStatus(userId, chatId, statusCh, chatType)
 	wsChat.ReadMessage(chatId, conn, rds, mgr, chatType)
 
 	close(msgCh)
+	close(statusCh)
 }
 
 func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
@@ -291,6 +294,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	rds.AddUser(userId, groupId, conn, chatType)
 	log.Println("User connected to chat", groupId, userId)
 	msgCh := make(chan models.Message)
+	statusCh := make(chan models.Status)
 
 	if err := wsChat.SendChatHistory(conn, mgr, groupId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
@@ -305,16 +309,18 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 		}
 	}
 
-	go rds.ListenPubSub(groupId, msgCh, chatType)
+	go rds.ListenPubSub(groupId, msgCh, statusCh, chatType)
 
 	defer func() {
 		rds.RemoveUser(userId, groupId, chatType)
 	}()
 
 	go rds.SendLocalMessage(userId, groupId, msgCh, chatType)
+	go rds.SendLocalStatus(userId, groupId, statusCh, chatType)
 	wsChat.ReadMessage(groupId, conn, rds, mgr, chatType)
 
 	close(msgCh)
+	close(statusCh)
 }
 
 func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
@@ -333,6 +339,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 	}
 
 	msgCh := make(chan models.Message)
+	statusCh := make(chan models.Status)
 
 	chats, err := mgr.GetUserRooms(userId, 0, 0)
 	switch {
@@ -345,7 +352,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 	}
 
 	for _, room := range chats.Rooms {
-		go rds.ListenPubSub(room.ID, msgCh, room.Type)
+		go rds.ListenPubSub(room.ID, msgCh, statusCh, room.Type)
 
 		if room.LastMessage != nil {
 			room.LastMessage.Type = models.LastMessage
@@ -355,7 +362,9 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 	}
 
 	go wsChat.SendAllUserMessages(conn, msgCh)
+	go wsChat.SendAllUserStatuses(conn, statusCh)
 
 	conn.Close()
 	close(msgCh)
+	close(statusCh)
 }

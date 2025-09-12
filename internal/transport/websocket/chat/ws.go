@@ -32,7 +32,7 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			log.Println(err)
 			break
 		}
-		
+
 		switch message.Type {
 		case models.Typing, models.StopTyping:
 			_ = rds.SendToUser(chatId, message, chatType)
@@ -66,7 +66,7 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			default:
 				log.Println("Chat type is not private or group")
 			}
-			
+
 			if err := manager.SaveMessage(message, dbType); err != nil {
 				log.Println("Failed to save message:", err)
 			}
@@ -106,6 +106,14 @@ func SendAllUserMessages(conn *websocket.Conn, msgCh <-chan models.Message) {
 	for msg := range msgCh {
 		if err := conn.WriteJSON(msg); err != nil {
 			log.Println("Failed to send message:", err)
+		}
+	}
+}
+
+func SendAllUserStatuses(conn *websocket.Conn, statusCh <-chan models.Status) {
+	for status := range statusCh {
+		if err := conn.WriteJSON(status); err != nil {
+			log.Println("Failed to send status:", err)
 		}
 	}
 }

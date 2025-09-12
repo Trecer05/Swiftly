@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, chatType models.ChatType) {
+func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, statusCh chan models.Status, chatType models.ChatType) {
 	manager.MU.Lock()
 	key := models.SessionKey{Type: chatType, ID: chatId}
 	if manager.SubscribedChats[key] {
@@ -19,12 +19,24 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, chat
 	manager.SubscribedChats[key] = true
 	manager.MU.Unlock()
 
-	pubsub := manager.RDB.Subscribe(ctx, string(key.Type) + ":" + strconv.Itoa(key.ID))
+	pubsub := manager.RDB.Subscribe(ctx, string(key.Type)+":"+strconv.Itoa(key.ID))
 	ch := pubsub.Channel()
 
 	go func() {
 		for msg := range ch {
+			if msg.Channel == "online" || msg.Channel == "offline" {
+				var online models.Status
+				if err := json.Unmarshal([]byte(msg.Payload), &online); err != nil {
+					log.Println("Invalid pubsub message:", err)
+					continue
+				}
+
+				statusCh <- online
+
+				continue
+			}
 			var m models.Message
+
 			if err := json.Unmarshal([]byte(msg.Payload), &m); err != nil {
 				log.Println("Invalid pubsub message:", err)
 				continue
@@ -45,6 +57,8 @@ func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn, chatTy
 	}
 
 	manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId] = conn
+
+	go manager.PublishUserStatus(userId, true)
 }
 
 func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType) error {
@@ -58,6 +72,8 @@ func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType)
 		if len(manager.Sessions[key]) == 0 {
 			delete(manager.Sessions, key)
 		}
+
+		go manager.PublishUserStatus(userId, false)
 	}
 
 	return nil
@@ -85,5 +101,39 @@ func (manager *Manager) SendToUser(chatId int, message models.Message, chatType 
 	}
 
 	channel := string(chatType) + ":" + strconv.Itoa(chatId)
-    return manager.RDB.Publish(ctx, channel, data).Err()
+	return manager.RDB.Publish(ctx, channel, data).Err()
+}
+
+func (manager *Manager) SendLocalStatus(userId, chatId int, statuses <-chan models.Status, chatType models.ChatType) {
+	for status := range statuses {
+		manager.MU.RLock()
+		conn, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId]
+		manager.MU.RUnlock()
+
+		if ok {
+			if err := conn.WriteJSON(status); err != nil {
+				log.Println("Status write error:", err)
+			}
+		}
+	}
+}
+
+func (manager *Manager) PublishUserStatus(userId int, online bool) error {
+	status := models.Status{
+		Type:    "status",
+		User_ID: userId,
+		Online:  online,
+	}
+
+	data, err := json.Marshal(status)
+	if err != nil {
+		return err
+	}
+
+	channel := "online"
+	if !online {
+		channel = "offline"
+	}
+
+	return manager.RDB.Publish(ctx, channel, data).Err()
 }
