@@ -48,6 +48,21 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS chat_file_urls (
+    id SERIAL PRIMARY KEY,
+    chat_id BIGINT NOT NULL,
+    file_url TEXT,
+    FOREIGN KEY (chat_id) REFERENCES chat_messages(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages_file_urls (
+    id SERIAL PRIMARY KEY,
+    chat_message_id BIGINT NOT NULL,
+    chat_file_id BIGINT NOT NULL,
+    FOREIGN KEY (chat_file_id) REFERENCES chat_file_urls(id) ON DELETE CASCADE,
+    FOREIGN KEY (chat_message_id) REFERENCES chat_messages(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS group_messages (
     id SERIAL PRIMARY KEY,
     group_id BIGINT NOT NULL,
@@ -57,4 +72,19 @@ CREATE TABLE IF NOT EXISTS group_messages (
     sent_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_file_urls (
+    id SERIAL PRIMARY KEY,
+    group_id BIGINT NOT NULL,
+    file_url TEXT,
+    FOREIGN KEY (group_id) REFERENCES group_messages(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_messages_file_urls (
+    id SERIAL PRIMARY KEY,
+    group_message_id BIGINT NOT NULL,
+    group_file_id BIGINT NOT NULL,
+    FOREIGN KEY (group_file_id) REFERENCES group_file_urls(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_message_id) REFERENCES group_messages(id) ON DELETE CASCADE
 );

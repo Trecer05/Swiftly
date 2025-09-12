@@ -37,11 +37,23 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 		case models.Typing, models.StopTyping:
 			_ = rds.SendToUser(chatId, message, chatType)
 		case models.Read:
-			if err := manager.UpdateMessageStatus(message.ID, message.Read); err != nil {
-				log.Println("Failed to update message status:", err)
-			}
+			switch chatType {
+			case models.TypePrivate:
+				if err := manager.UpdateChatMessageStatus(message.ID, message.Read); err != nil {
+					log.Println("Failed to update message status:", err)
+				}
 
-			_ = rds.SendToUser(chatId, message, chatType)
+				_ = rds.SendToUser(chatId, message, chatType)
+
+			case models.TypeGroup:
+				if err := manager.UpdateGroupMessageStatus(message.ID, message.Read); err != nil {
+					log.Println("Failed to update message status:", err)
+				}
+
+				_ = rds.SendToUser(chatId, message, chatType)
+			default:
+				log.Println("Chat type is not private or group")
+			}
 		case models.Default:
 			_ = rds.SendToUser(chatId, message, chatType)
 

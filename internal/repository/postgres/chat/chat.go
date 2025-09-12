@@ -99,7 +99,9 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 			LIMIT $2 OFFSET $3
 			`, userId, new, offset)
 	if err != nil {
-		if err == sql.ErrNoRows { return models.ChatRooms{}, errors.ErrNoRooms }
+		if err == sql.ErrNoRows {
+			return models.ChatRooms{}, errors.ErrNoRooms
+		}
 		return models.ChatRooms{}, err
 	}
 
@@ -121,7 +123,9 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 			&senderName,
 			&lastMessageTime,
 		)
-		if err != nil { return models.ChatRooms{}, err }
+		if err != nil {
+			return models.ChatRooms{}, err
+		}
 
 		var typeModel models.ChatType
 		if chatType == "chat" {
@@ -135,7 +139,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 		}
 
 		chatRooms.Rooms = append(chatRooms.Rooms, &models.ChatRoom{
-			ID: id,
+			ID:   id,
 			Name: chatName,
 			Type: typeModel,
 			LastMessage: &models.Message{
@@ -148,7 +152,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 			},
 		})
 	}
-	
+
 	return chatRooms, nil
 }
 
@@ -172,7 +176,11 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 				cm.sent_at DESC
 			LIMIT $2 OFFSET $3`, chatId, limit, offset)
 	if err != nil {
-		if err == sql.ErrNoRows { return messages, errors.ErrNoMessages } else { return messages, err }
+		if err == sql.ErrNoRows {
+			return messages, errors.ErrNoMessages
+		} else {
+			return messages, err
+		}
 	}
 
 	for rows.Next() {
@@ -185,13 +193,20 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 			&message.Read,
 			&message.Author.ID,
 			&message.Author.Name,
-		) 
+		)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return messages, errors.ErrNoMessages
 			} else {
 				return messages, err
 			}
+		}
+
+		fileURLs, err := manager.getChatMessageFiles(message.ID)
+		if err != nil {
+			fmt.Printf("Ошибка загрузки файлов для сообщения %d: %v\n", message.ID, err)
+		} else {
+			message.FileUrls = fileURLs
 		}
 
 		messages = append(messages, message)
@@ -220,7 +235,11 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 				gm.sent_at DESC
 			LIMIT $2 OFFSET $3`, groupId, limit, offset)
 	if err != nil {
-		if err == sql.ErrNoRows { return messages, errors.ErrNoMessages } else { return messages, err }
+		if err == sql.ErrNoRows {
+			return messages, errors.ErrNoMessages
+		} else {
+			return messages, err
+		}
 	}
 
 	for rows.Next() {
@@ -233,13 +252,20 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 			&message.Read,
 			&message.Author.ID,
 			&message.Author.Name,
-		) 
+		)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return messages, errors.ErrNoMessages
 			} else {
 				return messages, err
 			}
+		}
+
+		fileURLs, err := manager.getGroupMessageFiles(message.ID)
+		if err != nil {
+			fmt.Printf("Ошибка загрузки файлов для сообщения %d: %v\n", message.ID, err)
+		} else {
+			message.FileUrls = fileURLs
 		}
 
 		messages = append(messages, message)
@@ -249,8 +275,85 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 }
 
 func (manager *Manager) SaveMessage(message models.Message, chatType models.DBType) error {
-	_, err := manager.Conn.Exec(fmt.Sprintf(`INSERT INTO %s_messages (%s_id, user_id, text) VALUES ($1, $2, $3)`, chatType, chatType), message.ChatID, message.Author.ID, message.Text)
-	return err
+	tx, err := manager.Conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var messageID int
+	var insertQuery string
+
+	if chatType == models.DBChat {
+		insertQuery = `INSERT INTO chat_messages (chat_id, user_id, text) VALUES ($1, $2, $3) RETURNING id`
+	} else {
+		insertQuery = `INSERT INTO group_messages (group_id, user_id, text) VALUES ($1, $2, $3) RETURNING id`
+	}
+
+	err = tx.QueryRow(insertQuery, message.ChatID, message.Author.ID, message.Text).Scan(&messageID)
+	if err != nil {
+		return err
+	}
+
+	if len(message.FileUrls) > 0 {
+		for _, fileURL := range message.FileUrls {
+			var fileID int
+			var fileInsertQuery string
+
+			if chatType == models.DBChat {
+				fileInsertQuery = `INSERT INTO chat_file_urls (chat_id, file_url) VALUES ($1, $2) RETURNING id`
+			} else {
+				fileInsertQuery = `INSERT INTO group_file_urls (group_id, file_url) VALUES ($1, $2) RETURNING id`
+			}
+
+			err = tx.QueryRow(fileInsertQuery, message.ChatID, fileURL).Scan(&fileID)
+			if err != nil {
+				return err
+			}
+
+			var linkInsertQuery string
+			if chatType == models.DBChat {
+				linkInsertQuery = `INSERT INTO chat_messages_file_urls (chat_message_id, chat_file_id) VALUES ($1, $2)`
+			} else {
+				linkInsertQuery = `INSERT INTO group_messages_file_urls (group_message_id, group_file_id) VALUES ($1, $2)`
+			}
+
+			_, err = tx.Exec(linkInsertQuery, messageID, fileID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if message.FileURL != nil && *message.FileURL != "" {
+		var fileID int
+		var fileInsertQuery string
+
+		if chatType == models.DBChat {
+			fileInsertQuery = `INSERT INTO chat_file_urls (chat_id, file_url) VALUES ($1, $2) RETURNING id`
+		} else {
+			fileInsertQuery = `INSERT INTO group_file_urls (group_id, file_url) VALUES ($1, $2) RETURNING id`
+		}
+
+		err = tx.QueryRow(fileInsertQuery, message.ChatID, *message.FileURL).Scan(&fileID)
+		if err != nil {
+			return err
+		}
+
+		var linkInsertQuery string
+		if chatType == models.DBChat {
+			linkInsertQuery = `INSERT INTO chat_messages_file_urls (chat_message_id, chat_file_id) VALUES ($1, $2)`
+		} else {
+			linkInsertQuery = `INSERT INTO group_messages_file_urls (group_message_id, group_file_id) VALUES ($1, $2)`
+		}
+
+		_, err = tx.Exec(linkInsertQuery, messageID, fileID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (manager *Manager) ValidateOwnerId(groupId int, userId int) (bool, error) {
@@ -267,7 +370,7 @@ func (manager *Manager) ValidateOwnerId(groupId int, userId int) (bool, error) {
 	return id == userId, err
 }
 
-func (manager *Manager) UpdateMessageStatus(messageId int, read bool) error {
+func (manager *Manager) UpdateChatMessageStatus(messageId int, read bool) error {
 	if _, err := manager.Conn.Exec(`
 		UPDATE chat_messages
 		SET read = $1
@@ -276,4 +379,67 @@ func (manager *Manager) UpdateMessageStatus(messageId int, read bool) error {
 	}
 
 	return nil
+}
+
+func (manager *Manager) UpdateGroupMessageStatus(messageId int, read bool) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE group_messages
+		SET read = $1
+		WHERE id = $2`, read, messageId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) getChatMessageFiles(messageID int) ([]string, error) {
+	var fileURLs []string
+
+	rows, err := manager.Conn.Query(`
+		SELECT cf.file_url 
+		FROM chat_file_urls cf
+		JOIN chat_messages_file_urls cmf ON cf.id = cmf.chat_file_id
+		WHERE cmf.chat_message_id = $1
+		ORDER BY cf.id`, messageID)
+
+	if err != nil {
+		return fileURLs, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fileURL string
+		if err := rows.Scan(&fileURL); err != nil {
+			return fileURLs, err
+		}
+		fileURLs = append(fileURLs, fileURL)
+	}
+
+	return fileURLs, nil
+}
+
+func (manager *Manager) getGroupMessageFiles(messageID int) ([]string, error) {
+	var fileURLs []string
+
+	rows, err := manager.Conn.Query(`
+		SELECT gf.file_url 
+		FROM group_file_urls gf
+		JOIN group_messages_file_urls gmf ON gf.id = gmf.group_file_id
+		WHERE gmf.group_message_id = $1
+		ORDER BY gf.id`, messageID)
+
+	if err != nil {
+		return fileURLs, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fileURL string
+		if err := rows.Scan(&fileURL); err != nil {
+			return fileURLs, err
+		}
+		fileURLs = append(fileURLs, fileURL)
+	}
+
+	return fileURLs, nil
 }

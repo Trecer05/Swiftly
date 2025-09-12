@@ -121,6 +121,7 @@
 {
   "name": "string",
   "description": "string",
+  "owner_id": 1,
   "users": [
     {
       "id": 1,
@@ -129,6 +130,8 @@
   ]
 }
 ```
+
+**Примечание:** Поле `owner_id` автоматически устанавливается из JWT токена текущего пользователя.
 
 **Возможные коды ответов:**
 - 200 OK — группа создана
@@ -175,9 +178,12 @@
 {
   "id": 1,
   "name": "string",
-  "description": "string"
+  "description": "string",
+  "owner_id": 1
 }
 ```
+
+**Примечание:** Поле `owner_id` показывает ID владельца группы.
 
 #### GET /api/v1/group/{id}/users
 **Описание:** Получение списка пользователей группы.
@@ -252,6 +258,24 @@
 - 409 Conflict — пользователь не в группе
 - 500 Internal Server Error — внутренняя ошибка сервера
 
+#### DELETE /api/v1/group/{id}/leave
+**Описание:** Выход пользователя из группы (самостоятельно).
+**Параметры URL:**
+- `id` - ID группы
+
+**Возможные коды ответов:**
+- 200 OK — пользователь вышел из группы
+- 400 Bad Request — некорректный ID группы
+- 401 Unauthorized — пользователь не авторизован
+- 500 Internal Server Error — внутренняя ошибка сервера
+
+**Ответ (успех):**
+```json
+{
+  "status": "ok"
+}
+```
+
 ---
 
 ### Список чатов
@@ -292,6 +316,200 @@
   ]
 }
 ```
+
+---
+
+## Файлы и медиа
+
+### Загрузка файлов в приватные чаты
+
+#### POST /api/v1/chat/{id}/img
+**Описание:** Загрузка изображений в приватный чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID чата
+
+**Параметры:**
+- `photos` (files) - массив изображений
+
+**Поддерживаемые форматы:** jpg, png, gif, webp, svg, bmp
+
+**MIME-типы:** image/jpeg, image/png, image/gif, image/webp, image/svg+xml, image/bmp
+
+**Возможные коды ответов:**
+- 200 OK — файлы загружены
+- 400 Bad Request — некорректные данные
+- 401 Unauthorized — пользователь не авторизован
+- 500 Internal Server Error — внутренняя ошибка сервера
+
+**Ответ (успех):**
+```json
+[
+  "/chat/1/img/1234567890_photo1.jpg",
+  "/chat/1/img/1234567891_photo2.png"
+]
+```
+
+#### POST /api/v1/chat/{id}/video
+**Описание:** Загрузка видео в приватный чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID чата
+
+**Параметры:**
+- `videos` (files) - массив видеофайлов
+
+**Поддерживаемые форматы:** mp4, mpeg, quicktime, webm, avi, wmv
+
+**MIME-типы:** video/mp4, video/mpeg, video/quicktime, video/webm, video/x-msvideo, video/x-ms-wmv
+
+#### POST /api/v1/chat/{id}/audio
+**Описание:** Загрузка аудио в приватный чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID чата
+
+**Параметры:**
+- `photos` (files) - массив аудиофайлов
+
+**Поддерживаемые форматы:** mp3, wav, ogg, webm, aac
+
+**MIME-типы:** audio/mpeg, audio/wav, audio/ogg, audio/webm, audio/aac
+
+#### POST /api/v1/chat/{id}/file
+**Описание:** Загрузка документов в приватный чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID чата
+
+**Параметры:**
+- `photos` (files) - массив документов
+
+**Поддерживаемые форматы:** pdf, doc, docx, xls, xlsx, txt, csv, zip, rar
+
+**MIME-типы:** application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/plain, text/csv, application/zip, application/x-rar-compressed
+
+#### POST /api/v1/chat/{id}/imgvid
+**Описание:** Смешанная загрузка изображений и видео в приватный чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID чата
+
+**Параметры:**
+- `files` (files) - массив файлов (автоматически сортируются по типу)
+
+### Загрузка файлов в групповые чаты
+
+#### POST /api/v1/group/{id}/img
+**Описание:** Загрузка изображений в групповой чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID группы
+
+**Параметры:**
+- `photos` (files) - массив изображений
+
+#### POST /api/v1/group/{id}/video
+**Описание:** Загрузка видео в групповой чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID группы
+
+**Параметры:**
+- `videos` (files) - массив видеофайлов
+
+#### POST /api/v1/group/{id}/audio
+**Описание:** Загрузка аудио в групповой чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID группы
+
+**Параметры:**
+- `photos` (files) - массив аудиофайлов
+
+#### POST /api/v1/group/{id}/file
+**Описание:** Загрузка документов в групповой чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID группы
+
+**Параметры:**
+- `photos` (files) - массив документов
+
+#### POST /api/v1/group/{id}/imgvid
+**Описание:** Смешанная загрузка изображений и видео в групповой чат.
+**Content-Type:** `multipart/form-data`
+**Параметры URL:**
+- `id` - ID группы
+
+**Параметры:**
+- `files` (files) - массив файлов (автоматически сортируются по типу)
+
+### Получение файлов
+
+#### GET /api/v1/chat/{id}/files
+**Описание:** Получение списка всех файлов приватного чата.
+**Параметры URL:**
+- `id` - ID чата
+
+**Возможные коды ответов:**
+- 200 OK — список получен
+- 400 Bad Request — некорректный ID
+- 401 Unauthorized — пользователь не авторизован
+- 500 Internal Server Error — внутренняя ошибка сервера
+
+#### GET /api/v1/group/{id}/files
+**Описание:** Получение списка всех файлов группового чата.
+**Параметры URL:**
+- `id` - ID группы
+
+#### GET /api/v1/chat/{id}/img/{url}
+**Описание:** Скачивание изображения из приватного чата.
+**Параметры URL:**
+- `id` - ID чата
+- `url` - имя файла
+
+#### GET /api/v1/chat/{id}/video/{url}
+**Описание:** Скачивание видео из приватного чата.
+**Параметры URL:**
+- `id` - ID чата
+- `url` - имя файла
+
+#### GET /api/v1/chat/{id}/audio/{url}
+**Описание:** Скачивание аудио из приватного чата.
+**Параметры URL:**
+- `id` - ID чата
+- `url` - имя файла
+
+#### GET /api/v1/chat/{id}/file/{url}
+**Описание:** Скачивание документа из приватного чата.
+**Параметры URL:**
+- `id` - ID чата
+- `url` - имя файла
+
+#### GET /api/v1/group/{id}/img/{url}
+**Описание:** Скачивание изображения из группового чата.
+**Параметры URL:**
+- `id` - ID группы
+- `url` - имя файла
+
+#### GET /api/v1/group/{id}/video/{url}
+**Описание:** Скачивание видео из группового чата.
+**Параметры URL:**
+- `id` - ID группы
+- `url` - имя файла
+
+#### GET /api/v1/group/{id}/audio/{url}
+**Описание:** Скачивание аудио из группового чата.
+**Параметры URL:**
+- `id` - ID группы
+- `url` - имя файла
+
+#### GET /api/v1/group/{id}/file/{url}
+**Описание:** Скачивание документа из группового чата.
+**Параметры URL:**
+- `id` - ID группы
+- `url` - имя файла
 
 ---
 
@@ -340,6 +558,26 @@
 }
 ```
 
+#### Сообщение с файлами
+```json
+{
+  "type": "with_files",
+  "text": "string",
+  "author": {
+    "id": 1,
+    "name": "string"
+  },
+  "file_urls": [
+    "/chat/1/img/1234567890_photo.jpg",
+    "/chat/1/video/1234567891_video.mp4"
+  ],
+  "file_name": "photo.jpg",
+  "file_mime": "image/jpeg",
+  "file_type": "photo",
+  "file_size": 1024000
+}
+```
+
 #### Индикатор печати
 ```json
 {
@@ -362,6 +600,19 @@
 }
 ```
 
+#### Статус прочтения сообщения
+```json
+{
+  "type": "read",
+  "id": 123,
+  "read": true,
+  "author": {
+    "id": 1,
+    "name": "string"
+  }
+}
+```
+
 #### Получение истории (от сервера)
 ```json
 {
@@ -372,11 +623,18 @@
       "chat_id": 1,
       "type": "message",
       "text": "string",
+      "read": false,
       "author": {
         "id": 1,
         "name": "string"
       },
-      "time": "2023-01-01T00:00:00Z"
+      "time": "2023-01-01T00:00:00Z",
+      "file_url": "string",
+      "file_urls": ["string"],
+      "file_name": "string",
+      "file_mime": "string",
+      "file_type": "photo",
+      "file_size": 1024000
     }
   ],
   "error": "string" // если нет сообщений
@@ -390,11 +648,18 @@
   "chat_id": 1,
   "type": "last_message",
   "text": "string",
+  "read": false,
   "author": {
     "id": 1,
     "name": "string"
   },
-  "time": "2023-01-01T00:00:00Z"
+  "time": "2023-01-01T00:00:00Z",
+  "file_url": "string",
+  "file_urls": ["string"],
+  "file_name": "string",
+  "file_mime": "string",
+  "file_type": "photo",
+  "file_size": 1024000
 }
 ```
 
@@ -407,13 +672,20 @@
 {
   "id": 1,
   "chat_id": 1,
-  "type": "message|typing|stop_typing|last_message",
+  "type": "message|with_files|typing|stop_typing|read|last_message",
   "text": "string",
+  "read": false,
   "author": {
     "id": 1,
     "name": "string"
   },
-  "time": "2023-01-01T00:00:00Z"
+  "time": "2023-01-01T00:00:00Z",
+  "file_url": "string",
+  "file_urls": ["string"],
+  "file_name": "string",
+  "file_mime": "string",
+  "file_type": "photo|video|audio|file|other",
+  "file_size": 1024000
 }
 ```
 
@@ -444,7 +716,8 @@
 {
   "id": 1,
   "name": "string",
-  "description": "string"
+  "description": "string",
+  "owner_id": 1
 }
 ```
 
@@ -452,10 +725,34 @@
 
 ## Примечания
 
-- Все WebSocket подключения требуют JWT аутентификации через заголовок Authorization
+### Аутентификация и безопасность
+- Все эндпойнты требуют JWT аутентификации через Bearer токен в заголовке Authorization
+- WebSocket подключения также требуют JWT аутентификации
+- Валидация владельца группы для операций управления участниками
+
+### Real-time общение
 - При подключении к чату/группе автоматически отправляется история сообщений
 - Сообщения передаются в real-time через Redis Pub/Sub
-- Поддержка файлов через multipart/form-data для создания пользователей и групп
-- Автоматическое создание папок для хранения файлов чатов и групп
-- Валидация владельца группы для операций управления участниками
+- Поддержка индикаторов печати (typing/stop_typing)
+- Статусы прочтения сообщений (read/unread)
 - Graceful закрытие WebSocket соединений с очисткой ресурсов
+
+### Файлы и медиа
+- Поддержка всех типов файлов: изображения, видео, аудио, документы
+- Автоматическое определение MIME-типов файлов
+- Организованное хранение файлов по папкам (photos, videos, audios, files)
+- Смешанная загрузка изображений и видео в одном запросе
+- Максимальный размер файла: 32MB для загрузки
+- Автоматическое создание папок для хранения файлов чатов и групп
+
+### Управление группами
+- Только владелец группы может добавлять/удалять участников
+- Пользователи могут самостоятельно выходить из группы
+- Поддержка загрузки фото группы при создании
+- Валидация прав доступа для всех операций с группами
+
+### База данных
+- Использование PostgreSQL с миграциями
+- Поддержка транзакций для целостности данных
+- Индексы для оптимизации запросов
+- Cascade удаление связанных записей

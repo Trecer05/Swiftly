@@ -12,6 +12,12 @@ type Message struct {
 	Text   string    `json:"text"`
 	Author Client    `json:"author"`
 	Time   time.Time `json:"time"`
+	FileURL   *string    `json:"file_url,omitempty"`
+	FileUrls  []string `json:"file_urls,omitempty"`
+    FileName  string    `json:"file_name"`
+    FileMIME  string    `json:"file_mime"`
+	FileType  FileType `json:"file_type"`
+    FileSize  int64     `json:"file_size"`
 }
 
 type ChatRoom struct {

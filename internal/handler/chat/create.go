@@ -50,6 +50,12 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 		return
 	}
 
+	err = fileManager.CreateGroupMessagesFolder(id)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
 	if _, _, err := r.FormFile("photo"); err == nil {
         if err := fileManager.AddGroupPhoto(r, id); err != nil {
             serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
@@ -59,12 +65,6 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
         serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
         return
     }
-
-	err = fileManager.CreateGroupMessagesFolder(id)
-	if err != nil {
-		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{

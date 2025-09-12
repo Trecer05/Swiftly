@@ -95,6 +95,86 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/group/{id}/leave", func(w http.ResponseWriter, r *http.Request) {
 		ExitGroupHandler(w, r, mgr)
 	}).Methods(http.MethodDelete)
+
+	apiSecure.HandleFunc("/group/{id}/img", func(w http.ResponseWriter, r *http.Request) {
+		UploadImgHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/video", func(w http.ResponseWriter, r *http.Request) {
+		UploadVideoHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/file", func(w http.ResponseWriter, r *http.Request) {
+		UploadFileHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
+		UploadAudioHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/imgvid", func(w http.ResponseWriter, r *http.Request) {
+		UploadImgVideoHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/files", func(w http.ResponseWriter, r *http.Request) {
+		GetFilesHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/img/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetImgHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/video/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetVideoHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/audio/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetAudioHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/file/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetFileHandler(w, r, mgr, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/img", func(w http.ResponseWriter, r *http.Request) {
+		UploadImgHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/video", func(w http.ResponseWriter, r *http.Request) {
+		UploadVideoHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/file", func(w http.ResponseWriter, r *http.Request) {
+		UploadFileHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
+		UploadAudioHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/imgvid", func(w http.ResponseWriter, r *http.Request) {
+		UploadImgVideoHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/files", func(w http.ResponseWriter, r *http.Request) {
+		GetFilesHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/img/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetImgHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/video/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetVideoHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/audio/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetAudioHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/file/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetFileHandler(w, r, mgr, models.TypePrivate)
+	}).Methods(http.MethodGet)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

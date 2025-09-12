@@ -143,10 +143,12 @@ func ChatInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manage
 	json.NewEncoder(w).Encode(info)
 }
 
+// TODO
 func ReadChatMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 }
 
+// TODO
 func ReadGroupMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
-	
+
 }
