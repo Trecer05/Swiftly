@@ -24,6 +24,7 @@ class ActiveTasks extends ConsumerWidget {
         ...cards.map(
           (card) => CardItemDesktop(
             card: card,
+            maxWidth: true,
           ),
         ),
       ],

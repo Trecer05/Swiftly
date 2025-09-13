@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/domain/kanban/models/priority.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 import 'package:swiftly_mobile/providers/current_user_provider.dart';
+import 'package:swiftly_mobile/ui/core/ui/custom/filter_state.dart';
 
 import '../../../core/themes/colors.dart';
 import '../../../core/themes/theme.dart';
@@ -21,12 +22,16 @@ class ColumnWidgetDesktop extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cards =
-        ref
-            .watch(cardNotifierProvider)
-            .cards
-            .where((card) => card.columnId == columnId)
-            .toList();
+    // final cards =
+    //     ref
+    //         .watch(cardNotifierProvider)
+    //         .cards
+    //         .where((card) => card.columnId == columnId)
+    //         .toList();
+    final cards = ref.watch(filteredCardsProvider)
+    .where((c) => c.columnId == columnId)
+    .toList();
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

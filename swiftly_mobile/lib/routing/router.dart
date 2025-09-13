@@ -20,9 +20,9 @@ final GoRouter router = GoRouter(
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
         return ResponsiveLayout(
-      mobile: CustomNavigationBar(child: child),
-      desktop: CustomNavigationRail(child: child),
-    );
+          mobile: CustomNavigationBar(child: child),
+          desktop: CustomNavigationRail(child: child),
+        );
       },
       routes: [
         GoRoute(

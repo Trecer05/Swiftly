@@ -24,62 +24,29 @@ class PrioritySelector extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
-              color: isSelected ? _backgroundColor(priority) : AppColors.white15,
+              color: isSelected ? priority.color.withValues(alpha: 0.2) : AppColors.white15,
               borderRadius: BorderRadius.circular(10),
               border: isSelected
-                  ? Border.all(color: _textColor(priority))
+                  ? Border.all(color: priority.color)
                   : null,
             ),
             child: Row(
               children: [
                 Text(
-                  _title(priority),
+                  priority.title,
                   style: TextStyle(
-                    color: _textColor(priority),
+                    color: priority.color,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 5),
-                Icon(Icons.network_cell_outlined, size: 12, color: _textColor(priority)),
+                Icon(Icons.network_cell_outlined, size: 12, color: priority.color),
               ],
             ),
           ),
         );
       }).toList(),
     );
-  }
-
-  String _title(Priority priority) {
-    switch (priority) {
-      case Priority.low:
-        return 'Низкий';
-      case Priority.medium:
-        return 'Средний';
-      case Priority.high:
-        return 'Высокий';
-    }
-  }
-
-  Color _textColor(Priority priority) {
-    switch (priority) {
-      case Priority.low:
-        return AppColors.green1;
-      case Priority.medium:
-        return AppColors.yellow1;
-      case Priority.high:
-        return AppColors.red1;
-    }
-  }
-
-  Color _backgroundColor(Priority priority) {
-    switch (priority) {
-      case Priority.low:
-        return AppColors.green2;
-      case Priority.medium:
-        return AppColors.yellow2;
-      case Priority.high:
-        return AppColors.red2;
-    }
   }
 }

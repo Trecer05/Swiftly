@@ -40,7 +40,7 @@ class _CustomButtonState extends State<CustomButton> {
             height: 40,
             decoration: BoxDecoration(
               gradient: widget.gradient ? AppColors.gradient_4 : null,
-              color: widget.gradient ? null : AppColors.white15,
+              color: widget.gradient ? null : isHovered ? AppColors.white38 : AppColors.white15,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isHovered ? AppColors.white : AppColors.transparent,
@@ -54,7 +54,7 @@ class _CustomButtonState extends State<CustomButton> {
                     widget.prefixIcon,
                     size: 24,
                     color:
-                        widget.gradient ? AppColors.white : AppColors.white128,
+                        widget.gradient ? AppColors.white : isHovered ? AppColors.white : AppColors.white128,
                   ),
                 if (widget.text != null)
                   Row(

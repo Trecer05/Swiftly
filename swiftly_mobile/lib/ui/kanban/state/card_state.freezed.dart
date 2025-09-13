@@ -19,6 +19,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$CardState {
   List<CardItem> get cards => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
+  bool get isFiltered => throw _privateConstructorUsedError;
 
   /// Create a copy of CardState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,7 +33,7 @@ abstract class $CardStateCopyWith<$Res> {
   factory $CardStateCopyWith(CardState value, $Res Function(CardState) then) =
       _$CardStateCopyWithImpl<$Res, CardState>;
   @useResult
-  $Res call({List<CardItem> cards, bool isLoading});
+  $Res call({List<CardItem> cards, bool isLoading, bool isFiltered});
 }
 
 /// @nodoc
@@ -49,7 +50,11 @@ class _$CardStateCopyWithImpl<$Res, $Val extends CardState>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? cards = null, Object? isLoading = null}) {
+  $Res call({
+    Object? cards = null,
+    Object? isLoading = null,
+    Object? isFiltered = null,
+  }) {
     return _then(
       _value.copyWith(
             cards:
@@ -61,6 +66,11 @@ class _$CardStateCopyWithImpl<$Res, $Val extends CardState>
                 null == isLoading
                     ? _value.isLoading
                     : isLoading // ignore: cast_nullable_to_non_nullable
+                        as bool,
+            isFiltered:
+                null == isFiltered
+                    ? _value.isFiltered
+                    : isFiltered // ignore: cast_nullable_to_non_nullable
                         as bool,
           )
           as $Val,
@@ -77,7 +87,7 @@ abstract class _$$CardStateImplCopyWith<$Res>
   ) = __$$CardStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<CardItem> cards, bool isLoading});
+  $Res call({List<CardItem> cards, bool isLoading, bool isFiltered});
 }
 
 /// @nodoc
@@ -93,7 +103,11 @@ class __$$CardStateImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? cards = null, Object? isLoading = null}) {
+  $Res call({
+    Object? cards = null,
+    Object? isLoading = null,
+    Object? isFiltered = null,
+  }) {
     return _then(
       _$CardStateImpl(
         cards:
@@ -106,6 +120,11 @@ class __$$CardStateImplCopyWithImpl<$Res>
                 ? _value.isLoading
                 : isLoading // ignore: cast_nullable_to_non_nullable
                     as bool,
+        isFiltered:
+            null == isFiltered
+                ? _value.isFiltered
+                : isFiltered // ignore: cast_nullable_to_non_nullable
+                    as bool,
       ),
     );
   }
@@ -117,6 +136,7 @@ class _$CardStateImpl implements _CardState {
   const _$CardStateImpl({
     required final List<CardItem> cards,
     this.isLoading = false,
+    this.isFiltered = false,
   }) : _cards = cards;
 
   final List<CardItem> _cards;
@@ -130,10 +150,13 @@ class _$CardStateImpl implements _CardState {
   @override
   @JsonKey()
   final bool isLoading;
+  @override
+  @JsonKey()
+  final bool isFiltered;
 
   @override
   String toString() {
-    return 'CardState(cards: $cards, isLoading: $isLoading)';
+    return 'CardState(cards: $cards, isLoading: $isLoading, isFiltered: $isFiltered)';
   }
 
   @override
@@ -143,7 +166,9 @@ class _$CardStateImpl implements _CardState {
             other is _$CardStateImpl &&
             const DeepCollectionEquality().equals(other._cards, _cards) &&
             (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading));
+                other.isLoading == isLoading) &&
+            (identical(other.isFiltered, isFiltered) ||
+                other.isFiltered == isFiltered));
   }
 
   @override
@@ -151,6 +176,7 @@ class _$CardStateImpl implements _CardState {
     runtimeType,
     const DeepCollectionEquality().hash(_cards),
     isLoading,
+    isFiltered,
   );
 
   /// Create a copy of CardState
@@ -166,12 +192,15 @@ abstract class _CardState implements CardState {
   const factory _CardState({
     required final List<CardItem> cards,
     final bool isLoading,
+    final bool isFiltered,
   }) = _$CardStateImpl;
 
   @override
   List<CardItem> get cards;
   @override
   bool get isLoading;
+  @override
+  bool get isFiltered;
 
   /// Create a copy of CardState
   /// with the given fields replaced by the non-null parameter values.

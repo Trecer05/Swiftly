@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftly_mobile/ui/core/ui/custom/filter_state.dart';
 
 import '../../../../domain/kanban/models/card_item.dart';
 import '../../../../domain/kanban/models/priority.dart';
@@ -17,7 +18,8 @@ class KanbanScreenDesktop extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cards = ref.watch(cardNotifierProvider).cards.toList();
+    // final cards = ref.watch(cardNotifierProvider).cards.toList();
+    final cards = ref.watch(filteredCardsProvider); // ✅ тут уже фильтрованные
     return Scaffold(
       backgroundColor: AppColors.transparent168,
       body: Column(

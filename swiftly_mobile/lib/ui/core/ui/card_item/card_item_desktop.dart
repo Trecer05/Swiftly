@@ -9,7 +9,8 @@ import 'card_item_content.dart';
 
 class CardItemDesktop extends ConsumerStatefulWidget {
   final CardItem card;
-  const CardItemDesktop({super.key, required this.card});
+  final bool? maxWidth;
+  const CardItemDesktop({super.key, required this.card, this.maxWidth});
 
   @override
   ConsumerState<CardItemDesktop> createState() => _CardItemDesktopState();
@@ -17,12 +18,25 @@ class CardItemDesktop extends ConsumerStatefulWidget {
 
 class _CardItemDesktopState extends ConsumerState<CardItemDesktop> {
   bool isHovered = false;
-  
+
   @override
   Widget build(BuildContext context) {
-    final labels = ref.watch(labelNotifierProvider).labels
-        .where((label) => label.cardId == widget.card.id)
-        .toList();
+    final windowWidth = MediaQuery.of(context).size.width;
+    const minWindowWidth = 1000.0;
+    const minCardWidth = 150.0;
+    const maxCardWidth = 350.0;
+    final t = ((windowWidth - minWindowWidth) / (minWindowWidth)).clamp(
+      0.0,
+      1.0,
+    );
+    final cardWidth = minCardWidth + (maxCardWidth - minCardWidth) * t;
+
+    final labels =
+        ref
+            .watch(labelNotifierProvider)
+            .labels
+            .where((label) => label.cardId == widget.card.id)
+            .toList();
 
     Widget content = CardItemContent(card: widget.card, labels: labels);
 
@@ -33,7 +47,7 @@ class _CardItemDesktopState extends ConsumerState<CardItemDesktop> {
         onEnter: (_) => setState(() => isHovered = true),
         onExit: (_) => setState(() => isHovered = false),
         child: Container(
-          width: double.infinity,
+          width: widget.maxWidth == true ? cardWidth : double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isHovered ? AppColors.white31 : AppColors.white15,
@@ -48,11 +62,12 @@ class _CardItemDesktopState extends ConsumerState<CardItemDesktop> {
   void _openDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        backgroundColor: Colors.transparent,
-        child: CartDetailsWidget(card: widget.card),
-      ),
+      builder:
+          (context) => Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            backgroundColor: Colors.transparent,
+            child: CartDetailsWidget(card: widget.card),
+          ),
     );
   }
 }

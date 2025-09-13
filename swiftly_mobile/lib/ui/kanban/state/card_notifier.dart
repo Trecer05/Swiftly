@@ -64,6 +64,26 @@ class CardNotifier extends StateNotifier<CardState> {
     );
   }
 
+  List<CardItem> _allCards = [];
+
+  void toggleMyCards(String userId) {
+    if (state.isFiltered) {
+      state = state.copyWith(cards: _allCards, isFiltered: false);
+    } else {
+      final filtered = _allCards.where((c) => c.userId == userId).toList();
+      state = state.copyWith(cards: filtered, isFiltered: true);
+    }
+  }
+
+  void toggleByPriority(Priority priority) {
+    if (state.isFiltered) {
+      state = state.copyWith(cards: _allCards, isFiltered: false);
+    } else {
+      final filtered = _allCards.where((c) => c.priority == priority).toList();
+      state = state.copyWith(cards: filtered, isFiltered: true);
+    }
+  }
+
   Future<void> loadCards(WidgetRef ref) async {
     state = state.copyWith(isLoading: true);
     await Future.delayed(const Duration(seconds: 1));
@@ -89,6 +109,13 @@ class CardNotifier extends StateNotifier<CardState> {
         columnId: 'progress',
       ),
       CardItem.create(
+        userId: 'aaa',
+        title: 'Задача 10',
+        description: 'Сделать что-то',
+        priority: Priority.medium,
+        columnId: 'progress',
+      ),
+      CardItem.create(
         userId: '3',
         title: 'Задача 1',
         description: 'Lorem ipsum',
@@ -97,6 +124,7 @@ class CardNotifier extends StateNotifier<CardState> {
       ),
     ];
 
+    _allCards = cards;
     state = state.copyWith(cards: cards, isLoading: false);
   }
 }
