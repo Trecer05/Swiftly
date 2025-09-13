@@ -8,29 +8,39 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+
 import 'domain/user/models/user.dart';
 import 'providers/current_user_provider.dart';
 import 'ui/core/themes/colors.dart';
 
+bool isDesktopPlatform() {
+  if (kIsWeb) return false;
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.macOS:
+    case TargetPlatform.windows:
+    case TargetPlatform.linux:
+      return true;
+    default:
+      return false;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!Platform.isIOS && !Platform.isAndroid && !kIsWeb) {
-    await acrylic.Window.initialize();
-    await acrylic.Window.setEffect(
-      effect: WindowEffect.hudWindow,
-      color: Colors.transparent,
-    );
-  }
-
-  if (!kIsWeb) {
+  if (isDesktopPlatform()) {
     try {
+      await acrylic.Window.initialize();
+      await acrylic.Window.setEffect(
+        effect: WindowEffect.hudWindow,
+        color: Colors.transparent,
+      );
+
       await windowManager.ensureInitialized();
       await windowManager.setMinimumSize(const Size(1000, 500));
     } catch (e) {
-      debugPrint('Ошибка инициализации windowManager: $e');
+      debugPrint('Инициализация desktop-окна пропущена: $e');
     }
   }
   runApp(const ProviderScope(child: MyApp()));
@@ -41,6 +51,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool onDesktop = isDesktopPlatform();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(userNotifierProvider.notifier).loadUsers();
       ref.read(cardNotifierProvider.notifier).loadCards(ref);
@@ -58,7 +69,7 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: 'Swiftly',
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.transparent,
+        scaffoldBackgroundColor: onDesktop ? Colors.transparent : Colors.black,
         navigationRailTheme: const NavigationRailThemeData(
           selectedIconTheme: IconThemeData(color: AppColors.white),
           selectedLabelTextStyle: TextStyle(color: AppColors.white),
