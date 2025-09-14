@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     user_id BIGINT NOT NULL,
     text TEXT NOT NULL,
     read boolean DEFAULT false,
+    edited boolean DEFAULT false,
     sent_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS group_messages (
     user_id BIGINT NOT NULL,
     text TEXT NOT NULL,
     read boolean DEFAULT false,
+    edited boolean DEFAULT false,
     sent_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

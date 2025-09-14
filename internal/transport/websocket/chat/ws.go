@@ -39,21 +39,56 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 		case models.Read:
 			switch chatType {
 			case models.TypePrivate:
-				if err := manager.UpdateChatMessageStatus(message.ID, message.Read); err != nil {
+				if err := manager.UpdateChatMessageStatus(message.ID, *message.Read); err != nil {
 					log.Println("Failed to update message status:", err)
 				}
 
 				_ = rds.SendToUser(chatId, message, chatType)
 
 			case models.TypeGroup:
-				if err := manager.UpdateGroupMessageStatus(message.ID, message.Read); err != nil {
+				if err := manager.UpdateGroupMessageStatus(message.ID, *message.Read); err != nil {
 					log.Println("Failed to update message status:", err)
 				}
 
 				_ = rds.SendToUser(chatId, message, chatType)
 			default:
 				log.Println("Chat type is not private or group")
+				continue
 			}
+		case models.Delete:
+			var dbType models.DBType
+			switch chatType {
+			case models.TypePrivate:
+				dbType = models.DBChat
+			case models.TypeGroup:
+				dbType = models.DBGroup
+			default:
+				log.Println("Chat type is not private or group")
+			}
+
+			if err := manager.DeleteMessage(chatId, message.ID, dbType); err != nil {
+				log.Println("Failed to delete message:", err)
+			}
+
+			_ = rds.SendToUser(chatId, message, chatType)
+		case models.Update:
+			var dbType models.DBType
+			switch chatType {
+			case models.TypePrivate:
+				dbType = models.DBChat
+			case models.TypeGroup:
+				dbType = models.DBGroup
+			default:
+				log.Println("Chat type is not private or group")
+			}
+
+			if err := manager.UpdateMessage(chatId, message.ID, message.Text, dbType); err != nil {
+				log.Println("Failed to update message:", err)
+			}
+
+			message.Edited = true
+
+			_ = rds.SendToUser(chatId, message, chatType)
 		case models.Default:
 			_ = rds.SendToUser(chatId, message, chatType)
 
@@ -65,6 +100,7 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 				dbType = models.DBGroup
 			default:
 				log.Println("Chat type is not private or group")
+				continue
 			}
 
 			if err := manager.SaveMessage(message, dbType); err != nil {

@@ -15,6 +15,8 @@ const (
 	WithFiles   MessageType = "with_files"
 	LastMessage MessageType = "last_message"
 	Read        MessageType = "read"
+	Delete      MessageType = "delete"
+	Update      MessageType = "update"
 )
 
 type ChatType string

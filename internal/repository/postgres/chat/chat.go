@@ -143,12 +143,12 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 			Name: chatName,
 			Type: typeModel,
 			LastMessage: &models.Message{
-				Text: lastMessageText.String,
+				Text: &lastMessageText.String,
 				Time: lastMessageTime.Time,
 				Author: models.Client{
 					Name: senderName.String,
 				},
-				Read: read,
+				Read: &read,
 			},
 		})
 	}
@@ -164,6 +164,7 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 				cm.text AS message_text,
 				cm.sent_at AS sent_time,
 				cm.read AS read,
+				cm.edited AS edited,
 				u.id AS user_id,
 				u.name AS user_name
 			FROM 
@@ -191,6 +192,7 @@ func (manager *Manager) GetChatMessages(chatId, limit, offset int) ([]models.Mes
 			&message.Text,
 			&message.Time,
 			&message.Read,
+			&message.Edited,
 			&message.Author.ID,
 			&message.Author.Name,
 		)
@@ -223,6 +225,7 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 				gm.text AS message_text,
 				gm.sent_at AS sent_time,
 				gm.read AS read,
+				gm.edited AS edited,
 				u.id AS user_id,
 				u.name AS user_name
 			FROM 
@@ -250,6 +253,7 @@ func (manager *Manager) GetGroupMessages(groupId, limit, offset int) ([]models.M
 			&message.Text,
 			&message.Time,
 			&message.Read,
+			&message.Edited,
 			&message.Author.ID,
 			&message.Author.Name,
 		)
@@ -354,6 +358,37 @@ func (manager *Manager) SaveMessage(message models.Message, chatType models.DBTy
 	}
 
 	return tx.Commit()
+}
+
+func (manager *Manager) DeleteMessage(chatId, messageId int, chatType models.DBType) error {
+	_, err := manager.Conn.Exec(fmt.Sprintf(`
+		DELETE FROM %s_messages
+		WHERE id = $1 and %s_id = $2
+	`, chatType, chatType), messageId, chatId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrNoMessages
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) UpdateMessage(chatId, messageId int, text *string, chatType models.DBType) error {
+	_, err := manager.Conn.Exec(fmt.Sprintf(`
+		UPDATE %s_messages
+		SET text = $1, edited = true
+		WHERE id = $2 and %s_id = $3
+		`, chatType, chatType), text, messageId, chatId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrNoMessages
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (manager *Manager) ValidateOwnerId(groupId int, userId int) (bool, error) {
