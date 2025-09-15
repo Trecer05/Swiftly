@@ -32,17 +32,16 @@ func ValidateGroupOwner(groupId int, r *http.Request, mgr *manager.Manager) (int
 
 func ValidateLimitOffset(r *http.Request) (int, int, error) {
 	var limit, offset int
-	vars := r.URL.Query()
-	if vars["limit"] != nil {
-		if l, err := strconv.Atoi(vars["limit"][0]); err == nil {
+	strLimit, strOffset := r.URL.Query()["limit"], r.URL.Query()["offset"]
+	if strLimit != nil {
+		if l, err := strconv.Atoi(strLimit[0]); err == nil {
 			limit = l
 		} else {
 			return 0, 0, chatErrors.ErrInvalidLimit
 		}
 	}
-
-	if vars["offset"] != nil {
-		if o, err := strconv.Atoi(vars["offset"][0]); err == nil {
+	if strOffset != nil {
+		if o, err := strconv.Atoi(strOffset[0]); err == nil {
 			offset = o
 		} else {
 			return 0, 0, chatErrors.ErrInvalidOffset

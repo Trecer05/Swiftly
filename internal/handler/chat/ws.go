@@ -11,6 +11,7 @@ import (
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	wsChat "github.com/Trecer05/Swiftly/internal/transport/websocket/chat"
 
@@ -78,11 +79,19 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 
 	apiSecure.HandleFunc("/chat/{id}/info", func(w http.ResponseWriter, r *http.Request) {
 		ChatInfoHandler(w, r, mgr)
-	})
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/messages", func(w http.ResponseWriter, r *http.Request) {
+		ChatMessagesHandler(w, r, mgr)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/messages", func(w http.ResponseWriter, r *http.Request) {
+		GroupMessagesHandler(w, r, mgr)
+	}).Methods(http.MethodGet)
 
 	apiSecure.HandleFunc("/group/{id}/info", func(w http.ResponseWriter, r *http.Request) {
 		GroupInfoHandler(w, r, mgr)
-	})
+	}).Methods(http.MethodGet)
 
 	apiSecure.HandleFunc("/group/{id}/add", func(w http.ResponseWriter, r *http.Request) {
 		AddUserToGroupHandler(w, r, mgr)
@@ -191,23 +200,10 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 		return
 	}
 
-	var limit, offset int
-	strLimit, strOffset := r.URL.Query()["limit"], r.URL.Query()["offset"]
-	if strLimit == nil {
-		limit = 100
-	} else {
-		if limit, err = strconv.Atoi(strLimit[0]); err != nil {
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-			return
-		}
-	}
-	if strOffset == nil {
-		offset = 0
-	} else {
-		if offset, err = strconv.Atoi(strOffset[0]); err != nil {
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-			return
-		}
+	limit, offset, err := serviceChat.ValidateLimitOffset(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
 	}
 
 	userId, ok := r.Context().Value("id").(int)
@@ -264,23 +260,10 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 		return
 	}
 
-	var limit, offset int
-	strLimit, strOffset := r.URL.Query()["limit"], r.URL.Query()["offset"]
-	if strLimit == nil {
-		limit = 100
-	} else {
-		if limit, err = strconv.Atoi(strLimit[0]); err != nil {
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-			return
-		}
-	}
-	if strOffset == nil {
-		offset = 0
-	} else {
-		if offset, err = strconv.Atoi(strOffset[0]); err != nil {
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-			return
-		}
+	limit, offset, err := serviceChat.ValidateLimitOffset(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
 	}
 
 	userId, ok := r.Context().Value("id").(int)

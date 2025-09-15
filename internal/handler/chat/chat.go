@@ -152,3 +152,57 @@ func ReadChatMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manage
 func ReadGroupMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 
 }
+
+func ChatMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	limit, offset, err := serviceChat.ValidateLimitOffset(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	messages, err := mgr.GetChatMessages(id, limit, offset)
+	switch {
+		case err == chatErrors.ErrNoMessages:
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case err != nil:
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(messages)
+}
+
+func GroupMessagesHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	limit, offset, err := serviceChat.ValidateLimitOffset(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	messages, err := mgr.GetGroupMessages(id, limit, offset)
+	switch {
+		case err == chatErrors.ErrNoMessages:
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case err != nil:
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(messages)
+}
