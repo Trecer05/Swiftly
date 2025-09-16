@@ -5,7 +5,6 @@ import 'package:swiftly_mobile/ui/core/themes/colors.dart';
 import 'package:swiftly_mobile/ui/core/themes/theme.dart';
 import 'package:swiftly_mobile/ui/core/ui/custom/filter_state.dart';
 
-import '../../../../providers/card_notifier_provider.dart';
 import '../../../../providers/current_user_provider.dart';
 import '../../../../providers/label_notifier_provider.dart';
 import '../../../../providers/user_notifier_provider.dart';
@@ -104,7 +103,7 @@ class _SegmentedControlWidgetDesktopState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _FilterMenuItem(
-                      title: '---',
+                      title: 'Выкл фильтры',
                       onSubmenuHoverChanged: _onSubmenuHoverChanged,
                     ),
                     _FilterMenuItem(
@@ -301,7 +300,7 @@ class _FilterMenuItemState extends ConsumerState<_FilterMenuItem> {
       case 'Категория':
         final uniqueLabels = {for (var l in labels) l}.toList();
         options = [
-          MapEntry('---', () {
+          MapEntry('Выкл фильтр', () {
             ref.read(filterNotifierProvider.notifier).clearLabel();
           }),
           ...uniqueLabels.map(
@@ -313,7 +312,7 @@ class _FilterMenuItemState extends ConsumerState<_FilterMenuItem> {
         break;
       case 'Приоритет':
         options = [
-          MapEntry('---', () {
+          MapEntry('Выкл фильтр', () {
             ref.read(filterNotifierProvider.notifier).clearPriority();
           }),
           ...priorities.map((priority) => MapEntry(priority.title, () {
@@ -326,7 +325,7 @@ class _FilterMenuItemState extends ConsumerState<_FilterMenuItem> {
       //   break;
       case 'Исполнитель':
         options = [
-          MapEntry('---', () {
+          MapEntry('Выкл фильтр', () {
             ref.read(filterNotifierProvider.notifier).clearUser();
           }),
           ...users.map((user) => MapEntry(user, () {
