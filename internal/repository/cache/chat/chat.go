@@ -53,10 +53,10 @@ func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn, chatTy
 	defer manager.MU.Unlock()
 
 	if _, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}]; !ok {
-		manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}] = make(map[int]*websocket.Conn)
+		manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}] = make(map[int]*Calls)
 	}
 
-	manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId] = conn
+	manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS = conn
 
 	go manager.PublishUserStatus(userId, true)
 }
@@ -66,15 +66,14 @@ func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType)
 	defer manager.MU.Unlock()
 
 	key := models.SessionKey{Type: chatType, ID: chatId}
-	if conn, ok := manager.Sessions[key][userId]; ok {
-		conn.Close()
-		delete(manager.Sessions[key], userId)
-		if len(manager.Sessions[key]) == 0 {
-			delete(manager.Sessions, key)
-		}
-
-		go manager.PublishUserStatus(userId, false)
+	conn := manager.Sessions[key][userId].WS
+	conn.Close()
+	delete(manager.Sessions[key], userId)
+	if len(manager.Sessions[key]) == 0 {
+		delete(manager.Sessions, key)
 	}
+
+	go manager.PublishUserStatus(userId, false)
 
 	return nil
 }
@@ -82,13 +81,11 @@ func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType)
 func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan models.Message, chatType models.ChatType) {
 	for message := range messages {
 		manager.MU.RLock()
-		conn, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId]
+		conn := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS
 		manager.MU.RUnlock()
 
-		if ok {
-			if err := conn.WriteJSON(message); err != nil {
-				log.Println("write error:", err)
-			}
+		if err := conn.WriteJSON(message); err != nil {
+			log.Println("write error:", err)
 		}
 	}
 }
@@ -107,13 +104,11 @@ func (manager *Manager) SendToUser(chatId int, message models.Message, chatType 
 func (manager *Manager) SendLocalStatus(userId, chatId int, statuses <-chan models.Status, chatType models.ChatType) {
 	for status := range statuses {
 		manager.MU.RLock()
-		conn, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId]
+		conn := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS
 		manager.MU.RUnlock()
 
-		if ok {
-			if err := conn.WriteJSON(status); err != nil {
-				log.Println("Status write error:", err)
-			}
+		if err := conn.WriteJSON(status); err != nil {
+			log.Println("Status write error:", err)
 		}
 	}
 }
