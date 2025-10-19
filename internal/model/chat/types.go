@@ -17,6 +17,7 @@ const (
 	Read        MessageType = "read"
 	Delete      MessageType = "delete"
 	Update      MessageType = "update"
+	Call        MessageType = "call"
 )
 
 type ChatType string
@@ -35,7 +36,12 @@ const (
 
 type SessionKey struct {
 	Type ChatType
-	ID   int
+	ChatID   int
+}
+
+type CallsKey struct {
+	Type ChatType
+	RoomID   int
 }
 
 type DataType string

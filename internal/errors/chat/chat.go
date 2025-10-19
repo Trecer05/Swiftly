@@ -19,3 +19,7 @@ var (
 	ErrNoUser = errors.New("user not found")
 	ErrNoUsers = errors.New("no users found")
 )
+
+var (
+	ErrorNoCallRoom = errors.New("no room found")
+)

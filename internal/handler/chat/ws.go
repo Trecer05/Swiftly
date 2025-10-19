@@ -184,6 +184,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/chat/{id}/file/{url}", func(w http.ResponseWriter, r *http.Request) {
 		GetFileHandler(w, r, mgr, models.TypePrivate)
 	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/call", func(w http.ResponseWriter, r *http.Request) {
+		HandleChatCallConnection(w, r, redis)
+	}).Methods(http.MethodConnect)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

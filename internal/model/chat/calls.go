@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -37,4 +38,17 @@ type Room struct {
 	Mutex     sync.RWMutex
 	Published map[string]*PublishedTrack
 	PubMutex  sync.RWMutex
+}
+
+func (r *Room) RemovePeer(sessionID string) {
+	r.Mutex.Lock()
+	defer r.Mutex.Unlock()
+	delete(r.Peers, sessionID)
+}
+
+type SignalMessage struct {
+	Type      string          `json:"type"`
+	Payload   json.RawMessage `json:"payload"`
+	RoomID    int          `json:"roomId"`
+	SessionID string          `json:"sessionId,omitempty"`
 }

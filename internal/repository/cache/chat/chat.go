@@ -11,7 +11,7 @@ import (
 
 func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, statusCh chan models.Status, chatType models.ChatType) {
 	manager.MU.Lock()
-	key := models.SessionKey{Type: chatType, ID: chatId}
+	key := models.SessionKey{Type: chatType, ChatID: chatId}
 	if manager.SubscribedChats[key] {
 		manager.MU.Unlock()
 		return
@@ -19,7 +19,7 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, stat
 	manager.SubscribedChats[key] = true
 	manager.MU.Unlock()
 
-	pubsub := manager.RDB.Subscribe(ctx, string(key.Type)+":"+strconv.Itoa(key.ID))
+	pubsub := manager.RDB.Subscribe(ctx, string(key.Type)+":"+strconv.Itoa(key.ChatID))
 	ch := pubsub.Channel()
 
 	go func() {
@@ -52,11 +52,11 @@ func (manager *Manager) AddUser(userId, chatId int, conn *websocket.Conn, chatTy
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	if _, ok := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}]; !ok {
-		manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}] = make(map[int]*Calls)
+	if _, ok := manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}]; !ok {
+		manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}] = make(map[int]*websocket.Conn)
 	}
 
-	manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS = conn
+	manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}][userId] = conn
 
 	go manager.PublishUserStatus(userId, true)
 }
@@ -65,8 +65,8 @@ func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType)
 	manager.MU.Lock()
 	defer manager.MU.Unlock()
 
-	key := models.SessionKey{Type: chatType, ID: chatId}
-	conn := manager.Sessions[key][userId].WS
+	key := models.SessionKey{Type: chatType, ChatID: chatId}
+	conn := manager.Sessions[key][userId]
 	conn.Close()
 	delete(manager.Sessions[key], userId)
 	if len(manager.Sessions[key]) == 0 {
@@ -81,7 +81,7 @@ func (manager *Manager) RemoveUser(userId, chatId int, chatType models.ChatType)
 func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan models.Message, chatType models.ChatType) {
 	for message := range messages {
 		manager.MU.RLock()
-		conn := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS
+		conn := manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}][userId]
 		manager.MU.RUnlock()
 
 		if err := conn.WriteJSON(message); err != nil {
@@ -104,7 +104,7 @@ func (manager *Manager) SendToUser(chatId int, message models.Message, chatType 
 func (manager *Manager) SendLocalStatus(userId, chatId int, statuses <-chan models.Status, chatType models.ChatType) {
 	for status := range statuses {
 		manager.MU.RLock()
-		conn := manager.Sessions[models.SessionKey{Type: chatType, ID: chatId}][userId].WS
+		conn := manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}][userId]
 		manager.MU.RUnlock()
 
 		if err := conn.WriteJSON(status); err != nil {

@@ -6,8 +6,10 @@ import (
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 func ValidateGroupOwner(groupId int, r *http.Request, mgr *manager.Manager) (int, error) {
@@ -55,4 +57,19 @@ func GetIdFromVars(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	return strconv.Atoi(id)
+}
+
+func CreateCurPS(conn *websocket.Conn, sessionID string) *models.PeerState {
+	return &models.PeerState{
+		WS:        conn,
+		SessionID: sessionID,
+		Tracks:    make(map[string]*models.Track),
+	}
+}
+
+func NewRoom() *models.Room {
+	return &models.Room{
+		Peers:     make(map[string]*models.PeerState),
+		Published: make(map[string]*models.PublishedTrack),
+	}
 }
