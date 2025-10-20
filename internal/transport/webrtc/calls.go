@@ -9,12 +9,13 @@ import (
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
+	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	service "github.com/Trecer05/Swiftly/internal/service/chat"
 
 	"github.com/pion/webrtc/v4"
 )
 
-func ReadWS(chatID int, rooms map[models.CallsKey]*models.Room, room *models.Room, key models.CallsKey, currentPeerState *models.PeerState, roomsMutex *sync.RWMutex) {
+func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.CallsKey]*models.Room, room *models.Room, key models.CallsKey, currentPeerState *models.PeerState, roomsMutex *sync.RWMutex) *models.Room {
 	log.Printf("WS started for %s", currentPeerState.SessionID)
 
 	for {
@@ -42,12 +43,12 @@ func ReadWS(chatID int, rooms map[models.CallsKey]*models.Room, room *models.Roo
 			room = rooms[key]
 			roomsMutex.Unlock()
 
-			pc, err := createPeerConnection(currentPeerState, chatID, roomsMutex, rooms, key)
+			pc, err := createPeerConnection(currentPeerState, userID, manager, chatID, roomsMutex, rooms, key)
 			if err != nil {
 				if err == errors.ErrorNoCallRoom {
 					log.Println("delete pc from room: ", chatID)
 					pc.Close()
-					return
+					return room
 				}
 				log.Printf("error creating PeerConnection for %s: %v", currentPeerState.SessionID, err)
 				continue
@@ -148,9 +149,11 @@ func ReadWS(chatID int, rooms map[models.CallsKey]*models.Room, room *models.Roo
 			log.Printf("unknown message type from %s: %s", currentPeerState.SessionID, msg.Type)
 		}
 	}
+
+	return room
 }
 
-func createPeerConnection(currentPeerState *models.PeerState, chatID int, roomsMutex *sync.RWMutex, rooms map[models.CallsKey]*models.Room, key models.CallsKey) (*webrtc.PeerConnection, error) {
+func createPeerConnection(currentPeerState *models.PeerState, userID int, manager *redis.Manager, chatID int, roomsMutex *sync.RWMutex, rooms map[models.CallsKey]*models.Room, key models.CallsKey) (*webrtc.PeerConnection, error) {
 	var NFound bool
 	log.Println("🎥 Creating peer connection")
 	config := webrtc.Configuration{
@@ -192,8 +195,11 @@ func createPeerConnection(currentPeerState *models.PeerState, chatID int, roomsM
 		}
 
 		log.Printf("[%s] Connection state: %s", currentPeerState.SessionID, state.String())
-		if state == webrtc.PeerConnectionStateFailed || state == webrtc.PeerConnectionStateClosed {
+		switch state {
+		case webrtc.PeerConnectionStateFailed, webrtc.PeerConnectionStateClosed:
 			room.RemovePeer(currentPeerState.SessionID)
+		case webrtc.PeerConnectionStateConnected:
+			
 		}
 	})
 

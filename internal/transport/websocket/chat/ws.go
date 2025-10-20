@@ -91,6 +91,7 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			_ = rds.SendToUser(chatId, message, chatType)
 		case models.Default:
 			_ = rds.SendToUser(chatId, message, chatType)
+			_ = rds.SendNotificationToUser(chatId, message, chatType, models.NotificationType(message.Type))
 
 			var dbType models.DBType
 			switch chatType {

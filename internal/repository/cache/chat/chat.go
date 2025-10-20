@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, statusCh chan models.Status, chatType models.ChatType) {
+func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, statusCh chan models.Status, notifCh chan models.Notifications, chatType models.ChatType) {
 	manager.MU.Lock()
 	key := models.SessionKey{Type: chatType, ChatID: chatId}
 	if manager.SubscribedChats[key] {
@@ -44,6 +44,22 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, stat
 			m.ChatID = chatId
 
 			msgCh <- m
+		}
+	}()
+
+	notifications := manager.RDB.Subscribe(ctx, string(key.Type)+":"+strconv.Itoa(key.ChatID)+":notifications")
+	notCh := notifications.Channel()
+
+	go func() {
+		for msg := range notCh {
+			var notif models.Notifications
+
+			if err := json.Unmarshal([]byte(msg.Payload), &notif); err != nil {
+				log.Println("Invalid pubsub message:", err)
+				continue
+			}
+			
+			notifCh <- notif
 		}
 	}()
 }
@@ -101,6 +117,35 @@ func (manager *Manager) SendToUser(chatId int, message models.Message, chatType 
 	return manager.RDB.Publish(ctx, channel, data).Err()
 }
 
+func (manager *Manager) SendNotificationToUser(chatId int, message models.Message, chatType models.ChatType, notifType models.NotificationType) error {
+	notif := models.Notifications{
+		Type: notifType,
+		Message: message,
+	}
+
+	data, err := json.Marshal(notif)
+	if err != nil {
+		log.Println("Error marshalling message:", err)
+		return err
+	}
+
+	channel := string(chatType) + ":" + strconv.Itoa(chatId) + ":notifications"
+	return manager.RDB.Publish(ctx, channel, data).Err()
+}
+
+func (manager *Manager) SendLocalNotification(userId, chatId int, notifications <-chan models.Notifications, chatType models.ChatType) {
+	for notif := range notifications {
+		manager.MU.RLock()
+		conn := manager.Sessions[models.SessionKey{Type: chatType, ChatID: chatId}][userId]
+		manager.MU.RUnlock()
+
+		if err := conn.WriteJSON(notif); err != nil {
+			log.Println("Notification write error:", err)
+			continue
+		}
+	}
+}
+
 func (manager *Manager) SendLocalStatus(userId, chatId int, statuses <-chan models.Status, chatType models.ChatType) {
 	for status := range statuses {
 		manager.MU.RLock()
@@ -131,4 +176,21 @@ func (manager *Manager) PublishUserStatus(userId int, online bool) error {
 	}
 
 	return manager.RDB.Publish(ctx, channel, data).Err()
+}
+
+func (manager *Manager) CallSend(userId, chatId int, chatType models.ChatType) {
+	key := models.SessionKey{Type: chatType, ChatID: chatId}
+	chatSessions := manager.Sessions[key]
+
+	for _, conn := range chatSessions {
+		if err := conn.WriteJSON(models.Message{
+			Type:    models.Call,
+			Author: models.Client{
+				ID: userId,
+			},
+			ChatID:  chatId,
+		}); err != nil {
+			log.Println("Error sending call:", err)
+		}
+	}
 }

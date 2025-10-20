@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	cache "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	service "github.com/Trecer05/Swiftly/internal/service/chat"
@@ -32,6 +33,12 @@ func HandleChatCallConnection(w http.ResponseWriter, r *http.Request, rds *cache
 		return
 	}
 
+	userId, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
 	sessionID := fmt.Sprintf("%s-%d", conn.RemoteAddr().String(), time.Now().UnixNano())
 	log.Println("New chat client:", conn.RemoteAddr().String(), "session:", sessionID)
 
@@ -44,7 +51,7 @@ func HandleChatCallConnection(w http.ResponseWriter, r *http.Request, rds *cache
 
 	currentPeerState := service.CreateCurPS(conn, sessionID)
 
-	calls.ReadWS(chatId, rds.Calls, room, key, currentPeerState, &roomMutex)
+	calls.ReadWS(chatId, userId, rds, rds.Calls, room, key, currentPeerState, &roomMutex)
 
 	if chatId != 0 {
 		roomMutex.Lock()
@@ -62,7 +69,7 @@ func HandleChatCallConnection(w http.ResponseWriter, r *http.Request, rds *cache
 }
 
 func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cache.Manager) {
-		conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
@@ -72,6 +79,12 @@ func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cach
 	chatId, err := service.GetIdFromVars(r)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
@@ -87,7 +100,7 @@ func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cach
 
 	currentPeerState := service.CreateCurPS(conn, sessionID)
 
-	calls.ReadWS(chatId, rds.Calls, room, key, currentPeerState, &roomMutex)
+	calls.ReadWS(chatId, userId, rds, rds.Calls, room, key, currentPeerState, &roomMutex)
 
 	if chatId != 0 {
 		roomMutex.Lock()

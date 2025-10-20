@@ -28,6 +28,11 @@ type Status struct {
 	Online bool `json:"online"`
 }
 
+type Notifications struct {
+	Type NotificationType `json:"type"`
+	Message Message `json:"message"`
+}
+
 type ChatRoom struct {
 	ID int `json:"id"`
 	Name string `json:"name"`

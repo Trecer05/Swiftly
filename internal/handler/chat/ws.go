@@ -222,6 +222,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	log.Println("User connected to chat", chatId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
+	notifCh := make(chan models.Notifications)
 
 	if err := wsChat.SendChatHistory(conn, mgr, chatId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
@@ -236,7 +237,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 		}
 	}
 
-	go rds.ListenPubSub(chatId, msgCh, statusCh, chatType)
+	go rds.ListenPubSub(chatId, msgCh, statusCh, notifCh, chatType)
 
 	defer func() {
 		rds.RemoveUser(userId, chatId, chatType)
@@ -244,6 +245,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 
 	go rds.SendLocalMessage(userId, chatId, msgCh, chatType)
 	go rds.SendLocalStatus(userId, chatId, statusCh, chatType)
+	go rds.SendLocalNotification(userId, chatId, notifCh, chatType)
 	wsChat.ReadMessage(chatId, conn, rds, mgr, chatType)
 
 	close(msgCh)
@@ -282,6 +284,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	log.Println("User connected to chat", groupId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
+	notifCh := make(chan models.Notifications)
 
 	if err := wsChat.SendChatHistory(conn, mgr, groupId, limit, offset, chatType); err != nil {
 		if err == chatErrors.ErrNoMessages {
@@ -296,7 +299,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 		}
 	}
 
-	go rds.ListenPubSub(groupId, msgCh, statusCh, chatType)
+	go rds.ListenPubSub(groupId, msgCh, statusCh, notifCh, chatType)
 
 	defer func() {
 		rds.RemoveUser(userId, groupId, chatType)
@@ -304,6 +307,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 
 	go rds.SendLocalMessage(userId, groupId, msgCh, chatType)
 	go rds.SendLocalStatus(userId, groupId, statusCh, chatType)
+	go rds.SendLocalNotification(userId, groupId, notifCh, chatType)
 	wsChat.ReadMessage(groupId, conn, rds, mgr, chatType)
 
 	close(msgCh)
@@ -327,6 +331,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
+	notifCh := make(chan models.Notifications)
 
 	chats, err := mgr.GetUserRooms(userId, 0, 0)
 	switch {
@@ -339,7 +344,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 	}
 
 	for _, room := range chats.Rooms {
-		go rds.ListenPubSub(room.ID, msgCh, statusCh, room.Type)
+		go rds.ListenPubSub(room.ID, msgCh, statusCh, notifCh, room.Type)
 
 		if room.LastMessage != nil {
 			room.LastMessage.Type = models.LastMessage

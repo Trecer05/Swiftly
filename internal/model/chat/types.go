@@ -20,6 +20,13 @@ const (
 	Call        MessageType = "call"
 )
 
+type NotificationType string
+
+const (
+	CallNotification NotificationType = "call"
+	MessageNotification NotificationType = "message"
+)
+
 type ChatType string
 
 const (
