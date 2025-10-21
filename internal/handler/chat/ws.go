@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -26,12 +27,32 @@ import (
 //		return origin == "https://домен"
 //	}
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+    CheckOrigin: func(r *http.Request) bool {
+        // origin := r.Header.Get("Origin")
+        // allowedOrigins := []string{
+        //     "http://localhost:3000",
+        //     "https://yourdomain.com",
+        // }
+        
+        // for _, allowed := range allowedOrigins {
+        //     if origin == allowed {
+        //         return true
+        //     }
+        // }
+        // return false
+
+		return true
+    },
+    ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
 }
 
 func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
+	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
+
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
+	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
 		ChatHandler(w, r, redis, mgr)
@@ -187,7 +208,11 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 
 	apiSecure.HandleFunc("/chat/{id}/call", func(w http.ResponseWriter, r *http.Request) {
 		HandleChatCallConnection(w, r, redis)
-	}).Methods(http.MethodConnect)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/call", func(w http.ResponseWriter, r *http.Request) {
+		HandleGroupCallConnection(w, r, redis)
+	}).Methods(http.MethodGet)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

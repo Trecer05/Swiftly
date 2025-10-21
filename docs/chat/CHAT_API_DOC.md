@@ -756,3 +756,89 @@
 - Поддержка транзакций для целостности данных
 - Индексы для оптимизации запросов
 - Cascade удаление связанных записей
+
+---
+
+## Звонки (WebRTC)
+
+### Подключение к звонку в приватном чате
+**URL:** `ws://host/api/v1/chat/{id}/call`
+**Параметры URL:**
+- `id` - ID чата
+
+**Заголовки:** 
+- `Authorization: Bearer {access_token}`
+
+**Описание:** WebSocket соединение для WebRTC звонков в приватном чате. Поддерживает аудио и видео звонки.
+
+### Подключение к звонку в групповом чате
+**URL:** `ws://host/api/v1/group/{id}/call`
+**Параметры URL:**
+- `id` - ID группы
+
+**Заголовки:** 
+- `Authorization: Bearer {access_token}`
+
+**Описание:** WebSocket соединение для WebRTC звонков в групповом чате. Поддерживает аудио и видео звонки.
+
+### Типы сообщений WebRTC
+
+#### Присоединение к комнате
+```json
+{
+  "type": "join",
+  "roomId": 1,
+  "sessionId": "unique-session-id"
+}
+```
+
+#### WebRTC Offer
+```json
+{
+  "type": "offer",
+  "payload": {
+    "type": "offer",
+    "sdp": "v=0\r\no=- 1234567890 1234567890 IN IP4 127.0.0.1\r\n..."
+  },
+  "roomId": 1,
+  "sessionId": "unique-session-id"
+}
+```
+
+#### WebRTC Answer
+```json
+{
+  "type": "answer",
+  "payload": {
+    "type": "answer",
+    "sdp": "v=0\r\no=- 1234567890 1234567890 IN IP4 127.0.0.1\r\n..."
+  },
+  "roomId": 1,
+  "sessionId": "unique-session-id"
+}
+```
+
+#### ICE Candidate
+```json
+{
+  "type": "ice",
+  "payload": {
+    "candidate": "candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host",
+    "sdpMLineIndex": 0,
+    "sdpMid": "0"
+  },
+  "roomId": 1,
+  "sessionId": "unique-session-id"
+}
+```
+
+#### Покидание комнаты
+```json
+{
+  "type": "leave",
+  "roomId": 1,
+  "sessionId": "unique-session-id"
+}
+```
+
+**Примечание:** Подробная документация по звонкам доступна в [CALLS_API_DOC.md](../calls/CALLS_API_DOC.md)

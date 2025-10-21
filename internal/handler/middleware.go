@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
@@ -80,4 +81,61 @@ func AuthMiddleware() mux.MiddlewareFunc {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+type RateLimiter struct {
+    requests map[string][]time.Time
+    mutex    sync.RWMutex
+    limit    int
+    window   time.Duration
+}
+
+func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
+    return &RateLimiter{
+        requests: make(map[string][]time.Time),
+        limit:    limit,
+        window:   window,
+    }
+}
+
+func (rl *RateLimiter) Allow(identifier string) bool {
+    rl.mutex.Lock()
+    defer rl.mutex.Unlock()
+    
+    now := time.Now()
+    cutoff := now.Add(-rl.window)
+    
+    var validRequests []time.Time
+    for _, reqTime := range rl.requests[identifier] {
+        if reqTime.After(cutoff) {
+            validRequests = append(validRequests, reqTime)
+        }
+    }
+    
+    if len(validRequests) >= rl.limit {
+        return false
+    }
+    
+    validRequests = append(validRequests, now)
+    rl.requests[identifier] = validRequests
+    
+    return true
+}
+
+func RateLimitMiddleware(rl *RateLimiter) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            ip := r.RemoteAddr
+            if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+                ip = forwarded
+            }
+            
+            if !rl.Allow(ip) {
+                http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+                return
+            }
+            
+            next.ServeHTTP(w, r)
+        })
+    }
 }

@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	tokenErrors "github.com/Trecer05/Swiftly/internal/errors/tokens"
@@ -17,10 +18,12 @@ import (
 )
 
 func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
+	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 	api := router.PathPrefix("/api/v1").Subrouter()
 
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
+	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	api.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		Login(w, r, mgr)

@@ -78,12 +78,12 @@ func UploadAudioHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 		return
 	}
 
-	photos := r.MultipartForm.File["photos"]
-	if len(photos) == 0 {
+	audio := r.MultipartForm.File["audio"]
+	if len(audio) == 0 {
 		serviceHttp.NewErrorBody(w, "application/json", errors.ErrNoPhotos, http.StatusBadRequest)
 	}
 
-	urls, err := fileManager.SaveMessageFiles(photos, id, t, models.DataTypeAud)
+	urls, err := fileManager.SaveMessageFiles(audio, id, t, models.DataTypeAud)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
@@ -101,12 +101,12 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		return
 	}
 
-	photos := r.MultipartForm.File["photos"]
-	if len(photos) == 0 {
+	files := r.MultipartForm.File["files"]
+	if len(files) == 0 {
 		serviceHttp.NewErrorBody(w, "application/json", errors.ErrNoPhotos, http.StatusBadRequest)
 	}
 
-	urls, err := fileManager.SaveMessageFiles(photos, id, t, models.DataTypeDoc)
+	urls, err := fileManager.SaveMessageFiles(files, id, t, models.DataTypeDoc)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return

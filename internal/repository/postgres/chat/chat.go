@@ -3,6 +3,7 @@ package chat
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
@@ -10,13 +11,11 @@ import (
 
 func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRooms, error) {
 	var chatRooms models.ChatRooms
-	new := 0
+	var limitStr string
 	if limit == 0 {
-		new := "NULL"
-		new = new
+		limitStr = "NULL"
 	} else {
-		new := limit
-		new = new
+		limitStr = strconv.Itoa(limit)
 	}
 
 	rows, err := manager.Conn.Query(`WITH user_private_chats AS (
@@ -97,7 +96,7 @@ func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRoom
 			FROM combined_rooms
 			ORDER BY COALESCE(last_message_time, NOW()) DESC
 			LIMIT $2 OFFSET $3
-			`, userId, new, offset)
+			`, userId, limitStr, offset)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.ChatRooms{}, errors.ErrNoRooms
