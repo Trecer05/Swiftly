@@ -28,6 +28,11 @@ type Message struct {
     FileSize  *int64     `json:"file_size,omitempty"`
 }
 
+type UserRoom struct {
+    ID   int      `json:"id"`
+    Type ChatType `json:"type"`
+}
+
 type Status struct {
 	Type string `json:"type"`
 	User_ID int `json:"user_id"`

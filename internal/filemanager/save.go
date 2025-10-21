@@ -158,32 +158,35 @@ func SaveMessageFiles(files []*multipart.FileHeader, id int, chatType models.Cha
 	var urls []	string
 	var cht string
 	var dtp string
+	var folder string
 
 	switch chatType {
 	case models.TypePrivate:
-		dir = filepath.Join(userFolder, strconv.Itoa(id), "videos")
+		dir = filepath.Join(chatFolder, strconv.Itoa(id), "videos")
+		folder = chatFolder
 		cht = "chat"
 	case models.TypeGroup:
 		dir = filepath.Join(groupFolder, strconv.Itoa(id), "videos")
+		folder = groupFolder
 		cht = "group"
 	}
 
 	switch dataType {
 	case models.DataTypeAud:
-		dir = filepath.Join(userFolder, strconv.Itoa(id), "audios")
+		dir = filepath.Join(folder, strconv.Itoa(id), "audios")
 		dtp = "audio"
 	case models.DataTypeDoc:
-		dir = filepath.Join(userFolder, strconv.Itoa(id), "files")
+		dir = filepath.Join(folder, strconv.Itoa(id), "files")
 		dtp = "file"
 	case models.DataTypeImg:
-		dir = filepath.Join(userFolder, strconv.Itoa(id), "photos")
+		dir = filepath.Join(folder, strconv.Itoa(id), "photos")
 		dtp = "photo"
 	case models.DataTypeVid:
-		dir = filepath.Join(userFolder, strconv.Itoa(id), "videos")
+		dir = filepath.Join(folder, strconv.Itoa(id), "videos")
 		dtp = "video"
 	case models.DataTypeImgVid:
-		dir1 := filepath.Join(userFolder, strconv.Itoa(id), "photos")
-		dir2 := filepath.Join(userFolder, strconv.Itoa(id), "videos")
+		dir1 := filepath.Join(folder, strconv.Itoa(id), "photos")
+		dir2 := filepath.Join(folder, strconv.Itoa(id), "videos")
 		dtp1 := "photo"
 		dtp2 := "video"
 

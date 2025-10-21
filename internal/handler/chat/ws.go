@@ -243,7 +243,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 
 	chatType := models.TypePrivate
 
-	rds.AddUser(userId, chatId, conn, chatType)
+	rds.AddUser(userId, chatId, conn, chatType, mgr)
 	log.Println("User connected to chat", chatId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
@@ -265,7 +265,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	go rds.ListenPubSub(chatId, msgCh, statusCh, notifCh, chatType)
 
 	defer func() {
-		rds.RemoveUser(userId, chatId, chatType)
+		rds.RemoveUser(userId, chatId, chatType, mgr)
 	}()
 
 	go rds.SendLocalMessage(userId, chatId, msgCh, chatType)
@@ -305,7 +305,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 
 	chatType := models.TypeGroup
 
-	rds.AddUser(userId, groupId, conn, chatType)
+	rds.AddUser(userId, groupId, conn, chatType, mgr)
 	log.Println("User connected to chat", groupId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
@@ -327,7 +327,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	go rds.ListenPubSub(groupId, msgCh, statusCh, notifCh, chatType)
 
 	defer func() {
-		rds.RemoveUser(userId, groupId, chatType)
+		rds.RemoveUser(userId, groupId, chatType, mgr)
 	}()
 
 	go rds.SendLocalMessage(userId, groupId, msgCh, chatType)
@@ -378,8 +378,20 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 		}
 	}
 
-	go wsChat.SendAllUserMessages(conn, msgCh)
-	go wsChat.SendAllUserStatuses(conn, statusCh)
+	rds.WG.Add(3)
+	go func() {
+		defer rds.WG.Done()
+		wsChat.SendAllUserMessages(conn, msgCh)
+	}()
+	go func() {
+		defer rds.WG.Done()
+		wsChat.SendAllUserStatuses(conn, statusCh)
+	}()
+	go func() {
+		defer rds.WG.Done()
+		wsChat.SendAllUserNotifications(conn, notifCh)
+	}()
+	rds.WG.Wait()
 
 	conn.Close()
 	close(msgCh)

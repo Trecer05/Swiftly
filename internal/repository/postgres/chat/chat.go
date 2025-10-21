@@ -9,13 +9,60 @@ import (
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 )
 
+func (manager *Manager) GetUserRoomsForStatus(userId int) ([]models.UserRoom, error) {
+    var rooms []models.UserRoom
+    
+    rows, err := manager.Conn.Query(`
+        SELECT c.id, 'private' as type
+        FROM chats c
+        JOIN chat_users cu ON c.id = cu.chat_id
+        WHERE cu.user_id = $1`, userId)
+    if err != nil {
+        return rooms, err
+    }
+    defer rows.Close()
+    
+    for rows.Next() {
+        var room models.UserRoom
+        var roomType string
+        if err := rows.Scan(&room.ID, &roomType); err != nil {
+            continue
+        }
+        room.Type = models.ChatType(roomType)
+        rooms = append(rooms, room)
+    }
+    
+    groupRows, err := manager.Conn.Query(`
+        SELECT g.id, 'group' as type
+        FROM groups g
+        JOIN group_users gu ON g.id = gu.group_id
+        WHERE gu.user_id = $1`, userId)
+    if err != nil {
+        return rooms, err
+    }
+    defer groupRows.Close()
+    
+    for groupRows.Next() {
+        var room models.UserRoom
+        var roomType string
+        if err := groupRows.Scan(&room.ID, &roomType); err != nil {
+            continue
+        }
+        room.Type = models.ChatType(roomType)
+        rooms = append(rooms, room)
+    }
+    
+    return rooms, nil
+}
+
 func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRooms, error) {
 	var chatRooms models.ChatRooms
-	var limitStr string
+	var limitStr *string
 	if limit == 0 {
-		limitStr = "NULL"
+		limitStr = nil
 	} else {
-		limitStr = strconv.Itoa(limit)
+		strLimit := strconv.Itoa(limit)
+		limitStr = &strLimit
 	}
 
 	rows, err := manager.Conn.Query(`WITH user_private_chats AS (

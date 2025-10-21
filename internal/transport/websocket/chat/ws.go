@@ -147,6 +147,14 @@ func SendAllUserMessages(conn *websocket.Conn, msgCh <-chan models.Message) {
 	}
 }
 
+func SendAllUserNotifications(conn *websocket.Conn, notifCh <-chan models.Notifications) {
+	for notif := range notifCh {
+		if err := conn.WriteJSON(notif); err != nil {
+			log.Println("Failed to send notification:", err)
+		}
+	}
+}
+
 func SendAllUserStatuses(conn *websocket.Conn, statusCh <-chan models.Status) {
 	for status := range statusCh {
 		if err := conn.WriteJSON(status); err != nil {
