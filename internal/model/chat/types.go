@@ -6,6 +6,14 @@ import (
 	"net/http"
 )
 
+type EnvelopeType string
+
+const (
+	EnvelopeTypeMessage EnvelopeType = "message"
+	EnvelopeTypeNotification   EnvelopeType = "notification"
+	EnvelopeTypeStatus   EnvelopeType = "status"
+)
+
 type MessageType string
 
 const (

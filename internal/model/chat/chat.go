@@ -1,8 +1,14 @@
 package chat
 
 import (
+	"encoding/json"
 	"time"
 )
+
+type Envelope struct {
+	Type EnvelopeType `json:"type"`
+	Payload json.RawMessage `json:"payload"`
+}
 
 type Message struct {
 	ID     int    `json:"id"`
