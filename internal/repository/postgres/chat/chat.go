@@ -524,3 +524,44 @@ func (manager *Manager) getGroupMessageFiles(messageID int) ([]string, error) {
 
 	return fileURLs, nil
 }
+
+func (manager *Manager) UpdateGroup(id int, req models.GroupEdit) error {
+	switch {
+	case req.Name != nil && req.Description != nil:
+		if _, err := manager.Conn.Exec(`
+			UPDATE groups
+			SET name = $1, description = $2
+			WHERE id = $3`, req.Name, req.Description, id); err != nil {
+				if err == sql.ErrNoRows {
+					return errors.ErrNoGroupFound
+				}
+
+				return err
+			}
+		return nil
+	case req.Name != nil:
+		if _, err := manager.Conn.Exec(`
+			UPDATE groups
+			SET name = $1
+			WHERE id = $2`, req.Name, id); err != nil {
+				if err == sql.ErrNoRows {
+					return errors.ErrNoGroupFound
+				}
+
+				return err
+			}
+	case req.Description != nil:
+		if _, err := manager.Conn.Exec(`
+			UPDATE groups
+			SET description = $1
+			WHERE id = $2`, req.Description, id); err != nil {
+				if err == sql.ErrNoRows {
+					return errors.ErrNoGroupFound
+				}
+
+				return err
+			}
+	}
+	
+	return nil
+}

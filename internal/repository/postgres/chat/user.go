@@ -29,7 +29,8 @@ func (manager *Manager) GetGroupUsers(groupId int) ([]models.User, error) {
 			u.id, 
 			u.name, 
 			u.username, 
-			u.description
+			u.description,
+			u.avatar_url
 		FROM 
 			users u
 		JOIN 
@@ -47,7 +48,7 @@ func (manager *Manager) GetGroupUsers(groupId int) ([]models.User, error) {
 
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Name, &user.Username, &user.Description); err != nil {
+		if err := rows.Scan(&user.ID, &user.Name, &user.Username, &user.AvatarUrl, &user.Description); err != nil {
 			return nil, err
 		} else {
 			users = append(users, user)
@@ -107,5 +108,27 @@ func (manager *Manager) CreateUser(user models.RegisterUser, id int) (error) {
 	case err != nil:
 		return err
 	}
+	return nil
+}
+
+func (manager *Manager) EditProfileDescription(description string, userId int) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE users
+		SET description = $1
+		WHERE id = $2`, description, userId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) EditProfileName(name string, userId int) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE users
+		SET name = $1
+		WHERE id = $2`, name, userId); err != nil {
+		return err
+	}
+
 	return nil
 }

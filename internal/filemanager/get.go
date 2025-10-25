@@ -5,12 +5,14 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	fileErrors "github.com/Trecer05/Swiftly/internal/errors/file"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 )
 
 func GetFile(url string, id int, ct models.ChatType, ft models.DataType) ([]byte, string, error) {
+	url = filepath.Base(url)
 	var dir string
 
 	switch ct {
@@ -74,6 +76,7 @@ func GetDocs(id int, ct models.ChatType) ([]byte, string, error) {
 }
 
 func getPhoto(url string, dir string) ([]byte, string, error) {
+	url = filepath.Base(url)
 	dir = filepath.Join(dir, "photos", url)
 
 	file, err := os.ReadFile(dir)
@@ -87,6 +90,7 @@ func getPhoto(url string, dir string) ([]byte, string, error) {
 }
 
 func getVideo(url string, dir string) ([]byte, string, error) {
+	url = filepath.Base(url)
 	dir = filepath.Join(dir, "videos", url)
 
 	file, err := os.ReadFile(dir)
@@ -100,6 +104,7 @@ func getVideo(url string, dir string) ([]byte, string, error) {
 }
 
 func getAudio(url string, dir string) ([]byte, string, error) {
+	url = filepath.Base(url)
 	dir = filepath.Join(dir, "photos", url)
 
 	file, err := os.ReadFile(dir)
@@ -113,9 +118,106 @@ func getAudio(url string, dir string) ([]byte, string, error) {
 }
 
 func getDoc(url string, dir string) ([]byte, string, error) {
+	url = filepath.Base(url)
 	dir = filepath.Join(dir, "audios", url)
 
 	file, err := os.ReadFile(dir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileType := http.DetectContentType(file)
+	
+	return file, fileType, nil
+}
+
+func GetUserPhotosUrls(userId int) ([]string, error) {
+	userDir := filepath.Join(userFolder, strconv.Itoa(userId), "avatars")
+	var names []string
+
+	dir, err := os.ReadDir(userDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	for _, entry := range dir {
+		names = append(names, entry.Name())
+	}
+
+	return names, nil
+}
+
+func GetUserPhotoByUrl(userId int, url string) ([]byte, string, error) {
+	url = filepath.Base(url)
+	dir := filepath.Join(userFolder, strconv.Itoa(userId), "avatars", url)
+
+	file, err := os.ReadFile(dir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileType := http.DetectContentType(file)
+	
+	return file, fileType, nil
+}
+
+func GetLatestGroupAvatarUrl(groupId int) (string, error) {
+	dir := filepath.Join(groupFolder, strconv.Itoa(groupId), "avatars")
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	var latestFile string
+	var latestTime int64
+
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+
+		name := e.Name()
+		ext := strings.ToLower(filepath.Ext(name))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
+			continue
+		}
+
+		parts := strings.SplitN(name, "_", 2)
+		if len(parts) < 2 {
+			continue
+		}
+
+		timestamp, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		if timestamp > latestTime {
+			latestTime = timestamp
+			latestFile = name
+		}
+	}
+
+	if latestFile == "" {
+		return "", nil
+	}
+
+	return latestFile, nil
+}
+
+func GetGroupPhotoByUrl(groupId int, url string) ([]byte, string, error) {
+	url = filepath.Base(url)
+	photoUrl := filepath.Join(groupFolder, strconv.Itoa(groupId), "photos", url)
+
+	file, err := os.ReadFile(photoUrl)
 	if err != nil {
 		return nil, "", err
 	}

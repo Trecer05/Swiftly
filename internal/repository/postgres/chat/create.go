@@ -62,6 +62,11 @@ func (manager *Manager) DeleteGroup(groupId int) error {
 	return err
 }
 
+func (manager *Manager) DeleteChat(chatId int) error {
+    _, err := manager.Conn.Exec("DELETE FROM chats WHERE id = $1", chatId)
+	return err
+}
+
 func (manager *Manager) DeleteUsersFromGroup(users models.Users, groupId int) error {
 	tx, err := manager.Conn.Begin()
     if err != nil {

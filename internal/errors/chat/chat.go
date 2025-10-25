@@ -18,6 +18,8 @@ var (
 
 	ErrNoUser = errors.New("user not found")
 	ErrNoUsers = errors.New("no users found")
+
+	ErrNoData = errors.New("no data found")
 )
 
 var (

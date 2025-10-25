@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -158,7 +159,20 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 	log.Println("🎥 Creating peer connection")
 	config := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
-			{URLs: []string{"stun:stun.l.google.com:19302"}},
+			{
+				URLs: []string{os.Getenv("STUN1")},
+			},
+			{
+				URLs: []string{os.Getenv("STUN2")},
+			},
+			{
+				URLs: []string{
+					os.Getenv("TURN"),
+				},
+				Username:       os.Getenv("TURN_USER"),
+				Credential:     os.Getenv("TURN_PASSWORD"),
+				CredentialType: webrtc.ICECredentialTypePassword,
+			},
 		},
 	}
 	pc, err := webrtc.NewPeerConnection(config)

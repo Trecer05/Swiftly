@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(200) NOT NULL,
+    avatar_url TEXT,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );

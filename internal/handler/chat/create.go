@@ -8,9 +8,9 @@ import (
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	globalErrors "github.com/Trecer05/Swiftly/internal/errors/global"
+	fileManager "github.com/Trecer05/Swiftly/internal/filemanager"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
-	fileManager "github.com/Trecer05/Swiftly/internal/filemanager"
 	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 
@@ -97,6 +97,12 @@ func DeleteGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 	}
 
 	err = fileManager.DeleteGroupPhoto(groupId)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	err = fileManager.DeleteGroupFiles(groupId)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
@@ -239,4 +245,59 @@ func ExitGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manag
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 	})
+}
+
+func DeleteChatHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	if err := mgr.DeleteChat(id); err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	err = fileManager.DeleteChatFiles(id)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
+
+func UpdateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	var req models.GroupEdit
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	id, err := serviceChat.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	err = mgr.UpdateGroup(id, req)
+	switch err {
+	case chatErrors.ErrNoGroupFound:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case nil:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "ok",
+		})
+		return
+	default:
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
 }

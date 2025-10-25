@@ -54,6 +54,34 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
 
+	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		EditProfileHandler(w, r, mgr)
+	}).Methods(http.MethodPut)
+
+	apiSecure.HandleFunc("/user/avatar/urls", func(w http.ResponseWriter, r *http.Request) {
+		GetProfileAvatarUrlsHandler(w, r)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/user/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetProfileAvatarHandler(w, r)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/user/{id}/avatar/urls", func(w http.ResponseWriter, r *http.Request) {
+		GetUserAvatarUrlsHandler(w, r)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/user/{id}/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetUserAvatarHandler(w, r)
+	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/user/avatar", func(w http.ResponseWriter, r *http.Request) {
+		UploadProfileAvatarHandler(w, r)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/user/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
+		DeleteProfileAvatarHandler(w, r)
+	}).Methods(http.MethodDelete)
+
 	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
 		ChatHandler(w, r, redis, mgr)
 	})
@@ -71,7 +99,31 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	}).Methods(http.MethodPost)
 
 	apiSecure.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
+		UpdateGroupHandler(w, r, mgr)
+	}).Methods(http.MethodPut)
+
+	apiSecure.HandleFunc("/group/{id}/avatar", func(w http.ResponseWriter, r *http.Request) {
+		GetGroupAvatarUrlHandler(w, r)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetGroupAvatarHandler(w, r)
+	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/group/{id}/avatar", func(w http.ResponseWriter, r *http.Request) {
+		UploadGroupAvatarHandler(w, r)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
+		DeleteGroupAvatarHandler(w, r)
+	}).Methods(http.MethodDelete)
+
+	apiSecure.HandleFunc("/group/{id}", func(w http.ResponseWriter, r *http.Request) {
 		DeleteGroupHandler(w, r, mgr)
+	}).Methods(http.MethodDelete)
+
+	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
+		DeleteChatHandler(w, r, mgr)
 	}).Methods(http.MethodDelete)
 
 	apiSecure.HandleFunc("/group/{id}/users", func(w http.ResponseWriter, r *http.Request) {
@@ -273,6 +325,8 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	go rds.SendLocalNotification(userId, chatId, notifCh, chatType)
 	wsChat.ReadMessage(chatId, conn, rds, mgr, chatType)
 
+	conn.Close()
+	close(notifCh)
 	close(msgCh)
 	close(statusCh)
 }
@@ -335,6 +389,8 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	go rds.SendLocalNotification(userId, groupId, notifCh, chatType)
 	wsChat.ReadMessage(groupId, conn, rds, mgr, chatType)
 
+	conn.Close()
+	close(notifCh)
 	close(msgCh)
 	close(statusCh)
 }
@@ -394,6 +450,7 @@ func MainConnectionHandler(w http.ResponseWriter, r *http.Request, rds *redis.Ma
 	rds.WG.Wait()
 
 	conn.Close()
+	close(notifCh)
 	close(msgCh)
 	close(statusCh)
 }

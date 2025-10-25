@@ -15,3 +15,13 @@ type ChatCreate struct {
 	UserSender string `json:"user_sender"`
 	UserReceiver string `json:"user_receiver"`
 }
+
+type ProfileEdit struct {
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type GroupEdit struct {
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
