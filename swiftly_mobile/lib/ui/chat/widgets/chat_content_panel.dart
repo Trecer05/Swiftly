@@ -19,7 +19,7 @@ class ChatContentPanel extends StatelessWidget {
     if (selectedChat == null) {
       return Expanded(
         child: Container(
-          decoration: _blueGradient(),
+          color: Color(0xBF080808),
           child: Center(
             child: Text(
               'Выберите чат слева',
@@ -35,27 +35,38 @@ class ChatContentPanel extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: _blueGradient(opacity: 0.3),
+            color: Color(0x01080808),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  selectedChat!.name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                Expanded(
+                  child: Text(
+                    selectedChat!.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.search, color: Colors.white, size: 16,),
+                      icon: const Icon(Icons.search, color: Colors.white, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                       onPressed: () {},
                     ),
                     IconButton(
-                      icon: Icon(Icons.call, color: Colors.white, size: 16,),
+                      icon: const Icon(Icons.call, color: Colors.white, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                       onPressed: () {},
                     ),
                     IconButton(
-                      icon: Image.asset('assets/chat_bar_icon.png', color: Colors.white, width: 16,),
-                      onPressed: onInfoPressed
+                      icon: Image.asset('assets/chat_bar_icon.png', color: Colors.white, width: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      onPressed: onInfoPressed,
                     ),
                     ChatPopupMenu(
                       onEdit: () => onMenuPressed('edit'),
@@ -63,13 +74,13 @@ class ChatContentPanel extends StatelessWidget {
                       onDelete: () => onMenuPressed('delete'),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),
           Expanded(
             child: Container(
-              decoration: _blueGradient(opacity: 0.15),
+              color: Color(0xBF080808),
               child: Center(
                 child: Text(
                   'Напишите первое сообщение',
@@ -79,42 +90,35 @@ class ChatContentPanel extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: _blueGradient(opacity: 0.25),
-            child: Row(
-              children: [
-                IconButton(icon: const Icon(Icons.attach_file, color: Colors.white), onPressed: () {}),
-                const Expanded(
-                  child: TextField(
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Сообщение...',
-                      hintStyle: TextStyle(color: Colors.white70),
-                      border: InputBorder.none,
+            color: Color(0xBF080808), // фон темы за плашкой
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Color(0x06FFFFFF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  IconButton(icon: const Icon(Icons.attach_file, color: Colors.white), onPressed: () {}),
+                  const Expanded(
+                    child: TextField(
+                      style: TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Сообщение...',
+                        hintStyle: TextStyle(color: Colors.white70),
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
-                ),
-                IconButton(icon: const Icon(Icons.send, color: Colors.white), onPressed: () {}),
-              ],
+                  IconButton(icon: const Icon(Icons.send, color: Colors.white), onPressed: () {}),
+                ],
+              ),
             ),
-          ),
+          )
         ],
-      ),
-    );
-  }
-
-  BoxDecoration _blueGradient({double opacity = 0.2}) {
-    return BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          Colors.blue.shade900.withOpacity(opacity),
-          Colors.blue.shade700.withOpacity(opacity - 0.05),
-          Colors.blue.shade600.withOpacity(opacity - 0.07),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
       ),
     );
   }
 }
-

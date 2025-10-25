@@ -13,6 +13,18 @@ class ChatMenuPanel extends StatefulWidget {
 class _ChatMenuPanelState extends State<ChatMenuPanel> {
   int selectedChatIndex = -1;
 
+  static const double expandedWidth = 300;
+  static const double collapsedWidth = 80;
+  bool isCollapsed = false;
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    if (details.delta.dx < -6) {
+      if (!isCollapsed) setState(() => isCollapsed = true);
+    } else if (details.delta.dx > 6) {
+      if (isCollapsed) setState(() => isCollapsed = false);
+    }
+  }
+
   final List<ChatItem> pinnedChats = [
     ChatItem(
       name: 'Иван Дернов',
@@ -41,94 +53,115 @@ class _ChatMenuPanelState extends State<ChatMenuPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width;
-    final bool isCollapsed = width < 900; 
+    final double screenWidth = MediaQuery.of(context).size.width;
 
     return ClipRRect(
       borderRadius: BorderRadius.zero,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: isCollapsed ? 80 : 300,
-          padding: const EdgeInsets.only(top: 20),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xAA0D1B3B),
-                Color(0xAA0B1730),
-                Color(0x66081824),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isCollapsed)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Главная',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              if (!isCollapsed) const SizedBox(height: 12),
-
-              if (!isCollapsed)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Поиск',
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
-                      filled: true,
-                      fillColor: Colors.black26,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+        child: Stack(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOut,
+              width: isCollapsed ? collapsedWidth : expandedWidth,
+              padding: const EdgeInsets.only(top: 20),
+              decoration: const BoxDecoration(
+                color: Color(0x8C080808),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isCollapsed)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Главная',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white),
+                    ),
+                  if (!isCollapsed) const SizedBox(height: 12),
+
+                  if (!isCollapsed)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Поиск',
+                          hintStyle: TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.black26,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  if (!isCollapsed) const SizedBox(height: 12),
+
+                  if (!isCollapsed && pinnedChats.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Text(
+                        'ЗАКРЕПЛЕННЫЕ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  ...pinnedChats.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final chat = entry.value;
+                    return _buildChatItem(chat, i, isCollapsed, isPinned: true);
+                  }),
+
+                  if (!isCollapsed && allChats.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Text(
+                        'ВСЕ ЧАТЫ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: isCollapsed ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 8),
+                      itemExtent: isCollapsed ? (collapsedWidth * 0.6 + 16) : null,
+                      itemCount: allChats.length,
+                      itemBuilder: (context, index) {
+                        return _buildChatItem(
+                          allChats[index],
+                          index + pinnedChats.length,
+                          isCollapsed,
+                        );
+                      },
                     ),
                   ),
-                ),
-              if (!isCollapsed) const SizedBox(height: 20),
+                ],
+              ),
+            ),
 
-              if (!isCollapsed && pinnedChats.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    'ЗАКРЕПЛЕННЫЕ',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ),
-              ...pinnedChats.asMap().entries.map((entry) {
-                final i = entry.key;
-                final chat = entry.value;
-                return _buildChatItem(chat, i, isCollapsed, isPinned: true);
-              }),
-
-              if (!isCollapsed && allChats.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    'ВСЕ ЧАТЫ',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: allChats.length,
-                  itemBuilder: (context, index) {
-                    return _buildChatItem(
-                        allChats[index], index + pinnedChats.length, isCollapsed);
+            // Хэндл для ресайза справа
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeLeftRight,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragUpdate: _onDragUpdate,
+                  onDoubleTap: () {
+                    setState(() {
+                      isCollapsed = !isCollapsed;
+                    });
                   },
+                  child: const SizedBox(width: 8),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -144,21 +177,40 @@ class _ChatMenuPanelState extends State<ChatMenuPanel> {
         widget.onChatSelected?.call(index);
       },
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: isCollapsed ? 8 : 12, vertical: 4),
-        padding: EdgeInsets.all(isCollapsed ? 8 : 12),
+        width: double.infinity,
         decoration: BoxDecoration(
           color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: isCollapsed ? 16 : 20,
-              backgroundColor: chat.avatarColor ?? Colors.grey.shade700,
-              child: chat.avatarColor == null
-                  ? Text(chat.name[0], style: const TextStyle(color: Colors.white))
-                  : null,
-            ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isCollapsed ? collapsedWidth * 0.2 : 12,
+            vertical: isCollapsed ? 8 : 12,
+          ),
+          child: Row(
+            children: [
+            if (isCollapsed)
+              SizedBox(
+                width: collapsedWidth * 0.6,
+                height: collapsedWidth * 0.6,
+                child: Center(
+                  child: CircleAvatar(
+                    radius: (collapsedWidth * 0.6) / 2,
+                    backgroundColor: chat.avatarColor ?? Colors.grey.shade700,
+                    child: chat.avatarColor == null
+                        ? Text(chat.name[0], style: const TextStyle(color: Colors.white))
+                        : null,
+                  ),
+                ),
+              )
+            else
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: chat.avatarColor ?? Colors.grey.shade700,
+                child: chat.avatarColor == null
+                    ? Text(chat.name[0], style: const TextStyle(color: Colors.white))
+                    : null,
+              ),
             if (!isCollapsed) ...[
               const SizedBox(width: 10),
               Expanded(
@@ -219,7 +271,8 @@ class _ChatMenuPanelState extends State<ChatMenuPanel> {
                 ],
               ),
             ]
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 const BoxDecoration kChatBackground = BoxDecoration(
   gradient: LinearGradient(
@@ -26,8 +27,19 @@ class MobileChatPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(toolbarHeight: 0),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+      ),
       body: Container(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         decoration: kChatBackground,
         child: Column(
           children: [
@@ -47,6 +59,8 @@ class MobileChatPage extends StatelessWidget {
             const SizedBox(height: 6),
             Expanded(
               child: ListView.builder(
+                padding: EdgeInsets.zero,
+                primary: false,
                 itemCount: chats.length,
                 itemBuilder: (context, i) {
                   final c = chats[i];
@@ -136,8 +150,13 @@ class MobileChatThreadScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(CupertinoIcons.back, color: Color(0x80FFFFFF),),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -174,7 +193,7 @@ class MobileChatThreadScreen extends StatelessWidget {
                     'в сети',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(.6),
+                      color: Colors.white.withOpacity(0.6),
                       height: 1.2,
                     ),
                   ),
@@ -183,17 +202,22 @@ class MobileChatThreadScreen extends StatelessWidget {
             ],
           ),
         ),
-        backgroundColor: const Color(0x0FFFFFFF),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: kChatBackground),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
           const Padding(
             padding: EdgeInsets.only(right: 4),
-            child: Icon(CupertinoIcons.phone),
+            child: Icon(CupertinoIcons.phone, color: Color(0x80FFFFFF),),
           ),
           PopupMenuButton<_ChatMenuAction>(
-            icon: const Icon(CupertinoIcons.ellipsis_vertical),
+            icon: const Icon(CupertinoIcons.ellipsis_vertical, color: Color(0x80FFFFFF),),
+            color: const Color(0xFF171B2A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             onSelected: (value) {
               switch (value) {
                 case _ChatMenuAction.edit:
@@ -213,18 +237,27 @@ class MobileChatThreadScreen extends StatelessWidget {
                   break;
               }
             },
-            itemBuilder: (context) => const [
+            itemBuilder: (context) => [
               PopupMenuItem(
                 value: _ChatMenuAction.edit,
-                child: Text('Редактировать'),
+                child: Row(children: [
+                  Icon(Icons.edit, size: 18, color: Colors.white,), 
+                  Text('Редактировать', style: TextStyle(color: Colors.white)),
+                ],)
               ),
               PopupMenuItem(
                 value: _ChatMenuAction.block,
-                child: Text('Заблокировать'),
+                child: Row(children: [
+                  Icon(Icons.block, size: 18, color: Colors.white,),
+                  Text('Заблокировать чат', style: TextStyle(color: Colors.white)),
+                ],),
               ),
               PopupMenuItem(
                 value: _ChatMenuAction.delete,
-                child: Text('Удалить чат'),
+                child: Row(children: [
+                  Icon(Icons.delete, size: 18, color: Colors.red,),
+                  Text('Удалить чат', style: TextStyle(color: Colors.red)),
+                ],),
               ),
             ],
           ),
@@ -315,6 +348,7 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color(0xFF171B2A),
@@ -336,47 +370,40 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0x22FFFFFF))),
-          color: Color(0xFF0F1320),
-        ),
-        child: Row(
-          children: [
-            IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.paperclip)),
-            Expanded(
-              child: TextField(
-                minLines: 1,
-                maxLines: 4,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Сообщение...',
-                  filled: true,
-                  fillColor: const Color(0xFF171B2A),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: SafeArea(
+        bottom: false,
+        minimum: const EdgeInsets.symmetric(horizontal: 0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0x06FFFFFF),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.attach_file, color: Colors.white),
+                onPressed: () {},
+              ),
+              const Expanded(
+                child: TextField(
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Сообщение...',
+                    hintStyle: TextStyle(color: Colors.white70),
+                    border: InputBorder.none,
                   ),
-                  suffixIcon:
-                      IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.smiley)),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E63F6),
-                borderRadius: BorderRadius.circular(14),
+              IconButton(
+                icon: const Icon(Icons.send, color: Colors.white),
+                onPressed: () {},
               ),
-              child: IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.arrow_up)),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -407,10 +434,16 @@ class _MobileChatProfileScreenState extends State<MobileChatProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(CupertinoIcons.back, color: Colors.white,),
           onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: const Color(0x0FFFFFFF),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: kChatBackground),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -498,7 +531,7 @@ class _MobileChatProfileScreenState extends State<MobileChatProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    const Icon(CupertinoIcons.bell, size: 18),
+                    const Icon(CupertinoIcons.bell, size: 18, color: Colors.white,),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
@@ -593,7 +626,7 @@ class _SquareActionButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18),
+            Icon(icon, size: 18, color: Colors.white,),
             const SizedBox(width: 8),
             Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
           ],

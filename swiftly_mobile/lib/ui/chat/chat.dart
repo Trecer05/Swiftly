@@ -50,7 +50,6 @@ class _ChatScreenDesktopState extends State<ChatScreenDesktop> {
 
   @override
   Widget build(BuildContext context) {
-    const double menuWidth = 300;
     const double rightPanelWidth = 300;
 
     return Scaffold(
@@ -58,7 +57,6 @@ class _ChatScreenDesktopState extends State<ChatScreenDesktop> {
       body: Row(
         children: [
           SizedBox(
-            width: menuWidth,
             child: ChatMenuPanel(
               onChatSelected: (index) {
                 final all = [..._pinnedChats, ..._allChats];
