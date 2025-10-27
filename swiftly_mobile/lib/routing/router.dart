@@ -38,21 +38,9 @@ final GoRouter router = GoRouter(
           },
         ),
         GoRoute(
-          path: Routers.code,
-          builder: (BuildContext context, GoRouterState state) {
-            return const CodeScreen();
-          },
-        ),
-        GoRoute(
           path: Routers.cloud,
           builder: (BuildContext context, GoRouterState state) {
             return const CloudScreen();
-          },
-        ),
-        GoRoute(
-          path: Routers.figma,
-          builder: (BuildContext context, GoRouterState state) {
-            return const FigmaScreen();
           },
         ),
         GoRoute(

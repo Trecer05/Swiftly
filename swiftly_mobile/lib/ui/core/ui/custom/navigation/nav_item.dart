@@ -5,9 +5,7 @@ import '../../../../../routing/routers.dart';
 enum NavItem {
   home(Routers.home, Icons.home, 'Главная'),
   chat(Routers.chat, Icons.chat, 'Чат'),
-  code(Routers.code, Icons.code, 'Код'),
   cloud(Routers.cloud, Icons.cloud, 'Облако'),
-  figma(Routers.figma, Icons.pan_tool, 'Фигма'),
   board(Routers.board, Icons.task, 'Задачи'),
   settings(Routers.settings, Icons.settings, 'Настройки');
 
