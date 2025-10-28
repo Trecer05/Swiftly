@@ -352,14 +352,16 @@ func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadProfileAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	if err := fileManager.AddUserPhoto(r, r.Context().Value("id").(int)); err != nil {
+	var url string
+	var err error
+	if url, err = fileManager.AddUserPhoto(r, r.Context().Value("id").(int)); err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "ok",
+		"url": url,
 	})
 }
 
@@ -437,14 +439,15 @@ func UploadGroupAvatarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := fileManager.AddGroupPhoto(r, id); err != nil {
+	url, err := fileManager.AddGroupPhoto(r, id)
+	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "ok",
+		"url": url,
 	})
 }
 
@@ -464,5 +467,99 @@ func DeleteGroupAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
+	})
+}
+
+func GetAudioMessageHandler(w http.ResponseWriter, r *http.Request, chatType models.ChatType) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	url := vars["url"]
+
+	file, fileType, err := fileManager.GetAudioMessageByUrl(id, url, chatType)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	if file == nil {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrNoPhotos, http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", fileType)
+	if _, err := w.Write(file); err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func SaveAudioMessageHandler(w http.ResponseWriter, r *http.Request, chatType models.ChatType) {
+	id, err := service.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	url, err := fileManager.AddAudioMessage(r, id, chatType)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"url": url,
+	})
+}
+
+func GetVideoMessageHandler(w http.ResponseWriter, r *http.Request, chatType models.ChatType) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	url := vars["url"]
+
+	file, fileType, err := fileManager.GetVideoMessageByUrl(id, url, chatType)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	if file == nil {
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrNoPhotos, http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", fileType)
+	if _, err := w.Write(file); err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func SaveVideoMessageHandler(w http.ResponseWriter, r *http.Request, chatType models.ChatType) {
+	id, err := service.GetIdFromVars(r)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	url, err := fileManager.AddVideoMessage(r, id, chatType)
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"url": url,
 	})
 }

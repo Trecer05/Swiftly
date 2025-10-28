@@ -20,6 +20,8 @@ type Message struct {
 	Author Client    `json:"author"`
 	Time   time.Time `json:"time"`
 	Edited bool `json:"edited"`
+	AudioMessageURL *string `json:"audio_message_url,omitempty"`
+	VideoMessageURL *string `json:"video_message_url,omitempty"`
 	FileURL   *string    `json:"file_url,omitempty"`
 	FileUrls  []string `json:"file_urls,omitempty"`
     FileName  *string    `json:"file_name,omitempty"`

@@ -56,8 +56,9 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 		return
 	}
 
+	var url string
 	if _, _, err := r.FormFile("photo"); err == nil {
-        if err := fileManager.AddGroupPhoto(r, id); err != nil {
+        if url, err = fileManager.AddGroupPhoto(r, id); err != nil {
             serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
             return
         }
@@ -72,6 +73,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 		"group": map[string]interface{}{
 			"id":   id,
 			"name": group.Name,
+			"url": url,
 		},
 	})
 }

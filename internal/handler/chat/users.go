@@ -34,8 +34,9 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		return
 	}
 
+	var url string
 	if _, _, err := r.FormFile("photo"); err == nil {
-        if err := fileManager.AddUserPhoto(r, id); err != nil {
+        if url, err = fileManager.AddUserPhoto(r, id); err != nil {
             serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
             return
         }
@@ -52,7 +53,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "ok",
+		"url": url,
 	})
 }
 

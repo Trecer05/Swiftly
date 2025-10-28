@@ -17,15 +17,17 @@ const (
 type MessageType string
 
 const (
-	Typing      MessageType = "typing"
-	StopTyping  MessageType = "stop_typing"
-	Default     MessageType = "message"
-	WithFiles   MessageType = "with_files"
-	LastMessage MessageType = "last_message"
-	Read        MessageType = "read"
-	Delete      MessageType = "delete"
-	Update      MessageType = "update"
-	Call        MessageType = "call"
+	Typing       MessageType = "typing"
+	StopTyping   MessageType = "stop_typing"
+	Default      MessageType = "message"
+	WithFiles    MessageType = "with_files"
+	AudioMessage MessageType = "audio_message"
+	VideoMessage MessageType = "videoo_message"
+	LastMessage  MessageType = "last_message"
+	Read         MessageType = "read"
+	Delete       MessageType = "delete"
+	Update       MessageType = "update"
+	Call         MessageType = "call"
 )
 
 type NotificationType string

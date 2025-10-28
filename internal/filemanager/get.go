@@ -17,9 +17,9 @@ func GetFile(url string, id int, ct models.ChatType, ft models.DataType) ([]byte
 
 	switch ct {
 	case models.TypePrivate:
-		dir = filepath.Join(groupFolder, strconv.Itoa(id))
+		dir = filepath.Join(chatFolder, strconv.Itoa(id))
 	case models.TypeGroup:
-		dir = filepath.Join(userFolder, strconv.Itoa(id))
+		dir = filepath.Join(groupFolder, strconv.Itoa(id))
 	}
 
 	switch ft {
@@ -42,9 +42,9 @@ func GetMedias(id int, ct models.ChatType) ([]string, error) {
 
 	switch ct {
 	case models.TypePrivate:
-		dir = filepath.Join(groupFolder, strconv.Itoa(id))
+		dir = filepath.Join(chatFolder, strconv.Itoa(id))
 	case models.TypeGroup:
-		dir = filepath.Join(userFolder, strconv.Itoa(id))
+		dir = filepath.Join(groupFolder, strconv.Itoa(id))
 	}
 
 	photoDir := filepath.Join(dir, "photos")
@@ -71,64 +71,46 @@ func GetMedias(id int, ct models.ChatType) ([]string, error) {
 }
 
 func GetDocs(id int, ct models.ChatType) ([]byte, string, error) {
-
 	return nil, "", fileErrors.ErrFilesNotFound
+}
+
+func getFileHelper(url string, dir string) ([]byte, string, error) {
+	file, err := os.ReadFile(dir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileType := http.DetectContentType(file)
+	
+	return file, fileType, nil
 }
 
 func getPhoto(url string, dir string) ([]byte, string, error) {
 	url = filepath.Base(url)
 	dir = filepath.Join(dir, "photos", url)
 
-	file, err := os.ReadFile(dir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileType := http.DetectContentType(file)
-	
-	return file, fileType, nil
+	return getFileHelper(url, dir)
 }
 
 func getVideo(url string, dir string) ([]byte, string, error) {
 	url = filepath.Base(url)
 	dir = filepath.Join(dir, "videos", url)
 
-	file, err := os.ReadFile(dir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileType := http.DetectContentType(file)
-	
-	return file, fileType, nil
+	return getFileHelper(url, dir)
 }
 
 func getAudio(url string, dir string) ([]byte, string, error) {
 	url = filepath.Base(url)
-	dir = filepath.Join(dir, "photos", url)
+	dir = filepath.Join(dir, "audios", url)
 
-	file, err := os.ReadFile(dir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileType := http.DetectContentType(file)
-	
-	return file, fileType, nil
+	return getFileHelper(url, dir)
 }
 
 func getDoc(url string, dir string) ([]byte, string, error) {
 	url = filepath.Base(url)
-	dir = filepath.Join(dir, "audios", url)
-
-	file, err := os.ReadFile(dir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileType := http.DetectContentType(file)
+	dir = filepath.Join(dir, "files", url)
 	
-	return file, fileType, nil
+	return getFileHelper(url, dir)
 }
 
 func GetUserPhotosUrls(userId int) ([]string, error) {
@@ -155,14 +137,7 @@ func GetUserPhotoByUrl(userId int, url string) ([]byte, string, error) {
 	url = filepath.Base(url)
 	dir := filepath.Join(userFolder, strconv.Itoa(userId), "avatars", url)
 
-	file, err := os.ReadFile(dir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileType := http.DetectContentType(file)
-	
-	return file, fileType, nil
+	return getFileHelper(url, dir)
 }
 
 func GetLatestGroupAvatarUrl(groupId int) (string, error) {
@@ -215,14 +190,23 @@ func GetLatestGroupAvatarUrl(groupId int) (string, error) {
 
 func GetGroupPhotoByUrl(groupId int, url string) ([]byte, string, error) {
 	url = filepath.Base(url)
-	photoUrl := filepath.Join(groupFolder, strconv.Itoa(groupId), "photos", url)
+	photoUrl := filepath.Join(groupFolder, strconv.Itoa(groupId), "avatars", url)
 
-	file, err := os.ReadFile(photoUrl)
-	if err != nil {
-		return nil, "", err
+	return getFileHelper(url, photoUrl)
+}
+
+func GetAudioMessageByUrl(id int, url string, chatType models.ChatType) ([]byte, string, error) {
+	if chatType == models.TypePrivate {
+		return getFileHelper(url, filepath.Join(chatFolder, strconv.Itoa(id), "messages", "audio", url))
+	} else {
+		return getFileHelper(url, filepath.Join(groupFolder, strconv.Itoa(id), "messages", "audio", url))
 	}
+}
 
-	fileType := http.DetectContentType(file)
-	
-	return file, fileType, nil
+func GetVideoMessageByUrl(id int, url string, chatType models.ChatType) ([]byte, string, error) {
+	if chatType == models.TypePrivate {
+		return getFileHelper(url, filepath.Join(chatFolder, strconv.Itoa(id), "messages", "video", url))
+	} else {
+		return getFileHelper(url, filepath.Join(groupFolder, strconv.Itoa(id), "messages", "video", url))
+	}
 }

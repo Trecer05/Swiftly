@@ -265,6 +265,38 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/group/{id}/call", func(w http.ResponseWriter, r *http.Request) {
 		HandleGroupCallConnection(w, r, redis)
 	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/message/audio", func(w http.ResponseWriter, r *http.Request) {
+		SaveAudioMessageHandler(w, r, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/message/audio/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetAudioMessageHandler(w, r, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/group/{id}/message/video", func(w http.ResponseWriter, r *http.Request) {
+		SaveVideoMessageHandler(w, r, models.TypeGroup)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/group/{id}/message/video/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetVideoMessageHandler(w, r, models.TypeGroup)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/message/audio", func(w http.ResponseWriter, r *http.Request) {
+		SaveAudioMessageHandler(w, r, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/message/audio/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetAudioMessageHandler(w, r, models.TypePrivate)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/chat/{id}/message/video", func(w http.ResponseWriter, r *http.Request) {
+		SaveVideoMessageHandler(w, r, models.TypePrivate)
+	}).Methods(http.MethodPost)
+
+	apiSecure.HandleFunc("/chat/{id}/message/video/{url}", func(w http.ResponseWriter, r *http.Request) {
+		GetVideoMessageHandler(w, r, models.TypePrivate)
+	}).Methods(http.MethodGet)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

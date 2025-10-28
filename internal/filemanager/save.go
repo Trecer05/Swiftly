@@ -19,56 +19,34 @@ var (
 	chatFolder = os.Getenv("CHATS_STORAGE")
 )
 
-func AddUserPhoto(r *http.Request, id int) error {
+func AddUserPhoto(r *http.Request, id int) (string, error) {
 	file, handler, err := r.FormFile("photo")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
 	uploadDir := filepath.Join(userFolder, strconv.Itoa(id), "avatars")
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
-		return err
+		return "", err
 	}
 
-	fileName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), handler.Filename)
-
-	dst, err := os.Create(filepath.Join(uploadDir, fileName))
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		return err
-	}
-	return nil
+	return saveFilesHelper(file, handler, uploadDir)
 }
 
-func AddGroupPhoto(r *http.Request, id int) error {
+func AddGroupPhoto(r *http.Request, id int) (string, error) {
 	file, handler, err := r.FormFile("photo")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
 	uploadDir := filepath.Join(groupFolder, strconv.Itoa(id), "avatars")
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
-		return err
+		return "", err
 	}
 
-	fileName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), handler.Filename)
-
-	dst, err := os.Create(filepath.Join(uploadDir, fileName))
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		return err
-	}
-	return nil
+	return saveFilesHelper(file, handler, uploadDir)
 }
 
 func CreateChatMessagesFolder(id int) error {
@@ -76,6 +54,9 @@ func CreateChatMessagesFolder(id int) error {
 	video := filepath.Join(chatFolder, strconv.Itoa(id), "videos")
 	audio := filepath.Join(chatFolder, strconv.Itoa(id), "audios")
 	files := filepath.Join(chatFolder, strconv.Itoa(id), "files")
+	messages := filepath.Join(chatFolder, strconv.Itoa(id), "messages")
+	aum := filepath.Join(messages, "audio")
+	vim := filepath.Join(messages, "video")
 
 	if err := os.MkdirAll(ph, os.ModePerm); err != nil {
 		if os.IsExist(err) {
@@ -102,6 +83,22 @@ func CreateChatMessagesFolder(id int) error {
 	}
 
 	if err := os.MkdirAll(files, os.ModePerm); err != nil {
+		if os.IsExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if err := os.MkdirAll(aum, os.ModePerm); err != nil {
+		if os.IsExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if err := os.MkdirAll(vim, os.ModePerm); err != nil {
 		if os.IsExist(err) {
 			return nil
 		} else {
@@ -117,6 +114,9 @@ func CreateGroupMessagesFolder(id int) error {
 	video := filepath.Join(groupFolder, strconv.Itoa(id), "videos")
 	audio := filepath.Join(groupFolder, strconv.Itoa(id), "audios")
 	files := filepath.Join(groupFolder, strconv.Itoa(id), "files")
+	messages := filepath.Join(groupFolder, strconv.Itoa(id), "messages")
+	aum := filepath.Join(messages, "audio")
+	vim := filepath.Join(messages, "video")
 
 	if err := os.MkdirAll(ph, os.ModePerm); err != nil {
 		if os.IsExist(err) {
@@ -143,6 +143,22 @@ func CreateGroupMessagesFolder(id int) error {
 	}
 
 	if err := os.MkdirAll(files, os.ModePerm); err != nil {
+		if os.IsExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if err := os.MkdirAll(aum, os.ModePerm); err != nil {
+		if os.IsExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if err := os.MkdirAll(vim, os.ModePerm); err != nil {
 		if os.IsExist(err) {
 			return nil
 		} else {
@@ -180,14 +196,14 @@ func SaveMessageFiles(files []*multipart.FileHeader, id int, chatType models.Cha
 		dtp = "file"
 	case models.DataTypeImg:
 		dir = filepath.Join(folder, strconv.Itoa(id), "photos")
-		dtp = "photo"
+		dtp = "img"
 	case models.DataTypeVid:
 		dir = filepath.Join(folder, strconv.Itoa(id), "videos")
 		dtp = "video"
 	case models.DataTypeImgVid:
 		dir1 := filepath.Join(folder, strconv.Itoa(id), "photos")
 		dir2 := filepath.Join(folder, strconv.Itoa(id), "videos")
-		dtp1 := "photo"
+		dtp1 := "img"
 		dtp2 := "video"
 
 		if err := os.MkdirAll(dir1, os.ModePerm); err != nil {
@@ -267,4 +283,59 @@ func SaveMessageFiles(files []*multipart.FileHeader, id int, chatType models.Cha
 	}
 
 	return urls, nil
+}
+
+func AddAudioMessage(r *http.Request, id int, chatType models.ChatType) (string, error) {
+	var dir string
+	switch chatType {
+	case models.TypePrivate:
+		dir = filepath.Join(chatFolder, strconv.Itoa(id), "messages", "audio")
+	case models.TypeGroup:
+		dir = filepath.Join(groupFolder, strconv.Itoa(id), "messages", "audio")
+	}
+
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	file, handler, err := r.FormFile("audio")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	return saveFilesHelper(file, handler, dir)
+}
+
+func AddVideoMessage(r *http.Request, id int, chatType models.ChatType) (string, error) {
+	var dir string
+	switch chatType {
+	case models.TypePrivate:
+		dir = filepath.Join(chatFolder, strconv.Itoa(id), "messages", "video")
+	case models.TypeGroup:
+		dir = filepath.Join(groupFolder, strconv.Itoa(id), "messages", "video")
+	}
+
+	file, handler, err := r.FormFile("video")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	return saveFilesHelper(file, handler, dir)
+}
+
+func saveFilesHelper(file multipart.File, handler *multipart.FileHeader, dir string) (string, error) {
+	fileName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), handler.Filename)
+
+	dst, err := os.Create(filepath.Join(dir, fileName))
+	if err != nil {
+		return "", err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", err
+	}
+	return fileName, nil
 }
