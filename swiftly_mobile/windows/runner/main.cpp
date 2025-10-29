@@ -9,14 +9,10 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  // Attach to console when present (e.g., 'flutter run') or create a
-  // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
     CreateAndAttachConsole();
   }
 
-  // Initialize COM, so that it is available for use in the library and/or
-  // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
@@ -32,27 +28,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (!window.Create(L"swiftly_mobile", origin, size)) {
     return EXIT_FAILURE;
   }
-  
-  // УДАЛЕНИЕ РАМКИ ОКНА - УЛУЧШЕННАЯ ВЕРСИЯ
+
   // Получаем HWND окна
   HWND hwnd = window.GetHandle();
-  
-  // Получаем текущий стиль окна
-  LONG style = GetWindowLong(hwnd, GWL_STYLE);
-  
-  // Убираем стандартную рамку
-  style = (style & ~WS_OVERLAPPEDWINDOW) | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
-  SetWindowLong(hwnd, GWL_STYLE, style);
-  
-  // КЛЮЧЕВОЙ МОМЕНТ: Отрицательные margins расширяют клиентскую область на ВСЁ окно
-  // Это убирает видимую DWM рамку полностью
+
+  // Расширяем клиентскую область на ВСЁ окно (включая DWM border)
   MARGINS margins = {-1, -1, -1, -1};
   DwmExtendFrameIntoClientArea(hwnd, &margins);
-  
-  // Применяем изменения
-  SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
-               SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
-  
+
   window.SetQuitOnClose(true);
 
   ::MSG msg;

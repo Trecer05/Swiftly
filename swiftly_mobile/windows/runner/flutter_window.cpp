@@ -111,14 +111,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
     case WM_NCCALCSIZE: {
       if (wparam) {
-        // Расширяем клиентскую область на весь размер окна
-        // Это убирает видимую рамку DWM
-        NCCALCSIZE_PARAMS* pncsp = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-        
-        // Просто расширяем область на весь размер окна
-        // Оставляем прямоугольник без изменений
-        
-        return WVR_REDRAW;
+        return 0;
       }
       break;
     }
@@ -134,4 +127,3 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
 }
-
