@@ -1,6 +1,8 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
+#include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
 
 #include "flutter_window.h"
 #include "utils.h"
@@ -30,6 +32,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (!window.Create(L"swiftly_mobile", origin, size)) {
     return EXIT_FAILURE;
   }
+  
+  // УДАЛЕНИЕ РАМКИ ОКНА - УЛУЧШЕННАЯ ВЕРСИЯ
+  // Получаем HWND окна
+  HWND hwnd = window.GetHandle();
+  
+  // Получаем текущий стиль окна
+  LONG style = GetWindowLong(hwnd, GWL_STYLE);
+  
+  // Убираем стандартную рамку
+  style = (style & ~WS_OVERLAPPEDWINDOW) | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
+  SetWindowLong(hwnd, GWL_STYLE, style);
+  
+  // КЛЮЧЕВОЙ МОМЕНТ: Отрицательные margins расширяют клиентскую область на ВСЁ окно
+  // Это убирает видимую DWM рамку полностью
+  MARGINS margins = {-1, -1, -1, -1};
+  DwmExtendFrameIntoClientArea(hwnd, &margins);
+  
+  // Применяем изменения
+  SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+               SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+  
   window.SetQuitOnClose(true);
 
   ::MSG msg;

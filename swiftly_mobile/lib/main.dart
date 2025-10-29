@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+import 'dart:io' show Platform;
 
 import 'domain/user/models/user.dart';
 import 'providers/current_user_provider.dart';
@@ -26,16 +27,36 @@ bool isDesktopPlatform() {
   }
 }
 
+// Проверка версии Windows (Windows 11 поддерживает acrylic без лагов)
+bool isWindows11() {
+  if (!Platform.isWindows) return false;
+  final version = Platform.operatingSystemVersion;
+  // Build 22000+ это Windows 11
+  return version.contains(RegExp(r'Build 2[2-9]\d{3}'));
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (isDesktopPlatform()) {
     try {
       await acrylic.Window.initialize();
-      await acrylic.Window.setEffect(
-        effect: WindowEffect.hudWindow,
-        color: Colors.transparent,
-      );
+      
+      // Применяем эффект в зависимости от платформы
+      if (Platform.isWindows) {
+        // Для Windows используем acrylic (размытие)
+        // На Windows 10 можно использовать aero вместо acrylic для избежания лагов
+        await acrylic.Window.setEffect(
+          effect: isWindows11() ? WindowEffect.acrylic : WindowEffect.aero,
+          color: const Color(0xCC000000)// Полупрозрачный чёрный фон с размытием
+        );
+      } else {
+        // Для macOS и Linux оставляем hudWindow
+        await acrylic.Window.setEffect(
+          effect: WindowEffect.hudWindow,
+          color: Colors.transparent,
+        );
+      }
 
       await windowManager.ensureInitialized();
       await windowManager.setMinimumSize(const Size(1000, 500));
@@ -84,3 +105,4 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
+
