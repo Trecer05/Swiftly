@@ -11,6 +11,8 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/pierrec/lz4/v4 v4.1.16 // indirect
 	github.com/pion/datachannel v1.5.10 // indirect
 	github.com/pion/dtls/v3 v3.0.7 // indirect
 	github.com/pion/ice/v4 v4.0.10 // indirect
@@ -40,5 +42,8 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/pion/webrtc/v4 v4.1.6
 	github.com/redis/go-redis/v9 v9.11.0
+	github.com/segmentio/kafka-go v0.4.49
+	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/crypto v0.39.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

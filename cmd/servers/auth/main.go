@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
 	env "github.com/Trecer05/Swiftly/internal/config/environment"
+	kafka "github.com/Trecer05/Swiftly/internal/repository/kafka/auth"
 	migrator "github.com/Trecer05/Swiftly/internal/repository/postgres"
 	mgr "github.com/Trecer05/Swiftly/internal/repository/postgres/auth"
 	server "github.com/Trecer05/Swiftly/internal/transport/http"
 	router "github.com/Trecer05/Swiftly/internal/transport/http/auth"
 )
+
+var ctx = context.Background()
 
 func main() {
 	if err := env.LoadEnvFile("./.env"); err != nil {
@@ -22,6 +26,10 @@ func main() {
 
 	migrator.Migrate(manager.Conn, "auth")
 	log.Println("DB migrated")
+
+	kfk := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
+
+	go kfk.ReadMessages(ctx, manager)
 
 	r := router.NewAuthRouter(manager)
 

@@ -1,8 +1,10 @@
 package chat
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	middleware "github.com/Trecer05/Swiftly/internal/handler"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
+	kafka "github.com/Trecer05/Swiftly/internal/repository/kafka/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
@@ -47,12 +50,18 @@ var upgrader = websocket.Upgrader{
     WriteBufferSize: 1024,
 }
 
+var ctx = context.Background()
+
 func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manager) {
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
+
+	kafkaManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
+
+	go kafkaManager.ReadMessages(ctx)
 
 	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
 		EditProfileHandler(w, r, mgr)
@@ -81,6 +90,18 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/user/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
 		DeleteProfileAvatarHandler(w, r)
 	}).Methods(http.MethodDelete)
+
+	apiSecure.HandleFunc("/user/email", func(w http.ResponseWriter, r *http.Request) {
+		EditUserEmailHandler(w, r, mgr, kafkaManager)
+	}).Methods(http.MethodPut)
+
+	apiSecure.HandleFunc("/user/phone", func(w http.ResponseWriter, r *http.Request) {
+		EditUserPhoneHandler(w, r, mgr, kafkaManager)
+	}).Methods(http.MethodPut)
+
+	apiSecure.HandleFunc("/user/password", func(w http.ResponseWriter, r *http.Request) {
+		EditUserPasswordHandler(w, r, mgr, kafkaManager)
+	}).Methods(http.MethodPut)
 
 	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
 		ChatHandler(w, r, redis, mgr)
