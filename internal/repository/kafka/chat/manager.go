@@ -90,61 +90,47 @@ func (km *KafkaManager) ReadMessages(ctx context.Context) {
 
         switch string(msg.Key) {
         case "password":
-            var envel models.Envelope
-            if err := json.Unmarshal(msg.Value, &envel); err != nil {
-                logger.Logger.Errorf("Error unmarshaling message: %v", err)
+            err := SendEnvel(ctx, km, "password", msg)
+            if err != nil {
+                logger.Logger.Errorf("Error sending envelope: %v", err)
                 continue
-            }
-
-            userID := *envel.UserID
-
-            km.mu.Lock()
-            ch, ok := km.responses[userID]
-            km.mu.Unlock()
-
-            if ok {
-                ch <- envel
-            } else {
-                logger.Logger.Warnf("No waiting channel for userID=%d", userID)
             }
         case "phone":
-            var envel models.Envelope
-            if err := json.Unmarshal(msg.Value, &envel); err != nil {
-                logger.Logger.Errorf("Error unmarshaling message: %v", err)
+            err := SendEnvel(ctx, km, "phone", msg)
+            if err != nil {
+                logger.Logger.Errorf("Error sending envelope: %v", err)
                 continue
-            }
-
-            userID := *envel.UserID
-
-            km.mu.Lock()
-            ch, ok := km.responses[userID]
-            km.mu.Unlock()
-
-            if ok {
-                ch <- envel
-            } else {
-                logger.Logger.Warnf("No waiting channel for userID=%d", userID)
             }
         case "email":
-            var envel models.Envelope
-            if err := json.Unmarshal(msg.Value, &envel); err != nil {
-                logger.Logger.Errorf("Error unmarshaling message: %v", err)
+            err := SendEnvel(ctx, km, "email", msg)
+            if err != nil {
+                logger.Logger.Errorf("Error sending envelope: %v", err)
                 continue
-            }
-
-            userID := *envel.UserID
-
-            km.mu.Lock()
-            ch, ok := km.responses[userID]
-            km.mu.Unlock()
-
-            if ok {
-                ch <- envel
-            } else {
-                logger.Logger.Warnf("No waiting channel for userID=%d", userID)
             }
         }
 	}
+}
+
+func SendEnvel(ctx context.Context, km *KafkaManager, key string, msg kafka.Message) error {
+    var envel models.Envelope
+    if err := json.Unmarshal(msg.Value, &envel); err != nil {
+        logger.Logger.Errorf("Error unmarshaling message: %v", err)
+        return err
+    }
+
+    userID := *envel.UserID
+
+    km.mu.Lock()
+    ch, ok := km.responses[userID]
+    km.mu.Unlock()
+
+    if ok {
+        ch <- envel
+    } else {
+        logger.Logger.Warnf("No waiting channel for userID=%d", userID)
+    }
+
+    return nil
 }
 
 func (km *KafkaManager) WaitForResponse(userID int, timeout time.Duration) (models.Envelope, error) {

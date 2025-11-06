@@ -64,14 +64,14 @@ func (km *KafkaManager) SendMessage(ctx context.Context, key string, value inter
     return nil
 }
 
-func (km *KafkaManager) ReadMessage(ctx context.Context) error {
+func (km *KafkaManager) ReadMessage(ctx context.Context) (*kafka.Message, error) {
     msg, err := km.Reader.ReadMessage(ctx)
     if err != nil {
-        return err
+        return nil, err
     }
 
     logger.Logger.Infof("Received message: key=%s value=%s", string(msg.Key), string(msg.Value))
-    return nil
+    return &msg, err
 }
 
 func (km *KafkaManager) ReadMessages(ctx context.Context, mgr *postgres.Manager) {
