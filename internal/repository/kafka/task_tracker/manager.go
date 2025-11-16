@@ -1,4 +1,4 @@
-package chat
+package task_tracker
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
 	models "github.com/Trecer05/Swiftly/internal/model/kafka"
+	mgr "github.com/Trecer05/Swiftly/internal/repository/postgres/task_tracker"
 	"github.com/segmentio/kafka-go"
 
 	"time"
@@ -68,74 +69,39 @@ func (km *KafkaManager) SendMessage(ctx context.Context, key string, value inter
     return nil
 }
 
-func (km *KafkaManager) ReadMessage(ctx context.Context) error {
-    msg, err := km.Reader.ReadMessage(ctx)
-    if err != nil {
-        return err
+func (km *KafkaManager) ReadChatMessages(ctx context.Context, manager *mgr.Manager) {
+    for {
+        msg, err := km.Reader.ReadMessage(ctx)
+        if err != nil {
+            logger.Logger.Errorf("Error reading message: %v", err)
+            return
+        }
+
+        switch string(msg.Key) {
+        case "dashboard":
+        	var req models.TasksGet
+         
+        	if err := json.Unmarshal(msg.Value, &req); err != nil {
+			    logger.Logger.Errorf("Error unmarshaling message: %v", err)
+			
+			    data, _ := json.Marshal(models.Error{Err: err})
+			
+			    km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+			    continue
+			}
+			
+			tasks, err := manager.GetUserTasks(req.UserID, req.ProjectID)
+			if err != nil {
+				logger.Logger.Errorf("Error getting tasks: %v", err)
+				data, _ := json.Marshal(models.Error{Err: err})
+				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+				continue
+			}
+			
+			data, _ := json.Marshal(tasks)
+			km.SendMessage(ctx, "tasks", models.Envelope{Type: "tasks", Payload: data})
+        }
     }
-
-    logger.Logger.Infof("Received message: key=%s value=%s", string(msg.Key), string(msg.Value))
-    return nil
-}
-
-func (km *KafkaManager) ReadAuthMessages(ctx context.Context) {
-	logger.Logger.Info("Starting to read messages")
-
-	for {
-		msg, err := km.Reader.ReadMessage(ctx)
-		if err != nil {
-			logger.Logger.Errorf("Error reading message: %v", err)
-			continue
-		}
-
-        switch string(msg.Key) {
-        case "password":
-            err := SendEnvel(ctx, km, "password", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "phone":
-            err := SendEnvel(ctx, km, "phone", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "email":
-            err := SendEnvel(ctx, km, "email", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        }
-	}
-}
-
-func (km *KafkaManager) ReadTaskMessages(ctx context.Context) {
-	logger.Logger.Info("Starting to read messages")
-
-	for {
-		msg, err := km.Reader.ReadMessage(ctx)
-		if err != nil {
-			logger.Logger.Errorf("Error reading message: %v", err)
-			continue
-		}
-
-        switch string(msg.Key) {
-        case "tasks":
-            err := SendEnvel(ctx, km, "tasks", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "error":
-            err := SendEnvel(ctx, km, "error", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        }
-	}
 }
 
 func SendEnvel(ctx context.Context, km *KafkaManager, key string, msg kafka.Message) error {

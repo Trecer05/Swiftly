@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"os"
 
 	env "github.com/Trecer05/Swiftly/internal/config/environment"
@@ -14,23 +14,23 @@ import (
 
 func main() {
 	if err := env.LoadEnvFile("./.env"); err != nil {
-		log.Fatalf("Ошибка загрузки env: %v", err)
+		logger.Logger.Fatalf("Ошибка загрузки env: %v", err)
 	}
-	log.Println("ENV loaded")
+	logger.Logger.Println("ENV loaded")
 
 	manager := mgr.NewChatManager("postgres", os.Getenv("DB_AUTH_CONNECTION_STRING"))
-	log.Println("DB connected")
+	logger.Logger.Println("DB connected")
 
 	rds := redis.NewChatManager(os.Getenv("CHAT_REDIS_CONNECTION_STRING"))
-	log.Println("Redis connected")
+	logger.Logger.Println("Redis connected")
 
 	migrator.Migrate(manager.Conn, "chat")
-	log.Println("DB migrated")
+	logger.Logger.Println("DB migrated")
 
 	r := router.NewChatRouter(manager, rds)
 
 	s := server.NewServer(os.Getenv("CHAT_SERVER_PORT"), r)
 	if err := s.ListenAndServe(); err != nil {
-		log.Fatal(err)
+		logger.Logger.Fatal(err)
 	}
 }

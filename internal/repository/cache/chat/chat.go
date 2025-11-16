@@ -2,7 +2,7 @@ package chat
 
 import (
 	"encoding/json"
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"strconv"
 
 	chat "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
@@ -27,7 +27,7 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, stat
         for msg := range ch {
             var m models.Message
             if err := json.Unmarshal([]byte(msg.Payload), &m); err != nil {
-                log.Println("Invalid pubsub message:", err)
+                logger.Logger.Println("Invalid pubsub message:", err)
                 continue
             }
             m.ChatID = chatId
@@ -42,7 +42,7 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, stat
         for msg := range notCh {
             var notif models.Notifications
             if err := json.Unmarshal([]byte(msg.Payload), &notif); err != nil {
-                log.Println("Invalid pubsub message:", err)
+                logger.Logger.Println("Invalid pubsub message:", err)
                 continue
             }
             notifCh <- notif
@@ -56,7 +56,7 @@ func (manager *Manager) ListenPubSub(chatId int, msgCh chan models.Message, stat
         for msg := range statusChSub {
             var status models.Status
             if err := json.Unmarshal([]byte(msg.Payload), &status); err != nil {
-                log.Println("Invalid status message:", err)
+                logger.Logger.Println("Invalid status message:", err)
                 continue
             }
             statusCh <- status
@@ -105,7 +105,7 @@ func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan mod
 		manager.MU.RUnlock()
 
 		if err := conn.WriteJSON(message); err != nil {
-			log.Println("write error:", err)
+			logger.Logger.Println("write error:", err)
 		}
 	}
 }
@@ -113,7 +113,7 @@ func (manager *Manager) SendLocalMessage(userId, chatId int, messages <-chan mod
 func (manager *Manager) SendToUser(chatId int, message models.Message, chatType models.ChatType) error {
 	data, err := json.Marshal(message)
 	if err != nil {
-		log.Println("Error marshalling message:", err)
+		logger.Logger.Println("Error marshalling message:", err)
 		return err
 	}
 
@@ -129,7 +129,7 @@ func (manager *Manager) SendNotificationToUser(chatId int, message models.Messag
 
 	data, err := json.Marshal(notif)
 	if err != nil {
-		log.Println("Error marshalling message:", err)
+		logger.Logger.Println("Error marshalling message:", err)
 		return err
 	}
 
@@ -144,7 +144,7 @@ func (manager *Manager) SendLocalNotification(userId, chatId int, notifications 
 		manager.MU.RUnlock()
 
 		if err := conn.WriteJSON(notif); err != nil {
-			log.Println("Notification write error:", err)
+			logger.Logger.Println("Notification write error:", err)
 			continue
 		}
 	}
@@ -157,7 +157,7 @@ func (manager *Manager) SendLocalStatus(userId, chatId int, statuses <-chan mode
 		manager.MU.RUnlock()
 
 		if err := conn.WriteJSON(status); err != nil {
-			log.Println("Status write error:", err)
+			logger.Logger.Println("Status write error:", err)
 		}
 	}
 }
@@ -177,7 +177,7 @@ func (manager *Manager) PublishUserStatus(userId int, online bool, userRooms []m
     for _, room := range userRooms {
         channel := string(room.Type) + ":" + strconv.Itoa(room.ID) + ":status"
         if err := manager.RDB.Publish(ctx, channel, data).Err(); err != nil {
-            log.Printf("Failed to publish status to room %d: %v", room.ID, err)
+            logger.Logger.Printf("Failed to publish status to room %d: %v", room.ID, err)
         }
     }
 
@@ -196,7 +196,7 @@ func (manager *Manager) CallSend(userId, chatId int, chatType models.ChatType) {
 			},
 			ChatID:  chatId,
 		}); err != nil {
-			log.Println("Error sending call:", err)
+			logger.Logger.Println("Error sending call:", err)
 		}
 	}
 }

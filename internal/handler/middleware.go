@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"net/http"
 	"strings"
 	"sync"
@@ -25,7 +25,7 @@ func AuthMiddleware() mux.MiddlewareFunc {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(map[string]string{"error": errors.ErrUnauthorized.Error()})
-				log.Println("Unauthorized request")
+				logger.Logger.Println("Unauthorized request")
 				return
 			}
 
@@ -34,7 +34,7 @@ func AuthMiddleware() mux.MiddlewareFunc {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{"error": "invalid authorization header format"})
-				log.Println("Invalid authorization header format")
+				logger.Logger.Println("Invalid authorization header format")
 				return
 			}
 			tokenString := parts[1]
@@ -44,14 +44,14 @@ func AuthMiddleware() mux.MiddlewareFunc {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrAccessTokenExpired.Error()})
-				log.Println("Invalid token:", err)
+				logger.Logger.Println("Invalid token:", err)
 				return
 			}
 			if !token.Valid {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(map[string]string{"error": "token is not valid"})
-				log.Println("Token is not valid")
+				logger.Logger.Println("Token is not valid")
 				return
 			}
 
@@ -62,7 +62,7 @@ func AuthMiddleware() mux.MiddlewareFunc {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(map[string]string{"error": tokenErrors.ErrAccessTokenExpired.Error()})
-					log.Println("Token expired")
+					logger.Logger.Println("Token expired")
 					return
 				}
 			}
@@ -72,7 +72,7 @@ func AuthMiddleware() mux.MiddlewareFunc {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(map[string]string{"error": "invalid token payload"})
-				log.Println("Invalid token payload")
+				logger.Logger.Println("Invalid token payload")
 				return
 			}
 			id := int(idFloat)

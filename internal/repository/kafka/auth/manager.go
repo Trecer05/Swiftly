@@ -74,7 +74,7 @@ func (km *KafkaManager) ReadMessage(ctx context.Context) (*kafka.Message, error)
     return &msg, err
 }
 
-func (km *KafkaManager) ReadMessages(ctx context.Context, mgr *postgres.Manager) {
+func (km *KafkaManager) ReadUserEditMessages(ctx context.Context, mgr *postgres.Manager) {
 	logger.Logger.Info("Starting to read messages")
 
 	for {

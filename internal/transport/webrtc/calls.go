@@ -3,7 +3,7 @@ package calls
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"os"
 	"sync"
 	"time"
@@ -17,26 +17,26 @@ import (
 )
 
 func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.CallsKey]*models.Room, room *models.Room, key models.CallsKey, currentPeerState *models.PeerState, roomsMutex *sync.RWMutex) *models.Room {
-	log.Printf("WS started for %s", currentPeerState.SessionID)
+	logger.Logger.Printf("WS started for %s", currentPeerState.SessionID)
 
 	for {
 		_, raw, err := currentPeerState.WS.ReadMessage()
 		if err != nil {
-			log.Printf("error reading message from %s: %v", currentPeerState.SessionID, err)
+			logger.Logger.Printf("error reading message from %s: %v", currentPeerState.SessionID, err)
 			break
 		}
 
-		log.Printf("[WS RECV %s] %s", currentPeerState.SessionID, string(raw)[:29])
+		logger.Logger.Printf("[WS RECV %s] %s", currentPeerState.SessionID, string(raw)[:29])
 
 		var msg models.SignalMessage
 		if err := json.Unmarshal(raw, &msg); err != nil {
-			log.Printf("invalid signal json from %s: %v", currentPeerState.SessionID, err)
+			logger.Logger.Printf("invalid signal json from %s: %v", currentPeerState.SessionID, err)
 			continue
 		}
 
 		switch msg.Type {	
 		case "join":
-			log.Printf("[%s] JOIN room=%d", currentPeerState.SessionID, msg.RoomID)
+			logger.Logger.Printf("[%s] JOIN room=%d", currentPeerState.SessionID, msg.RoomID)
 			roomsMutex.Lock()
 			if rooms[key] == nil {
 				rooms[key] = service.NewRoom()
@@ -47,11 +47,11 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 			pc, err := createPeerConnection(currentPeerState, userID, manager, chatID, roomsMutex, rooms, key)
 			if err != nil {
 				if err == errors.ErrorNoCallRoom {
-					log.Println("delete pc from room: ", chatID)
+					logger.Logger.Println("delete pc from room: ", chatID)
 					pc.Close()
 					return room
 				}
-				log.Printf("error creating PeerConnection for %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("error creating PeerConnection for %s: %v", currentPeerState.SessionID, err)
 				continue
 			}
 			currentPeerState.PeerConnection = pc
@@ -67,12 +67,12 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 				}
 				localTrack, err := webrtc.NewTrackLocalStaticRTP(pub.Codec, fmt.Sprintf("%s-copy-%s", trackID, currentPeerState.SessionID), pub.Remote.StreamID())
 				if err != nil {
-					log.Printf("error creating local copy track %s->%s: %v", trackID, currentPeerState.SessionID, err)
+					logger.Logger.Printf("error creating local copy track %s->%s: %v", trackID, currentPeerState.SessionID, err)
 					continue
 				}
 				sender, err := pc.AddTrack(localTrack)
 				if err != nil {
-					log.Printf("error adding local copy to pc for %s: %v", currentPeerState.SessionID, err)
+					logger.Logger.Printf("error adding local copy to pc for %s: %v", currentPeerState.SessionID, err)
 					continue
 				}
 				pub.Mu.Lock()
@@ -86,57 +86,57 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 			room.PubMutex.RUnlock()
 
 			if err := sendOffer(currentPeerState, chatID); err != nil {
-				log.Printf("error sending offer to %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("error sending offer to %s: %v", currentPeerState.SessionID, err)
 				continue
 			}
 		case "answer":
-			log.Printf("[%s] ANSWER received", currentPeerState.SessionID)
+			logger.Logger.Printf("[%s] ANSWER received", currentPeerState.SessionID)
 			var answer webrtc.SessionDescription
 			if err := json.Unmarshal(msg.Payload, &answer); err != nil {
-				log.Printf("invalid answer payload from %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("invalid answer payload from %s: %v", currentPeerState.SessionID, err)
 				continue
 			}
 			if currentPeerState.PeerConnection == nil {
-				log.Printf("received answer but PeerConnection == nil for %s", currentPeerState.SessionID)
+				logger.Logger.Printf("received answer but PeerConnection == nil for %s", currentPeerState.SessionID)
 				continue
 			}
 
 			if err := currentPeerState.PeerConnection.SetRemoteDescription(answer); err != nil {
-				log.Printf("error SetRemoteDescription for %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("error SetRemoteDescription for %s: %v", currentPeerState.SessionID, err)
 				continue
 			}
 			for _, c := range currentPeerState.PendingICE {
 				if err := currentPeerState.PeerConnection.AddICECandidate(c); err != nil {
-					log.Printf("failed to add buffered ICE for %s: %v", currentPeerState.SessionID, err)
+					logger.Logger.Printf("failed to add buffered ICE for %s: %v", currentPeerState.SessionID, err)
 				}
 			}
 			currentPeerState.PendingICE = nil
-			log.Printf("Answer applied for %s", currentPeerState.SessionID)
+			logger.Logger.Printf("Answer applied for %s", currentPeerState.SessionID)
 		case "ice":
 			var candidate webrtc.ICECandidateInit
 			if err := json.Unmarshal(msg.Payload, &candidate); err != nil {
-				log.Printf("invalid ice payload from %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("invalid ice payload from %s: %v", currentPeerState.SessionID, err)
 				continue
 			}
 			
 			if currentPeerState.PeerConnection == nil {
 				currentPeerState.PendingICE = append(currentPeerState.PendingICE, candidate)
-				log.Printf("ICE buffered (no PC) for %s", currentPeerState.SessionID)
+				logger.Logger.Printf("ICE buffered (no PC) for %s", currentPeerState.SessionID)
 				continue
 			}
 
 			if currentPeerState.PeerConnection.RemoteDescription() == nil {
 				currentPeerState.PendingICE = append(currentPeerState.PendingICE, candidate)
-				log.Printf("ICE buffered (no remote desc) for %s", currentPeerState.SessionID)
+				logger.Logger.Printf("ICE buffered (no remote desc) for %s", currentPeerState.SessionID)
 				continue
 			}
 			if err := currentPeerState.PeerConnection.AddICECandidate(candidate); err != nil {
-				log.Printf("error adding ice candidate for %s: %v", currentPeerState.SessionID, err)
+				logger.Logger.Printf("error adding ice candidate for %s: %v", currentPeerState.SessionID, err)
 			} else {
-				log.Printf("Applied ICE candidate from %s", currentPeerState.SessionID)
+				logger.Logger.Printf("Applied ICE candidate from %s", currentPeerState.SessionID)
 			}
 		case "leave":
-			log.Printf("[%s] LEAVE room=%d", currentPeerState.SessionID, msg.RoomID)
+			logger.Logger.Printf("[%s] LEAVE room=%d", currentPeerState.SessionID, msg.RoomID)
 			if currentPeerState.PeerConnection != nil {
 				currentPeerState.PeerConnection.Close()
 			}
@@ -147,7 +147,7 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 				room.RemovePeer(currentPeerState.SessionID)
 			}
 		default:
-			log.Printf("unknown message type from %s: %s", currentPeerState.SessionID, msg.Type)
+			logger.Logger.Printf("unknown message type from %s: %s", currentPeerState.SessionID, msg.Type)
 		}
 	}
 
@@ -156,7 +156,7 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 
 func createPeerConnection(currentPeerState *models.PeerState, userID int, manager *redis.Manager, chatID int, roomsMutex *sync.RWMutex, rooms map[models.CallsKey]*models.Room, key models.CallsKey) (*webrtc.PeerConnection, error) {
 	var NFound bool
-	log.Println("🎥 Creating peer connection")
+	logger.Logger.Println("🎥 Creating peer connection")
 	config := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -184,17 +184,17 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
     webrtc.RTPCodecTypeAudio,
 		webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionRecvonly},
 	); err != nil {
-		log.Printf("warning: AddTransceiver audio failed: %v", err)
+		logger.Logger.Printf("warning: AddTransceiver audio failed: %v", err)
 	}
 	if _, err := pc.AddTransceiverFromKind(
 		webrtc.RTPCodecTypeVideo,
 		webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionRecvonly},
 	); err != nil {
-		log.Printf("warning: AddTransceiver video failed: %v", err)
+		logger.Logger.Printf("warning: AddTransceiver video failed: %v", err)
 	}
 
 	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-		log.Println("Connection state changed:", state)
+		logger.Logger.Println("Connection state changed:", state)
 		if state.String() == "failed" || state.String() == "closed" || state.String() == "disconnected" {
 			NFound = true
 			return
@@ -203,12 +203,12 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 		room := rooms[key]
 		roomsMutex.RUnlock()
 		if room == nil {
-			log.Printf("Room %d not found for track from %s", chatID, currentPeerState.SessionID)
+			logger.Logger.Printf("Room %d not found for track from %s", chatID, currentPeerState.SessionID)
 			NFound = true
 			return
 		}
 
-		log.Printf("[%s] Connection state: %s", currentPeerState.SessionID, state.String())
+		logger.Logger.Printf("[%s] Connection state: %s", currentPeerState.SessionID, state.String())
 		switch state {
 		case webrtc.PeerConnectionStateFailed, webrtc.PeerConnectionStateClosed:
 			room.RemovePeer(currentPeerState.SessionID)
@@ -223,7 +223,7 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 
 	pc.OnICECandidate(func(c *webrtc.ICECandidate) {
 		if c == nil {
-			log.Println("pc.OnICECandidate: gathering complete")
+			logger.Logger.Println("pc.OnICECandidate: gathering complete")
 			return
 		}
 		
@@ -232,16 +232,16 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 
 		currentPeerState.WSMu.Lock()
 		if err := currentPeerState.WS.WriteJSON(msg); err != nil {
-			log.Printf("❌ failed to WRITE ice to ws for %s: %v", currentPeerState.SessionID, err)
+			logger.Logger.Printf("❌ failed to WRITE ice to ws for %s: %v", currentPeerState.SessionID, err)
 		} else {
-			log.Printf("📤 Sent ICE to %s", currentPeerState.SessionID)
+			logger.Logger.Printf("📤 Sent ICE to %s", currentPeerState.SessionID)
 		}
 		currentPeerState.WSMu.Unlock()
 	})
 
 
 	pc.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		log.Println("Track received:", track.ID(), track.Codec().MimeType)
+		logger.Logger.Println("Track received:", track.ID(), track.Codec().MimeType)
 
 		trackKey := track.ID()
 
@@ -249,7 +249,7 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 		room := rooms[key]
 		roomsMutex.RUnlock()
 		if room == nil {
-			log.Printf("Room %d not found for track from %s", chatID, currentPeerState.SessionID)
+			logger.Logger.Printf("Room %d not found for track from %s", chatID, currentPeerState.SessionID)
 			return
 		}
 
@@ -257,7 +257,7 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 		_, exists := room.Published[trackKey]
 		if exists {
 			room.PubMutex.RUnlock()
-			log.Printf("Track %s already published, skipping", trackKey)
+			logger.Logger.Printf("Track %s already published, skipping", trackKey)
 			return
 		}
 
@@ -269,14 +269,14 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 		room.Published[trackKey] = pub
 		room.PubMutex.RUnlock()
 
-		log.Println("New track published:", track.ID(), track.Codec().MimeType)
+		logger.Logger.Println("New track published:", track.ID(), track.Codec().MimeType)
 
 		go func(pub *models.PublishedTrack) {
-			log.Printf("Start forwarding RTP for pub %s", pub.Remote.ID())
+			logger.Logger.Printf("Start forwarding RTP for pub %s", pub.Remote.ID())
 			for {
 				pkt, _, err := pub.Remote.ReadRTP()
 				if err != nil {
-					log.Printf("Remote.ReadRTP error for %s: %v", pub.Remote.ID(), err)
+					logger.Logger.Printf("Remote.ReadRTP error for %s: %v", pub.Remote.ID(), err)
 					break
 				}
 
@@ -286,12 +286,12 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 						continue
 					}
 					if writeErr := lt.Track.WriteRTP(pkt); writeErr != nil {
-						log.Printf("WriteRTP to local %s failed: %v", sid, writeErr)
+						logger.Logger.Printf("WriteRTP to local %s failed: %v", sid, writeErr)
 					}
 				}
 				pub.Mu.RUnlock()
 			}
-			log.Printf("Stopped forwarding RTP for pub %s", pub.Remote.ID())
+			logger.Logger.Printf("Stopped forwarding RTP for pub %s", pub.Remote.ID())
 		}(pub)
 		room.Mutex.RLock()
 		for otherSessionID, otherPeer := range room.Peers {
@@ -309,13 +309,13 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 
 			localTrack, err := webrtc.NewTrackLocalStaticRTP(pub.Codec, fmt.Sprintf("%s-%s", track.ID(), otherSessionID), track.StreamID())
 			if err != nil {
-				log.Printf("Error creating local track for %s -> %s: %v", currentPeerState.SessionID, otherSessionID, err)
+				logger.Logger.Printf("Error creating local track for %s -> %s: %v", currentPeerState.SessionID, otherSessionID, err)
 				continue
 			}
 
 			sender, err := otherPeer.PeerConnection.AddTrack(localTrack)
 			if err != nil {
-				log.Printf("Error adding track to peer %s: %v", otherSessionID, err)
+				logger.Logger.Printf("Error adding track to peer %s: %v", otherSessionID, err)
 				continue
 			}
 
@@ -333,7 +333,7 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 			}
 			otherPeer.TracksMu.Unlock()
 
-			log.Printf("Added track %s to peer %s", trackKey, otherSessionID)
+			logger.Logger.Printf("Added track %s to peer %s", trackKey, otherSessionID)
 
 			go func(peer *models.PeerState) {
 				time.Sleep(500 * time.Millisecond)					
@@ -343,12 +343,12 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 
 				offer, err := peer.PeerConnection.CreateOffer(nil)
 				if err != nil {
-					log.Printf("error creating renegotiation offer for %s: %v", otherSessionID, err)
+					logger.Logger.Printf("error creating renegotiation offer for %s: %v", otherSessionID, err)
 					return
 				}
 
 				if err := peer.PeerConnection.SetLocalDescription(offer); err != nil {
-					log.Printf("error setting local description for renegotiation %s: %v", otherSessionID, err)
+					logger.Logger.Printf("error setting local description for renegotiation %s: %v", otherSessionID, err)
 					return
 				}
 
@@ -362,7 +362,7 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 					RoomID:     chatID,
 					SessionID:  otherSessionID,
 				})
-				log.Printf("Sent renegotiation offer to %s", otherSessionID)
+				logger.Logger.Printf("Sent renegotiation offer to %s", otherSessionID)
 			}(otherPeer)
 		}
 		room.Mutex.RUnlock()
@@ -374,12 +374,12 @@ func createPeerConnection(currentPeerState *models.PeerState, userID int, manage
 func sendOffer(currentPeerState *models.PeerState, roomID int) error {
 	offer, err := currentPeerState.PeerConnection.CreateOffer(nil)
 	if err != nil {
-		log.Printf("Error creating offer for %s: %v", currentPeerState.SessionID, err)
+		logger.Logger.Printf("Error creating offer for %s: %v", currentPeerState.SessionID, err)
 		return err
 	}
 
 	if err := currentPeerState.PeerConnection.SetLocalDescription(offer); err != nil {
-		log.Printf("Error setting local description for %s: %v", currentPeerState.SessionID, err)
+		logger.Logger.Printf("Error setting local description for %s: %v", currentPeerState.SessionID, err)
 		return err
 	}
 
@@ -396,9 +396,9 @@ func sendOffer(currentPeerState *models.PeerState, roomID int) error {
 		SessionID: currentPeerState.SessionID,
 	})
 	if err != nil {
-		log.Printf("failed to WRITE offer to ws for %s: %v", currentPeerState.SessionID, err)
+		logger.Logger.Printf("failed to WRITE offer to ws for %s: %v", currentPeerState.SessionID, err)
 	} else {
-		log.Printf("Offer sent to %s (room=%d)", currentPeerState.SessionID, roomID)
+		logger.Logger.Printf("Offer sent to %s (room=%d)", currentPeerState.SessionID, roomID)
 	}
 	currentPeerState.WSMu.Unlock()
 	return err

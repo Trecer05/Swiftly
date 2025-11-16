@@ -2,7 +2,7 @@ package chat
 
 import (
 	"fmt"
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"net/http"
 	"sync"
 	"time"
@@ -40,7 +40,7 @@ func HandleChatCallConnection(w http.ResponseWriter, r *http.Request, rds *cache
 	}
 
 	sessionID := fmt.Sprintf("%s-%d", conn.RemoteAddr().String(), time.Now().UnixNano())
-	log.Println("New chat client:", conn.RemoteAddr().String(), "session:", sessionID)
+	logger.Logger.Println("New chat client:", conn.RemoteAddr().String(), "session:", sessionID)
 
 	var room *models.Room
 
@@ -59,13 +59,13 @@ func HandleChatCallConnection(w http.ResponseWriter, r *http.Request, rds *cache
 			r.RemovePeer(sessionID)
 			if len(r.Peers) == 0 {
 				delete(rds.Calls, key)
-				log.Printf("Chat Room %d deleted (empty)", chatId)
+				logger.Logger.Printf("Chat Room %d deleted (empty)", chatId)
 				currentPeerState.PeerConnection.Close()
 			}
 		}
 		roomMutex.Unlock()
 	}
-	log.Printf("WS chat handler finished for %s", sessionID)
+	logger.Logger.Printf("WS chat handler finished for %s", sessionID)
 }
 
 func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cache.Manager) {
@@ -89,7 +89,7 @@ func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cach
 	}
 
 	sessionID := fmt.Sprintf("%s-%d", conn.RemoteAddr().String(), time.Now().UnixNano())
-	log.Println("New group client:", conn.RemoteAddr().String(), "session:", sessionID)
+	logger.Logger.Println("New group client:", conn.RemoteAddr().String(), "session:", sessionID)
 
 	var room *models.Room
 
@@ -108,11 +108,11 @@ func HandleGroupCallConnection(w http.ResponseWriter, r *http.Request, rds *cach
 			r.RemovePeer(sessionID)
 			if len(r.Peers) == 0 {
 				delete(rds.Calls, key)
-				log.Printf("Group Room %d deleted (empty)", chatId)
+				logger.Logger.Printf("Group Room %d deleted (empty)", chatId)
 				currentPeerState.PeerConnection.Close()
 			}
 		}
 		roomMutex.Unlock()
 	}
-	log.Printf("WS group handler finished for %s", sessionID)
+	logger.Logger.Printf("WS group handler finished for %s", sessionID)
 }

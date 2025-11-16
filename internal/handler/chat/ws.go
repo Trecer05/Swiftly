@@ -2,7 +2,7 @@ package chat
 
 import (
 	"context"
-	"log"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"net/http"
 	"os"
 	"strconv"
@@ -59,9 +59,14 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
 
-	kafkaManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
+	kafkaChangeManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
+	kafkaChangeManagerTasks := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "team", "team-user-tasks")
 
-	go kafkaManager.ReadMessages(ctx)
+	go kafkaChangeManager.ReadAuthMessages(ctx)
+	go kafkaChangeManagerTasks.ReadTaskMessages(ctx)
+	
+	defer kafkaChangeManager.Close()
+	defer kafkaChangeManagerTasks.Close()
 
 	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
 		EditProfileHandler(w, r, mgr)
@@ -92,15 +97,15 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	}).Methods(http.MethodDelete)
 
 	apiSecure.HandleFunc("/user/email", func(w http.ResponseWriter, r *http.Request) {
-		EditUserEmailHandler(w, r, mgr, kafkaManager)
+		EditUserEmailHandler(w, r, mgr, kafkaChangeManager, ctx)
 	}).Methods(http.MethodPut)
 
 	apiSecure.HandleFunc("/user/phone", func(w http.ResponseWriter, r *http.Request) {
-		EditUserPhoneHandler(w, r, mgr, kafkaManager)
+		EditUserPhoneHandler(w, r, mgr, kafkaChangeManager, ctx)
 	}).Methods(http.MethodPut)
 
 	apiSecure.HandleFunc("/user/password", func(w http.ResponseWriter, r *http.Request) {
-		EditUserPasswordHandler(w, r, mgr, kafkaManager)
+		EditUserPasswordHandler(w, r, mgr, kafkaChangeManager, ctx)
 	}).Methods(http.MethodPut)
 
 	apiSecure.HandleFunc("/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -318,6 +323,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/chat/{id}/message/video/{url}", func(w http.ResponseWriter, r *http.Request) {
 		GetVideoMessageHandler(w, r, models.TypePrivate)
 	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/team/{id}/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		GetTeamDashboardHandler(w, r, mgr, kafkaChangeManagerTasks, ctx)
+	}).Methods(http.MethodGet)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {
@@ -349,7 +358,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr
 	chatType := models.TypePrivate
 
 	rds.AddUser(userId, chatId, conn, chatType, mgr)
-	log.Println("User connected to chat", chatId, userId)
+	logger.Logger.Println("User connected to chat", chatId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
 	notifCh := make(chan models.Notifications)
@@ -413,7 +422,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mg
 	chatType := models.TypeGroup
 
 	rds.AddUser(userId, groupId, conn, chatType, mgr)
-	log.Println("User connected to chat", groupId, userId)
+	logger.Logger.Println("User connected to chat", groupId, userId)
 	msgCh := make(chan models.Message)
 	statusCh := make(chan models.Status)
 	notifCh := make(chan models.Notifications)

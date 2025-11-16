@@ -2,12 +2,12 @@ package chat
 
 import (
 	"encoding/json"
-	"log"
 
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,13 +23,13 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v", err)
+				logger.Logger.Error("Unexpected close error:", err)
 			}
 			break
 		}
 
 		if err := json.Unmarshal(msg, &message); err != nil {
-			log.Println(err)
+			logger.Logger.Error("Failed to unmarshal message:", err)
 			break
 		}
 
@@ -40,19 +40,19 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			switch chatType {
 			case models.TypePrivate:
 				if err := manager.UpdateChatMessageStatus(message.ID, *message.Read); err != nil {
-					log.Println("Failed to update message status:", err)
+					logger.Logger.Error("Failed to update message status:", err)
 				}
 
 				_ = rds.SendToUser(chatId, message, chatType)
 
 			case models.TypeGroup:
 				if err := manager.UpdateGroupMessageStatus(message.ID, *message.Read); err != nil {
-					log.Println("Failed to update message status:", err)
+					logger.Logger.Error("Failed to update message status:", err)
 				}
 
 				_ = rds.SendToUser(chatId, message, chatType)
 			default:
-				log.Println("Chat type is not private or group")
+				logger.Logger.Error("Chat type is not private or group")
 				continue
 			}
 		case models.Delete:
@@ -63,11 +63,11 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			case models.TypeGroup:
 				dbType = models.DBGroup
 			default:
-				log.Println("Chat type is not private or group")
+				logger.Logger.Error("Chat type is not private or group")
 			}
 
 			if err := manager.DeleteMessage(chatId, message.ID, dbType); err != nil {
-				log.Println("Failed to delete message:", err)
+				logger.Logger.Error("Failed to delete message:", err)
 			}
 
 			_ = rds.SendToUser(chatId, message, chatType)
@@ -79,11 +79,11 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			case models.TypeGroup:
 				dbType = models.DBGroup
 			default:
-				log.Println("Chat type is not private or group")
+				logger.Logger.Error("Chat type is not private or group")
 			}
 
 			if err := manager.UpdateMessage(chatId, message.ID, message.Text, dbType); err != nil {
-				log.Println("Failed to update message:", err)
+				logger.Logger.Error("Failed to update message:", err)
 			}
 
 			message.Edited = true
@@ -100,15 +100,15 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.Manager, manager *
 			case models.TypeGroup:
 				dbType = models.DBGroup
 			default:
-				log.Println("Chat type is not private or group")
+				logger.Logger.Error("Chat type is not private or group")
 				continue
 			}
 
 			if err := manager.SaveMessage(message, dbType); err != nil {
-				log.Println("Failed to save message:", err)
+				logger.Logger.Error("Failed to save message:", err)
 			}
 		default:
-			log.Println("Unknown message type:", message.Type)
+			logger.Logger.Error("Unknown message type:", message.Type)
 		}
 	}
 }
@@ -125,6 +125,7 @@ func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, 
 	}
 	if err != nil {
 		if err == chatErrors.ErrNoMessages {
+			logger.Logger.Info("No messages found")
 			return nil
 		}
 		return err
@@ -132,6 +133,7 @@ func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, 
 
 	for _, msg := range messages {
 		if err := conn.WriteJSON(msg); err != nil {
+			logger.Logger.Error("Failed to send message:", err)
 			return err
 		}
 	}
@@ -142,7 +144,7 @@ func SendChatHistory(conn *websocket.Conn, mgr *manager.Manager, chatId, limit, 
 func SendAllUserMessages(conn *websocket.Conn, msgCh <-chan models.Message) {
 	for msg := range msgCh {
 		if err := conn.WriteJSON(msg); err != nil {
-			log.Println("Failed to send message:", err)
+			logger.Logger.Error("Failed to send message:", err)
 		}
 	}
 }
@@ -150,7 +152,7 @@ func SendAllUserMessages(conn *websocket.Conn, msgCh <-chan models.Message) {
 func SendAllUserNotifications(conn *websocket.Conn, notifCh <-chan models.Notifications) {
 	for notif := range notifCh {
 		if err := conn.WriteJSON(notif); err != nil {
-			log.Println("Failed to send notification:", err)
+			logger.Logger.Error("Failed to send notification:", err)
 		}
 	}
 }
@@ -158,7 +160,7 @@ func SendAllUserNotifications(conn *websocket.Conn, notifCh <-chan models.Notifi
 func SendAllUserStatuses(conn *websocket.Conn, statusCh <-chan models.Status) {
 	for status := range statusCh {
 		if err := conn.WriteJSON(status); err != nil {
-			log.Println("Failed to send status:", err)
+			logger.Logger.Error("Failed to send status:", err)
 		}
 	}
 }

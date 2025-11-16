@@ -11,7 +11,7 @@ import (
 func (manager *Manager) GetUserInfo(userId int) (models.User, error) {
 	var user models.User
 
-	err := manager.Conn.QueryRow(`SELECT name, username, description FROM users WHERE id = $1`, userId).Scan(&user.Name, &user.Username, &user.Description)
+	err := manager.Conn.QueryRow(`SELECT name, username, description, avatar_url FROM users WHERE id = $1`, userId).Scan(&user.Name, &user.Username, &user.Description, &user.AvatarUrl)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, errors.ErrNoUser
@@ -19,6 +19,75 @@ func (manager *Manager) GetUserInfo(userId int) (models.User, error) {
 		return user, err
 	}
 
+	return user, nil
+}
+
+func (manager *Manager) GetStartUserInfo(userId int) (models.StartUserInfo, error) {
+	var user models.StartUserInfo
+	user.ID = userId
+
+	err := manager.Conn.QueryRow(`
+		SELECT name, username, description, avatar_url 
+		FROM users WHERE id = $1`, userId).Scan(
+		&user.Name, &user.Username, &user.Description, &user.AvatarUrl)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, errors.ErrNoUser
+		}
+		return user, err
+	}
+
+	rows, err := manager.Conn.Query(`
+		SELECT p.id, p.name, p.description, up.is_admin
+		FROM projects p
+		INNER JOIN users_projects up ON p.id = up.project_id
+		WHERE up.user_id = $1
+		ORDER BY p.name`, userId)
+	if err != nil {
+		return user, err
+	}
+	defer rows.Close()
+
+	var projects []models.UserProject
+
+	for rows.Next() {
+		var project models.UserProject
+		err := rows.Scan(&project.ID, &project.Name, &project.Description, &project.IsAdmin)
+		if err != nil {
+			return user, err
+		}
+
+		userRows, err := manager.Conn.Query(`
+			SELECT u.id, u.name, up.role
+			FROM users u
+			INNER JOIN users_projects up ON u.id = up.user_id
+			WHERE up.project_id = $1
+			ORDER BY u.name`, project.ID)
+		if err != nil {
+			return user, err
+		}
+
+		var users []models.UserShort
+		for userRows.Next() {
+			var userShort models.UserShort
+			err := userRows.Scan(&userShort.ID, &userShort.Name, &userShort.Role)
+			if err != nil {
+				userRows.Close()
+				return user, err
+			}
+			users = append(users, userShort)
+		}
+		userRows.Close()
+
+		project.Users = users
+		projects = append(projects, project)
+	}
+
+	if err = rows.Err(); err != nil {
+		return user, err
+	}
+
+	user.Projects = projects
 	return user, nil
 }
 

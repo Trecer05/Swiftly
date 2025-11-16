@@ -11,6 +11,8 @@ INSERT INTO priority_definitions VALUES
 ('medium', 'Medium', '#FFFF00'),
 ('high', 'High', '#FF0000');
 
+CREATE TYPE IF NOT EXISTS task_status AS ENUM ('todo', 'in_progress', 'completed');
+
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     author_id INTEGER NOT NULL,
@@ -18,6 +20,7 @@ CREATE TABLE tasks (
     title TEXT NOT NULL,
     description TEXT,
     label VARCHAR(100),
+    status task_status NOT NULL DEFAULT 'todo',
     priority priority_level REFERENCES priority_definitions(level),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
