@@ -15,6 +15,30 @@ CREATE TABLE IF NOT EXISTS users_projects (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- тут две таблицы для будущего функционала команд
+-- CREATE TABLE IF NOT EXISTS commands (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(100) NOT NULL,
+--     description VARCHAR(200) NOT NULL,
+--     created_at TIMESTAMP DEFAULT NOW()
+-- );
+
+-- CREATE TABLE IF NOT EXISTS command_projects (
+--     command_id INTEGER NOT NULL,
+--     project_id INTEGER NOT NULL,
+--     PRIMARY KEY (command_id, project_id),
+--     FOREIGN KEY (command_id) REFERENCES commands(id) ON DELETE CASCADE,
+--     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+-- );
+
+-- CREATE TABLE IF NOT EXISTS command_users (
+--     command_id INTEGER NOT NULL,
+--     user_id INTEGER NOT NULL,
+--     PRIMARY KEY (command_id, user_id),
+--     FOREIGN KEY (command_id) REFERENCES commands(id) ON DELETE CASCADE,
+--     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- );
+
 CREATE TABLE IF NOT EXISTS users (
     id integer PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
