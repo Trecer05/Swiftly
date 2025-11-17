@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS users_projects (
     project_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    role VARCHAR(50) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'member',
     is_admin BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (project_id, user_id),
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
