@@ -39,3 +39,13 @@ func (manager *Manager) UpdateRefreshToken(userId int, token string) error {
 
 	return nil
 }
+
+func (manager *Manager) ValidateAndExtractUserIDFromRefreshToken(token string) (int, error) {
+	var userId int
+
+	if err := manager.Conn.QueryRow(`SELECT user_id FROM user_tokens WHERE token = $1`, token).Scan(&userId); err != nil {
+		return 0, err
+	}
+
+	return userId, nil
+}

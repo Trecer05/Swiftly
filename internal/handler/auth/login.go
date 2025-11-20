@@ -37,7 +37,7 @@ func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
 		Logout(w, r, mgr)
 	}).Methods(http.MethodPost)
 
-	apiSecure.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
+	api.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
 		Refresh(w, r, mgr)
 	}).Methods(http.MethodPost)
 }
@@ -180,46 +180,41 @@ func Logout(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
 }
 
 func Refresh(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
-	var t model.Tokens
-	var id int
-	var ok bool
+    var t struct {
+        RefreshToken string `json:"refresh_token"`
+    }
 
-	if id, ok = r.Context().Value("id").(int); !ok {
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
-		return
-	}
+    if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+        serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+        return
+    }
 
-	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
-		return
-	}
+    userID, err := mgr.ValidateAndExtractUserIDFromRefreshToken(t.RefreshToken)
+    if err != nil {
+        switch err {
+        case jwt.ErrTokenExpired:
+            serviceHttp.NewErrorBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
+            return
+        default:
+            serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+            return
+        }
+    }
 
-	refreshToken, err := tokens.ValidateRefreshToken(mgr, id)
-	if err != nil {
-		switch err {
-		case jwt.ErrTokenExpired:
-			serviceHttp.NewErrorBody(w, "application/json", tokenErrors.ErrRefreshTokenExpired, http.StatusUnauthorized)
-			return
-		default:
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
-			return
-		}
-	}
-	t.RefreshToken = refreshToken.Token
+    claims := jwt.MapClaims{
+        "id":  userID,
+        "exp": tokens.AddAccessTime(),
+    }
 
-	claims := jwt.MapClaims{
-		"id":  id,
-		"exp": tokens.AddAccessTime(),
-	}
+    accessToken, err := tokens.GenerateAccessToken(claims)
+    if err != nil {
+        serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+        return
+    }
 
-	if t.AccessToken, err = tokens.GenerateAccessToken(claims); err != nil {
-		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  t.AccessToken,
-		"refresh_token": t.RefreshToken,
-	})
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{
+        "access_token": accessToken,
+        "refresh_token": t.RefreshToken,
+    })
 }
