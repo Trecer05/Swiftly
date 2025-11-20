@@ -10,10 +10,14 @@ CREATE TABLE IF NOT EXISTS users_projects (
     user_id BIGINT NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'member',
     is_admin BOOLEAN DEFAULT FALSE,
+    added_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (project_id, user_id),
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_users_projects_project_user ON users_projects(project_id, user_id);
+CREATE INDEX idx_users_projects_user_project ON users_projects(user_id, project_id);
 
 -- тут две таблицы для будущего функционала команд
 -- CREATE TABLE IF NOT EXISTS commands (
@@ -48,6 +52,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_users_username ON users(username);
 
 CREATE TABLE IF NOT EXISTS chats (
     id SERIAL PRIMARY KEY,

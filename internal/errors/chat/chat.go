@@ -18,6 +18,8 @@ var (
 
 	ErrNoUser = errors.New("user not found")
 	ErrNoUsers = errors.New("no users found")
+	ErrUserNotAOwner = errors.New("user not a owner")
+	ErrUserAlreadyInTeam = errors.New("user already in team")
 
 	ErrNoData = errors.New("no data found")
 )

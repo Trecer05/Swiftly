@@ -22,7 +22,7 @@ const (
 	Default      MessageType = "message"
 	WithFiles    MessageType = "with_files"
 	AudioMessage MessageType = "audio_message"
-	VideoMessage MessageType = "videoo_message"
+	VideoMessage MessageType = "video_message"
 	LastMessage  MessageType = "last_message"
 	Read         MessageType = "read"
 	Delete       MessageType = "delete"

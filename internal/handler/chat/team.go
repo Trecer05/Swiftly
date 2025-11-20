@@ -1,0 +1,160 @@
+package chat
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/Trecer05/Swiftly/internal/config/logger"
+	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
+	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
+	models "github.com/Trecer05/Swiftly/internal/model/chat"
+	kafkaModels "github.com/Trecer05/Swiftly/internal/model/kafka"
+	redis "github.com/Trecer05/Swiftly/internal/repository/cache/chat"
+	kafka "github.com/Trecer05/Swiftly/internal/repository/kafka/chat"
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
+	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
+
+	"github.com/gorilla/mux"
+)
+
+func GetTeamDashboardHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kfMgr *kafka.KafkaManager, ctx context.Context) {
+	id, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	user, err := mgr.GetStartUserInfo(id)
+	if err != nil {
+		logger.Logger.Error("Error getting user info", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	if len(user.Projects) != 0 {
+	    for i := range user.Projects {
+	        project := &user.Projects[i]
+	        
+	        if err := kfMgr.SendMessage(ctx, "dashboard", kafkaModels.TasksGet{UserID: user.ID, ProjectID: project.ID}); err != nil {
+	            logger.Logger.Error("Error sending message", err)
+	            continue
+	        }
+	        
+	        data, err := kfMgr.WaitForResponse(user.ID, time.Second * 5)
+	        if err != nil {
+	            logger.Logger.Error("Error waiting for response", err)
+	            serviceHttp.NewErrorBody(w, "application/json", err, http.StatusGatewayTimeout)
+	            return
+	        }
+	
+	        switch data.Type {
+	        case "error":
+	            var e kafkaModels.Error
+	            json.Unmarshal(data.Payload, &e)
+	            logger.Logger.Error("Error unmarshalling error response", e)
+	        case "tasks":
+	            var tasks []models.UserTask
+	            json.Unmarshal(data.Payload, &tasks)
+	            project.Tasks = append(project.Tasks, tasks...)
+	        }
+	    }
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func AddUserToTeamByUsernameHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, rds *redis.Manager) {
+	vars := mux.Vars(r)
+	
+	teamID, err := strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error get team_id: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	username := vars["username"]
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	_, err = mgr.AddUserToTeamByUsername(teamID, ownerID, username)
+	if err != nil {
+		if err == chatErrors.ErrNoUser {
+			logger.Logger.Error("Error not user found: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		}
+		if err == chatErrors.ErrUserNotAOwner {
+			logger.Logger.Error("Error user not a owner: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error add user to team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
+
+func RemoveUserFromTeamByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, rds *redis.Manager) {
+	vars := mux.Vars(r)
+	
+	teamID, err := strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error get team_id: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	userID, err := strconv.Atoi(vars["user_id"])
+	if err != nil {
+		logger.Logger.Error("Error get user_id: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	err = mgr.RemoveUserFromTeamByID(teamID, ownerID, userID)
+	if err != nil {
+		if err == chatErrors.ErrNoUser {
+			logger.Logger.Error("Error not user found: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		}
+		if err == chatErrors.ErrUserNotAOwner {
+			logger.Logger.Error("Error user not a owner: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error remove user from team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}

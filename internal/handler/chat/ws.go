@@ -324,9 +324,18 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 		GetVideoMessageHandler(w, r, models.TypePrivate)
 	}).Methods(http.MethodGet)
 	
+	// Модуль команды
 	apiSecure.HandleFunc("/team/{id}/dashboard", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamDashboardHandler(w, r, mgr, kafkaChangeManagerTasks, ctx)
 	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/team/{team_id}/user/{username}/add", func(w http.ResponseWriter, r *http.Request) {
+		AddUserToTeamByUsernameHandler(w, r, mgr, redis)
+	}).Methods(http.MethodPost)
+	
+	apiSecure.HandleFunc("/team/{team_id}/user/{user_id}/remove", func(w http.ResponseWriter, r *http.Request) {
+		RemoveUserFromTeamByIDHandler(w, r, mgr, redis)
+	}).Methods(http.MethodDelete)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

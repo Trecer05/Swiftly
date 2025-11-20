@@ -56,6 +56,21 @@ func ReadWS(chatID int, userID int, manager *redis.Manager, rooms map[models.Cal
 			}
 			currentPeerState.PeerConnection = pc
 
+			callMessage := models.Message{
+				Type:   models.Call,
+				Author: models.Client{ID: userID},
+				ChatID: chatID,
+				Time:   time.Now(),
+			}
+			chatType := models.TypePrivate
+			if key.Type == models.TypeGroup {
+				chatType = models.TypeGroup
+			}
+			
+			if notifyErr := manager.SendNotificationToUser(chatID, callMessage, chatType, models.CallNotification); notifyErr != nil {
+				logger.Logger.Printf("error sending call notification: %v", notifyErr)
+			}
+
 			room.Mutex.Lock()
 			room.Peers[currentPeerState.SessionID] = currentPeerState
 			room.Mutex.Unlock()
