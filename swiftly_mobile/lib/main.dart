@@ -27,12 +27,29 @@ bool isDesktopPlatform() {
   }
 }
 
-// Проверка версии Windows (Windows 11 поддерживает acrylic без лагов)
 bool isWindows11() {
   if (!Platform.isWindows) return false;
   final version = Platform.operatingSystemVersion;
-  // Build 22000+ это Windows 11
   return version.contains(RegExp(r'Build 2[2-9]\d{3}'));
+}
+
+class AcrylicEffectLifecycleObserver extends WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (Platform.isWindows) {
+      if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+        await acrylic.Window.setEffect(
+          effect: isWindows11() ? WindowEffect.acrylic : WindowEffect.aero,
+          color: const Color(0x88000000),
+        );
+      } else if (state == AppLifecycleState.resumed) {
+        await acrylic.Window.setEffect(
+          effect: isWindows11() ? WindowEffect.acrylic : WindowEffect.aero,
+          color: const Color(0xCC000000),
+        );
+      }
+    }
+  }
 }
 
 void main() async {
@@ -40,30 +57,42 @@ void main() async {
 
   if (isDesktopPlatform()) {
     try {
-      await acrylic.Window.initialize();
-      
-      // Применяем эффект в зависимости от платформы
-      if (Platform.isWindows) {
-        // Для Windows используем acrylic (размытие)
-        // На Windows 10 можно использовать aero вместо acrylic для избежания лагов
-        await acrylic.Window.setEffect(
-          effect: isWindows11() ? WindowEffect.acrylic : WindowEffect.aero,
-          color: const Color(0xCC000000)// Полупрозрачный чёрный фон с размытием
-        );
-      } else {
-        // Для macOS и Linux оставляем hudWindow
-        await acrylic.Window.setEffect(
-          effect: WindowEffect.hudWindow,
-          color: Colors.transparent,
-        );
-      }
-
       await windowManager.ensureInitialized();
-      await windowManager.setMinimumSize(const Size(1000, 500));
+
+      await acrylic.Window.initialize();
+      WindowOptions windowOptions = const WindowOptions(
+        size: Size(1500, 1000),
+        minimumSize: Size(1024, 500),
+        backgroundColor: Colors.transparent,
+        
+        skipTaskbar: false,
+        titleBarStyle: TitleBarStyle.normal, 
+      );
+
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        
+        if (Platform.isWindows) {
+          await acrylic.Window.setEffect(
+            effect: isWindows11() ? WindowEffect.acrylic : WindowEffect.aero,
+            color: const Color(0xCC000000),
+          );
+        } else {
+          await acrylic.Window.setEffect(
+            effect: WindowEffect.hudWindow,
+            color: Colors.transparent,
+          );
+        }
+
+        await windowManager.show();
+        await windowManager.focus();
+      });
+
     } catch (e) {
-      debugPrint('Инициализация desktop-окна пропущена: $e');
+      debugPrint('ERROR: $e');
     }
   }
+
+  WidgetsBinding.instance.addObserver(AcrylicEffectLifecycleObserver());
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -73,10 +102,10 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bool onDesktop = isDesktopPlatform();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(userNotifierProvider.notifier).loadUsers();
       ref.read(cardNotifierProvider.notifier).loadCards(ref);
-      // ref.read(labelNotifierProvider.notifier).loadLabels();
       final user = User.create(
         id: 'aaa',
         name: 'Иван',
@@ -86,6 +115,7 @@ class MyApp extends ConsumerWidget {
       ref.read(userNotifierProvider.notifier).addUser(user);
       ref.read(currentUserProvider.notifier).state = user;
     });
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Swiftly',
@@ -105,4 +135,3 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
-

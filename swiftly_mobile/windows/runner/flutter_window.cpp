@@ -1,53 +1,8 @@
 #include "flutter_window.h"
 
 #include <optional>
-#include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
 
 #include "flutter/generated_plugin_registrant.h"
-
-inline int GET_X_LPARAM(LPARAM lParam) {
-  return (int)(short)LOWORD(lParam);
-}
-
-inline int GET_Y_LPARAM(LPARAM lParam) {
-  return (int)(short)HIWORD(lParam);
-}
-
-LRESULT HitTestNCA(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-  POINT ptMouse = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-
-  RECT rcWindow;
-  GetWindowRect(hWnd, &rcWindow);
-
-  const int BORDER_WIDTH = 8;
-  const int TITLE_BAR_HEIGHT = 32;
-  
-  USHORT uRow = 1;
-  USHORT uCol = 1;
-
-  if (ptMouse.y >= rcWindow.top && ptMouse.y < rcWindow.top + TITLE_BAR_HEIGHT) {
-    uRow = 0;
-  }
-  else if (ptMouse.y < rcWindow.bottom && ptMouse.y >= rcWindow.bottom - BORDER_WIDTH) {
-    uRow = 2;
-  }
-
-  if (ptMouse.x >= rcWindow.left && ptMouse.x < rcWindow.left + BORDER_WIDTH) {
-    uCol = 0;
-  }
-  else if (ptMouse.x < rcWindow.right && ptMouse.x >= rcWindow.right - BORDER_WIDTH) {
-    uCol = 2;
-  }
-
-  LRESULT hitTests[3][3] = {
-      {HTTOPLEFT, HTTOP, HTTOPRIGHT},
-      {HTLEFT, HTNOWHERE, HTRIGHT},
-      {HTBOTTOMLEFT, HTBOTTOM, HTBOTTOMRIGHT}
-  };
-
-  return hitTests[uRow][uCol];
-}
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -90,11 +45,6 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  LRESULT lRet = 0;
-  if (DwmDefWindowProc(hwnd, message, wparam, lparam, &lRet)) {
-    return lRet;
-  }
-
   if (flutter_controller_) {
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
@@ -108,21 +58,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;
-
-    case WM_NCCALCSIZE: {
-      if (wparam) {
-        return 0;
-      }
-      break;
-    }
-
-    case WM_NCHITTEST: {
-      LRESULT hit = HitTestNCA(hwnd, wparam, lparam);
-      if (hit != HTNOWHERE) {
-        return hit;
-      }
-      break;
-    }
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);

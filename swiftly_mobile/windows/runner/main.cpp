@@ -29,13 +29,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_FAILURE;
   }
 
-  // Получаем HWND окна
-  HWND hwnd = window.GetHandle();
-
-  // Расширяем клиентскую область на ВСЁ окно (включая DWM border)
-  MARGINS margins = {-1, -1, -1, -1};
-  DwmExtendFrameIntoClientArea(hwnd, &margins);
-
   window.SetQuitOnClose(true);
 
   ::MSG msg;
