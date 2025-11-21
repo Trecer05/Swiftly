@@ -58,7 +58,7 @@ func (manager *Manager) GetStartUserInfo(userId int) (models.StartUserInfo, erro
 		}
 
 		userRows, err := manager.Conn.Query(`
-			SELECT u.id, u.name, up.role
+			SELECT u.id, u.name, up.role, u.avatar_url
 			FROM users u
 			INNER JOIN users_projects up ON u.id = up.user_id
 			WHERE up.project_id = $1
@@ -70,7 +70,7 @@ func (manager *Manager) GetStartUserInfo(userId int) (models.StartUserInfo, erro
 		var users []models.UserShort
 		for userRows.Next() {
 			var userShort models.UserShort
-			err := userRows.Scan(&userShort.ID, &userShort.Name, &userShort.Role)
+			err := userRows.Scan(&userShort.ID, &userShort.Name, &userShort.Role, &userShort.AvatarURL)
 			if err != nil {
 				userRows.Close()
 				return user, err

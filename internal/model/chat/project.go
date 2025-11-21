@@ -17,6 +17,7 @@ type UserShort struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
 	Role      string `json:"role"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 type UserTask struct {
