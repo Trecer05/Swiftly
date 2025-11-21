@@ -336,6 +336,14 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/team/{team_id}/user/{user_id}/remove", func(w http.ResponseWriter, r *http.Request) {
 		RemoveUserFromTeamByIDHandler(w, r, mgr, redis)
 	}).Methods(http.MethodDelete)
+	
+	apiSecure.HandleFunc("/team/{team_id}/user/{user_id}/role", func(w http.ResponseWriter, r *http.Request) {
+		UpdateUserRoleHandler(w, r, mgr, redis)
+	}).Methods(http.MethodPut)
+	
+	apiSecure.HandleFunc("/team", func(w http.ResponseWriter, r *http.Request) {
+		CreateTeamHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

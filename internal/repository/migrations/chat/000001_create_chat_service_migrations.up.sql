@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS users_projects (
     project_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'member',
+    role VARCHAR(50) NOT NULL DEFAULT 'участник',
     is_admin BOOLEAN DEFAULT FALSE,
     added_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (project_id, user_id),

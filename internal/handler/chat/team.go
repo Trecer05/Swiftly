@@ -158,3 +158,88 @@ func RemoveUserFromTeamByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		"status": "ok",
 	})
 }
+
+func UpdateUserRoleHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, rds *redis.Manager) {
+	vars := mux.Vars(r)
+	
+	teamID, err := strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error get team_id: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	userID, err := strconv.Atoi(vars["user_id"])
+	if err != nil {
+		logger.Logger.Error("Error get user_id: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	var role models.UserRoleEdit
+	if err := json.NewDecoder(r.Body).Decode(&role); err != nil {
+		logger.Logger.Error("Error decode role: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	err = mgr.UpdateUserRole(teamID, ownerID, userID, role.NewRole)
+	if err != nil {
+		if err == chatErrors.ErrNoUser {
+			logger.Logger.Error("Error not user found: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		}
+		if err == chatErrors.ErrUserNotAOwner {
+			logger.Logger.Error("Error user not a owner: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error update user role: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
+
+func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	var team models.TeamCreate
+	if err := json.NewDecoder(r.Body).Decode(&team); err != nil {
+		logger.Logger.Error("Error decode team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	var ok bool
+	team.OwnerID, ok = r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	id, err := mgr.CreateTeam(&team)
+	if err != nil {
+		logger.Logger.Error("Error create team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"team_id": id,
+	})
+}

@@ -38,3 +38,20 @@ type PhoneEdit struct {
 type EmailEdit struct {
 	NewEmail string `json:"new_email"`
 }
+
+type UserRoleEdit struct {
+	NewRole string `json:"new_role"`
+}
+
+type TeamUser struct {
+	ID int
+	Username string `json:"username"`
+	Role string `json:"role"`
+}
+
+type TeamCreate struct {
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Users []TeamUser `json:"users,omitempty"`
+	OwnerID int
+}
