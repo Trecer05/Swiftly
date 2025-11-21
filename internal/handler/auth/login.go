@@ -24,6 +24,10 @@ func InitAuthRoutes(router *mux.Router, mgr *manager.Manager) {
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
+	
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods(http.MethodGet)
 
 	api.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		Login(w, r, mgr)

@@ -1,0 +1,180 @@
+version: "3.9"
+
+services:
+  # -------------------------------------
+  # POSTGRES SERVICES
+  # -------------------------------------
+  postgres_auth:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: swift
+      POSTGRES_PASSWORD: swift
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swift"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_auth_data:/var/lib/postgresql/data
+
+  postgres_chat:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: swift
+      POSTGRES_PASSWORD: swift
+      POSTGRES_DB: chat_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swift"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_chat_data:/var/lib/postgresql/data
+
+  postgres_task:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: swift
+      POSTGRES_PASSWORD: swift
+      POSTGRES_DB: task_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swift"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_task_data:/var/lib/postgresql/data
+
+  # -------------------------------------
+  # REDIS
+  # -------------------------------------
+  redis_chat:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_chat_data:/data
+
+  # -------------------------------------
+  # ZOOKEEPER + KAFKA
+  # -------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "9092:9092"
+
+  # -------------------------------------
+  # AUTH SERVICE
+  # -------------------------------------
+  auth_service:
+    build:
+      context: .
+      args:
+        SERVICE: auth
+    depends_on:
+      postgres_auth:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      AUTH_SERVER_PORT: "8081"
+      DB_AUTH_CONNECTION_STRING: "postgresql://swift:swift@postgres_auth:5432/auth_db?sslmode=disable"
+      KAFKA_ADDRESS: "kafka:9092"
+      JWT_SECRET: "very_secret"
+    ports:
+      - "8081:8081"
+
+  # -------------------------------------
+  # CHAT SERVICE
+  # -------------------------------------
+  chat_service:
+    build:
+      context: .
+      args:
+        SERVICE: chat
+    depends_on:
+      postgres_chat:
+        condition: service_healthy
+      redis_chat:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      CHAT_SERVER_PORT: "8082"
+      DB_CHAT_CONNECTION_STRING: "postgresql://swift:swift@postgres_chat:5432/chat_db?sslmode=disable"
+      CHAT_REDIS_CONNECTION_STRING: "redis://redis_chat:6379"
+      USERS_STORAGE: "/storage/chat/users"
+      GROUPS_STORAGE: "/storage/chat/groups"
+      CHATS_STORAGE: "/storage/chat/chats"
+      KAFKA_ADDRESS: "kafka:9092"
+    volumes:
+      - ./storage:/storage
+    ports:
+      - "8082:8082"
+
+  # -------------------------------------
+  # TASK SERVICE
+  # -------------------------------------
+  task_service:
+    build:
+      context: .
+      args:
+        SERVICE: task_tracker
+    depends_on:
+      postgres_task:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      TASK_SERVER_PORT: "8083"
+      DB_TASK_CONNECTION_STRING: "postgresql://swift:swift@postgres_task:5432/task_db?sslmode=disable"
+      KAFKA_ADDRESS: "kafka:9092"
+    ports:
+      - "8083:8083"
+
+volumes:
+  pg_auth_data:
+  pg_chat_data:
+  pg_task_data:
+  redis_chat_data:

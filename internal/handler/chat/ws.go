@@ -67,6 +67,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	
 	defer kafkaChangeManager.Close()
 	defer kafkaChangeManagerTasks.Close()
+	
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods(http.MethodGet)
 
 	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
 		EditProfileHandler(w, r, mgr)
