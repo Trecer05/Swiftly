@@ -18,7 +18,7 @@ func main() {
 	}
 	logger.Logger.Println("ENV loaded")
 
-	manager := mgr.NewChatManager("postgres", os.Getenv("DB_AUTH_CONNECTION_STRING"))
+	manager := mgr.NewChatManager("postgres", os.Getenv("DB_CHAT_CONNECTION_STRING"))
 	logger.Logger.Println("DB connected")
 
 	rds := redis.NewChatManager(os.Getenv("CHAT_REDIS_CONNECTION_STRING"))
