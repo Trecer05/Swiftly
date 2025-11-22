@@ -113,7 +113,6 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     }
   }
 
-
   /// Сохраняет текущее состояние в preferences
   Future<void> _saveState() async {
     final prefs = await SharedPreferences.getInstance();
@@ -133,16 +132,18 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
 
       try {
         final extension = file.name.split('.').last.toLowerCase();
-        
-        if (file.type == 'image' || 
-            ['txt', 'dart', 'json', 'md', 'yaml', 'xml', 'html', 'css', 'js'].contains(extension)) {
+
+        if (file.type == 'image' ||
+            ['txt', 'dart', 'json', 'md', 'yaml', 'xml', 'html', 'css', 'js']
+                .contains(extension)) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => FileEditorScreen(file: file),
             ),
           );
-        } else if (['docx', 'doc', 'pdf', 'xlsx', 'pptx'].contains(extension)) {
+        } else if (['docx', 'doc', 'pdf', 'xlsx', 'pptx']
+            .contains(extension)) {
           await _showOpenExternalDialog(file);
         } else {
           await OpenFilex.open(file.localPath!);
@@ -160,10 +161,9 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     }
   }
 
-
   Future<void> _showOpenExternalDialog(FileInfo file) async {
     final extension = file.name.split('.').last.toUpperCase();
-    
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -197,13 +197,13 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     );
   }
 
-
   /// Удаляет файл или папку
   Future<void> _deleteFile(FileInfo file) async {
     try {
       if (openFiles.contains(file.name)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Невозможно удалить открытый файл: ${file.name}')),
+          SnackBar(
+              content: Text('Невозможно удалить открытый файл: ${file.name}')),
         );
         return;
       }
@@ -236,7 +236,8 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
       if (newName.isEmpty) return;
 
       final oldPath = file.localPath!;
-      final newPath = '${oldPath.substring(0, oldPath.lastIndexOf("/"))}/$newName';
+      final newPath =
+          '${oldPath.substring(0, oldPath.lastIndexOf("/"))}/$newName';
 
       final entity = file.type == 'folder'
           ? Directory(oldPath)
@@ -297,7 +298,8 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
   /// Выбирает рабочую директорию
   Future<void> _selectFolder() async {
     try {
-      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      String? selectedDirectory =
+          await FilePicker.platform.getDirectoryPath();
 
       if (selectedDirectory != null) {
         workingDir = selectedDirectory;
@@ -314,7 +316,8 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
   /// Добавляет файлы в текущую директорию
   Future<void> _addFiles() async {
     try {
-      final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+      final result =
+          await FilePicker.platform.pickFiles(allowMultiple: true);
 
       if (result != null) {
         for (var file in result.files) {
@@ -344,11 +347,13 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
         files = _allFiles;
       } else {
         files = _allFiles
-            .where((file) => file.name.toLowerCase().contains(query.toLowerCase()))
+            .where((file) =>
+                file.name.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -385,7 +390,8 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
                     children: [
                       AppBarCloud(
                         title: 'Облако',
-                        currentDir: workingDir?.split(Platform.pathSeparator).last ?? 'Облако',
+                        currentDir: workingDir?.split(Platform.pathSeparator).last ??
+                            'Облако',
                         count: files.length,
                         onAdd: _addFiles,
                         onSearch: _searchFiles,
@@ -435,5 +441,6 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     );
   }
 }
+
 
 

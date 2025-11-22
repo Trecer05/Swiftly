@@ -19,10 +19,9 @@ class AppBarCloud extends StatelessWidget {
   @override
 Widget build(BuildContext context) {
   return Padding(
-    padding: const EdgeInsets.only(top: 25, bottom: 0, left: 5, right: 5),
+    padding: const EdgeInsets.only(top: 25, bottom: 0, left: 20, right: 24),
     child: Row(
       children: [
-        // Название папки слева
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

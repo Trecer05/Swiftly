@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'file_model.dart';
 
-/// Виджет для отображения файлов в адаптивной сетке
 class FileGrid extends StatelessWidget {
   final List<FileInfo> files;
   final Function(FileInfo)? onTap;
@@ -12,6 +12,10 @@ class FileGrid extends StatelessWidget {
   final Function(String)? onCreateFolder;
   final String currentPath;
 
+  // тут настраиваешь сдвиг
+  final double menuOffsetX; // >0 — левее, <0 — правее
+  final double menuOffsetY; // >0 — выше,  <0 — ниже
+
   const FileGrid({
     required this.files,
     required this.currentPath,
@@ -20,10 +24,11 @@ class FileGrid extends StatelessWidget {
     this.onRename,
     this.onCopy,
     this.onCreateFolder,
+    this.menuOffsetX = 24,   // можно крутить под себя
+    this.menuOffsetY = 12,
     super.key,
   });
 
-  /// Вычисляет количество колонок на основе доступной ширины
   int _calculateCrossAxisCount(double width) {
     const itemWidth = 116.0;
     const spacing = 24.0;
@@ -32,7 +37,6 @@ class FileGrid extends StatelessWidget {
     return count.clamp(1, 20);
   }
 
-  /// Показывает диалог подтверждения удаления
   void _showDeleteConfirmDialog(BuildContext context, FileInfo file) {
     showDialog(
       context: context,
@@ -46,30 +50,29 @@ class FileGrid extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () {
               onDelete?.call(file);
               Navigator.pop(ctx);
             },
-            child: Text('Удалить', style: TextStyle(color: Colors.red)),
+            child: const Text('Удалить', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  /// Показывает диалог переименования файла
   void _showRenameDialog(BuildContext context, FileInfo file) {
     final controller = TextEditingController(text: file.name);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Переименовать'),
+        title: const Text('Переименовать'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Новое имя',
             border: OutlineInputBorder(),
           ),
@@ -77,7 +80,7 @@ class FileGrid extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () {
@@ -86,23 +89,22 @@ class FileGrid extends StatelessWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: Text('Переименовать'),
+            child: const Text('Переименовать'),
           ),
         ],
       ),
     );
   }
 
-  /// Показывает диалог создания папки в текущей директории
-  void _showCreateFolderInCurrentDialog(BuildContext context) {
+  void _showCreateFolderDialog(BuildContext context) {
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Создать папку'),
+        title: const Text('Создать папку'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Имя папки',
             border: OutlineInputBorder(),
           ),
@@ -110,7 +112,7 @@ class FileGrid extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () {
@@ -119,187 +121,90 @@ class FileGrid extends StatelessWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: Text('Создать'),
+            child: const Text('Создать'),
           ),
         ],
       ),
     );
   }
 
-  /// Показывает диалог создания папки внутри родительской папки
-  void _showCreateFolderDialog(BuildContext context, FileInfo parentFolder) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Создать папку'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Имя папки',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                onCreateFolder?.call('${parentFolder.localPath}/${controller.text}');
-                Navigator.pop(ctx);
-              }
-            },
-            child: Text('Создать'),
-          ),
-        ],
-      ),
+  // ПКМ по файлу: показываем flutter_context_menu со сдвигом.[web:7]
+  void _showFileMenuWithOffset(
+    BuildContext context,
+    TapDownDetails details,
+    FileInfo file,
+  ) {
+    final basePos = details.globalPosition;
+    final offsetPos = Offset(
+      basePos.dx - 390,
+      basePos.dy + 10,
     );
-  }
 
-  /// Показывает контекстное меню для файла
-  void _showContextMenu(BuildContext context, TapDownDetails details, FileInfo file) {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromPoints(
-          details.globalPosition,
-          details.globalPosition.translate(1, 1),
-        ),
-        Offset.zero & overlay.size,
-      ),
-      items: [
-        PopupMenuItem(
+    final fileMenu = ContextMenu(
+      position: offsetPos, // ключ — задаём вручную позицию меню[web:7]
+      entries: <ContextMenuEntry>[
+        const MenuHeader(text: 'Файл'),
+        MenuItem(
+          label: 'Переименовать',
+          icon: Icons.edit,
           value: 'rename',
-          child: Row(
-            children: [
-              Icon(Icons.edit, size: 18),
-              SizedBox(width: 12),
-              Text('Переименовать'),
-            ],
-          ),
+          onSelected: () => _showRenameDialog(context, file),
         ),
-        PopupMenuItem(
+        MenuItem(
+          label: 'Копировать',
+          icon: Icons.content_copy,
           value: 'copy',
-          child: Row(
-            children: [
-              Icon(Icons.content_copy, size: 18),
-              SizedBox(width: 12),
-              Text('Копировать'),
-            ],
-          ),
+          onSelected: () => onCopy?.call(file),
         ),
-        PopupMenuItem(
+        const MenuDivider(),
+        MenuItem(
+          label: 'Удалить',
+          icon: Icons.delete,
           value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete, size: 18, color: Colors.red),
-              SizedBox(width: 12),
-              Text('Удалить', style: TextStyle(color: Colors.red)),
-            ],
-          ),
-        ),
-        if (file.type == 'folder') ...[
-          PopupMenuDivider(),
-          PopupMenuItem(
-            value: 'create_folder',
-            child: Row(
-              children: [
-                Icon(Icons.create_new_folder_outlined, size: 18),
-                SizedBox(width: 12),
-                Text('Создать папку'),
-              ],
-            ),
-          ),
-        ],
-      ],
-    ).then((value) {
-      if (value == null) return;
-
-      switch (value) {
-        case 'rename':
-          _showRenameDialog(context, file);
-          break;
-        case 'copy':
-          onCopy?.call(file);
-          break;
-        case 'delete':
-          _showDeleteConfirmDialog(context, file);
-          break;
-        case 'create_folder':
-          _showCreateFolderDialog(context, file);
-          break;
-      }
-    });
-  }
-
-  /// Показывает контекстное меню для пустой области
-  void _showEmptyAreaContextMenu(BuildContext context, TapDownDetails details) {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromPoints(
-          details.globalPosition,
-          details.globalPosition.translate(1, 1),
-        ),
-        Offset.zero & overlay.size,
-      ),
-      items: [
-        PopupMenuItem(
-          value: 'create_folder',
-          child: Row(
-            children: [
-              Icon(Icons.create_new_folder_outlined, size: 18),
-              SizedBox(width: 12),
-              Text('Создать папку'),
-            ],
-          ),
+          onSelected: () => _showDeleteConfirmDialog(context, file),
         ),
       ],
-    ).then((value) {
-      if (value == 'create_folder') {
-        _showCreateFolderInCurrentDialog(context);
-      }
-    });
+    );
+
+    // способ 1 из доки пакета — показать меню в заданной position[web:7]
+    showContextMenu(
+      context,
+      contextMenu: fileMenu,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onSecondaryTapDown: (details) => _showEmptyAreaContextMenu(context, details),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
 
-            return GridView.builder(
-              itemCount: files.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 0,
-                crossAxisSpacing: 24,
-                childAspectRatio: 116 / 100,
-              ),
-              itemBuilder: (_, i) => GestureDetector(
-                onTap: () => onTap?.call(files[i]),
-                onSecondaryTapDown: (details) => _showContextMenu(context, details, files[i]),
-                child: FileGridItem(file: files[i]),
-              ),
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 0, 24, 24),
+          itemCount: files.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 24,
+            crossAxisSpacing: 24,
+            childAspectRatio: 116 / 100,
+          ),
+          itemBuilder: (_, i) {
+            final file = files[i];
+
+            // тут уже не нужен ContextMenuRegion — позицию контролируем сами[web:7]
+            return GestureDetector(
+              onTap: () => onTap?.call(file),
+              onSecondaryTapDown: (details) =>
+                  _showFileMenuWithOffset(context, details, file),
+              child: FileGridItem(file: file),
             );
           },
-        ),
-      ),
+        );
+      },
     );
   }
 }
+
 
 /// Виджет для отображения одного файла в сетке
 class FileGridItem extends StatelessWidget {
@@ -333,15 +238,15 @@ class FileGridItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         icon,
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             file.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
               fontWeight: FontWeight.w600,

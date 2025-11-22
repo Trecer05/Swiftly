@@ -51,7 +51,7 @@ class SidePanelItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+      padding: const EdgeInsets.only(left: 18, top: 5, bottom: 5),
       child: Row(
         children: [
           Icon(

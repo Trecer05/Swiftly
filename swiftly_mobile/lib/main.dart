@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
@@ -54,6 +55,8 @@ class AcrylicEffectLifecycleObserver extends WidgetsBindingObserver {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // команда для дебага ui
+  debugPaintSizeEnabled = false;
 
   if (isDesktopPlatform()) {
     try {
