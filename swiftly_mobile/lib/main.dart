@@ -30,6 +30,7 @@ bool isDesktopPlatform() {
 
 bool isWindows11() {
   if (!Platform.isWindows) return false;
+  
   final version = Platform.operatingSystemVersion;
   return version.contains(RegExp(r'Build 2[2-9]\d{3}'));
 }
