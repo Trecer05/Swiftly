@@ -55,3 +55,10 @@ type TeamCreate struct {
 	Users []TeamUser `json:"users,omitempty"`
 	OwnerID int
 }
+
+type TeamEdit struct {
+	ID int
+	OwnerID int
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}

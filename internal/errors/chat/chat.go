@@ -22,6 +22,9 @@ var (
 	ErrUserAlreadyInTeam = errors.New("user already in team")
 
 	ErrNoData = errors.New("no data found")
+	
+	ErrProjectNotFound = errors.New("no project found")
+	ErrNoFieldsToUpdate = errors.New("no fields to update")
 )
 
 var (

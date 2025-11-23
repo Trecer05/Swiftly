@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"errors"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
-	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
+	authErrors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	kafkaModels "github.com/Trecer05/Swiftly/internal/model/kafka"
@@ -23,8 +24,8 @@ import (
 func GetTeamDashboardHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kfMgr *kafka.KafkaManager, ctx context.Context) {
 	id, ok := r.Context().Value("id").(int)
 	if !ok {
-		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 
@@ -82,8 +83,8 @@ func AddUserToTeamByUsernameHandler(w http.ResponseWriter, r *http.Request, mgr 
 	
 	ownerID, ok := r.Context().Value("id").(int)
 	if !ok {
-		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 	
@@ -130,8 +131,8 @@ func RemoveUserFromTeamByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 	
 	ownerID, ok := r.Context().Value("id").(int)
 	if !ok {
-		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 	
@@ -178,8 +179,8 @@ func UpdateUserRoleHandler(w http.ResponseWriter, r *http.Request, mgr *manager.
 	
 	ownerID, ok := r.Context().Value("id").(int)
 	if !ok {
-		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 	
@@ -225,8 +226,8 @@ func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 	var ok bool
 	team.OwnerID, ok = r.Context().Value("id").(int)
 	if !ok {
-		logger.Logger.Error("Error getting user ID", errors.ErrUnauthorized)
-		serviceHttp.NewErrorBody(w, "application/json", errors.ErrUnauthorized, http.StatusUnauthorized)
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
 		return
 	}
 	
@@ -241,5 +242,53 @@ func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 		"team_id": id,
+	})
+}
+
+func EditTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, redis *redis.Manager) {
+	var team models.TeamEdit
+	err := json.NewDecoder(r.Body).Decode(&team)
+	if err != nil {
+		logger.Logger.Error("Error decode team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	vars := mux.Vars(r)
+	team.ID, err = strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error getting team ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	var ok bool
+	team.OwnerID, ok = r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	err = mgr.EditTeam(&team)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error edit team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrNoFieldsToUpdate) {
+			logger.Logger.Info("No fields to update")
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNoContent)
+			return
+		}
+		
+		logger.Logger.Error("Error edit team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
 	})
 }

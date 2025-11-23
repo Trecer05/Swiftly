@@ -348,6 +348,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/team", func(w http.ResponseWriter, r *http.Request) {
 		CreateTeamHandler(w, r, mgr)
 	}).Methods(http.MethodPost)
+	
+	apiSecure.HandleFunc("/team/{team_id}/edit", func(w http.ResponseWriter, r *http.Request) {
+		EditTeamHandler(w, r, mgr, redis)
+	}).Methods(http.MethodPut)
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

@@ -3,6 +3,8 @@ package chat
 import (
 	"database/sql"
 	"github.com/lib/pq"
+	"fmt"
+	"strings"
 
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -209,3 +211,66 @@ func (manager *Manager) GetUsersFromUsernames(tx *sql.Tx, oldUsers []models.Team
 
 	return users, nil
 }
+
+func (manager *Manager) EditTeam(team *models.TeamEdit) error {
+    var realOwnerID int
+    err := manager.Conn.QueryRow(
+        "SELECT owner_id FROM projects WHERE id = $1",
+        team.ID,
+    ).Scan(&realOwnerID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return errors.ErrProjectNotFound
+        }
+        return err
+    }
+
+    if realOwnerID != team.OwnerID {
+        return errors.ErrUserNotAOwner
+    }
+
+    setParts := []string{}
+    args := []interface{}{}
+    idx := 1
+
+    if team.Name != nil {
+        setParts = append(setParts, fmt.Sprintf("name=$%d", idx))
+        args = append(args, *team.Name)
+        idx++
+    }
+
+    if team.Description != nil {
+        setParts = append(setParts, fmt.Sprintf("description=$%d", idx))
+        args = append(args, *team.Description)
+        idx++
+    }
+
+    if len(setParts) == 0 {
+        return errors.ErrNoFieldsToUpdate
+    }
+
+    args = append(args, team.ID)
+
+    query := fmt.Sprintf(`
+        UPDATE projects
+        SET %s
+        WHERE id=$%d
+    `, strings.Join(setParts, ", "), idx)
+
+    res, err := manager.Conn.Exec(query, args...)
+    if err != nil {
+        return err
+    }
+
+    rows, err := res.RowsAffected()
+    if err != nil {
+        return err
+    }
+
+    if rows == 0 {
+        return errors.ErrProjectNotFound
+    }
+
+    return nil
+}
+
