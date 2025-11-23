@@ -14,14 +14,16 @@ class PrivacyPolicyWidget extends StatelessWidget {
       children: [
         CustomRadio(isChecked: isChecked, onPressed: onPressed),
         const SizedBox(width: 10),
-        GestureDetector(
-          onTap: () {},
-          child: const Text(
-            'Согласен с политикой конфиденциальности',
-            style: AppTextStyles.style2,
+        Flexible(
+          child: GestureDetector(
+            onTap: () {},
+            child: const Text(
+              'Согласен с политикой конфиденциальности',
+              style: AppTextStyles.style2,
+            ),
           ),
-        ),
-      ],
+      )
+    ],
     );
   }
 }

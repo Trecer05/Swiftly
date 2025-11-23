@@ -6,6 +6,7 @@ import 'package:swiftly_mobile/providers/card_notifier_provider.dart';
 import 'package:swiftly_mobile/providers/user_notifier_provider.dart';
 import 'package:swiftly_mobile/routing/router.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter/services.dart';
 
 import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 
@@ -57,6 +58,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // команда для дебага ui
   debugPaintSizeEnabled = false;
+
+  if (!isDesktopPlatform()) {
+    if (Platform.isIOS || Platform.isAndroid) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+      ]);
+    }
+  }
 
   if (isDesktopPlatform()) {
     try {

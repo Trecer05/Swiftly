@@ -151,7 +151,7 @@ class _CloudSearchFieldState extends State<CloudSearchField> {
                       hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
                       border: InputBorder.none,
                       prefixIcon: Icon(Icons.search, color: Colors.white70, size: 18),
-                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 4),
                     ),
                   ),
                 ),
