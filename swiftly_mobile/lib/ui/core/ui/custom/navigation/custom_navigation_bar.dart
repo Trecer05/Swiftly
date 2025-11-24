@@ -4,6 +4,12 @@ import '../../../themes/colors.dart';
 import '../../../themes/theme.dart';
 import 'nav_item.dart';
 
+bool _isCallRoute(BuildContext context) {
+  final uri = GoRouterState.of(context).uri.toString();
+  return uri.startsWith('/call');
+}
+
+
 class CustomNavigationBar extends StatefulWidget {
   final Widget child;
 
@@ -16,10 +22,12 @@ class CustomNavigationBar extends StatefulWidget {
 class _CustomNavigationBarState extends State<CustomNavigationBar> {
   @override
   Widget build(BuildContext context) {
+    final isCall = _isCallRoute(context);
     return Scaffold(
       body: Column(
         children: [
           Expanded(child: widget.child),
+          if (!isCall)
           Container(
             color: AppColors.white15,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 34),

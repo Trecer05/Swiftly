@@ -12,7 +12,6 @@ class FileGrid extends StatelessWidget {
   final Function(String)? onCreateFolder;
   final String currentPath;
 
-  // тут настраиваешь сдвиг
   final double menuOffsetX; // >0 — левее, <0 — правее
   final double menuOffsetY; // >0 — выше,  <0 — ниже
 
@@ -24,7 +23,7 @@ class FileGrid extends StatelessWidget {
     this.onRename,
     this.onCopy,
     this.onCreateFolder,
-    this.menuOffsetX = 24,   // можно крутить под себя
+    this.menuOffsetX = 24,  
     this.menuOffsetY = 12,
     super.key,
   });

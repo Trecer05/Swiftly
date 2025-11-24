@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'mob_call_screen.dart';
+import '../chat.dart';
 
 const BoxDecoration kChatBackground = BoxDecoration(
   gradient: LinearGradient(
@@ -157,7 +160,9 @@ class MobileChatThreadScreen extends StatelessWidget {
         ),
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: Color(0x80FFFFFF),),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            context.push('/call', extra: title); // вместо Navigator.push
+          }
         ),
         centerTitle: true,
         title: GestureDetector(
@@ -208,9 +213,11 @@ class MobileChatThreadScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 4),
-            child: Icon(CupertinoIcons.phone, color: Color(0x80FFFFFF),),
+          IconButton(
+            icon: const Icon(Icons.call, color: Colors.white),
+            onPressed: () {
+              context.push('/call', extra: title);
+            },
           ),
           PopupMenuButton<_ChatMenuAction>(
             icon: const Icon(CupertinoIcons.ellipsis_vertical, color: Color(0x80FFFFFF),),

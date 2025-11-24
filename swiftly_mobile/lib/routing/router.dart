@@ -12,11 +12,22 @@ import 'package:swiftly_mobile/ui/home/widgets/home_screen.dart';
 import 'package:swiftly_mobile/ui/kanban/widgets/kanban_screen.dart';
 import 'package:swiftly_mobile/ui/cloud/cloud_screen.dart';
 import 'package:swiftly_mobile/ui/settings/widgets/settings_screen.dart';
+import 'package:swiftly_mobile/ui/chat/mob/mob_call_screen.dart';
 
 import '../utils/responsive_layout.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
+    GoRoute(
+          path: '/call',
+          builder: (context, state) {
+            final String username = state.extra as String;
+            return MobileCallScreen(
+              username: username,
+              isIncoming: false,
+            );
+          },
+        ),
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
         return ResponsiveLayout(

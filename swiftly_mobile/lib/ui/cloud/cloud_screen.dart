@@ -5,11 +5,16 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:swiftly_mobile/utils/responsive_layout.dart';
 import 'widgets/side_panel.dart';
 import 'widgets/app_bar_cloud.dart';
 import 'widgets/file_grid.dart';
 import 'widgets/file_model.dart';
 import 'file_editor_screen.dart';
+import 'cloud_mob/cloud_mob_screen.dart';
+import 'cloud_desk_screen.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:pasteboard/pasteboard.dart';
 
 class CloudScreen extends StatefulWidget {
   const CloudScreen({super.key});
@@ -161,6 +166,21 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _shareFile(FileInfo file) async {
+  if (file.localPath == null) return;
+
+  try {
+    await Share.shareXFiles(
+      [XFile(file.localPath!)],
+      text: 'Файл из облака: ${file.name}',
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Не удалось поделиться: $e')),
+    );
+  }
+}
+
   Future<void> _showOpenExternalDialog(FileInfo file) async {
     final extension = file.name.split('.').last.toUpperCase();
 
@@ -259,9 +279,13 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
 
   /// Копирует файл или папку
   Future<void> _copyFile(FileInfo file) async {
+    if (file.localPath == null) return;
+
     try {
+      await Pasteboard.writeFiles([file.localPath!]);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${file.name} скопирован')),
+        SnackBar(content: Text('${file.name} скопирован в буфер обмена')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -269,7 +293,7 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
       );
     }
   }
-
+  
   /// Создаёт новую папку
   Future<void> _createFolder(String folderPath) async {
     try {
@@ -356,91 +380,32 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        child: Row(
-          children: [
-            SizedBox(
-              width: 200,
-              child: Column(
-                children: [
-                  Container(
-                    height: 81,
-                    alignment: Alignment.centerLeft,
-                    padding: EdgeInsets.only(left: 20, top: 25, bottom: 20),
-                    child: Text(
-                      'Ваше облако',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: SidePanel(),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Column(
-                    children: [
-                      AppBarCloud(
-                        title: 'Облако',
-                        currentDir: workingDir?.split(Platform.pathSeparator).last ??
-                            'Облако',
-                        count: files.length,
-                        onAdd: _addFiles,
-                        onSearch: _searchFiles,
-                      ),
-                      Expanded(
-                        child: FileGrid(
-                          files: files,
-                          currentPath: workingDir ?? '',
-                          onTap: _openFile,
-                          onDelete: _deleteFile,
-                          onRename: _renameFile,
-                          onCopy: _copyFile,
-                          onCreateFolder: _createFolder,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 24,
-                    right: 24,
-                    child: FloatingActionButton(
-                      heroTag: 'select_folder_fab',
-                      onPressed: _selectFolder,
-                      backgroundColor: Color(0xFF6DA8FF),
-                      child: Icon(Icons.folder_open, color: Colors.white),
-                      tooltip: 'Выбрать папку',
-                    ),
-                  ),
-                  if (directoryStack.isNotEmpty)
-                    Positioned(
-                      bottom: 96,
-                      right: 24,
-                      child: FloatingActionButton(
-                        heroTag: 'back_fab',
-                        onPressed: _navigateBack,
-                        backgroundColor: Color(0xFF6DA8FF),
-                        child: Icon(Icons.arrow_back, color: Colors.white),
-                        tooltip: 'Назад',
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return ResponsiveLayout(
+      mobile: CloudTabMobile(
+        files: files,
+        currentPath: workingDir ?? '',
+        onTap: _openFile,
+        onDelete: _deleteFile,
+        onRename: _renameFile,
+        onCreateFolder: _createFolder,
+        onShare: _shareFile,
+        onAddFile: _addFiles,
+        onSearch: _searchFiles,
+      ),
+      desktop: CloudDesktopScreen(
+        files: files,
+        workingDir: workingDir,
+        directoryStack: directoryStack,
+        onTap: _openFile,
+        onDelete: _deleteFile,
+        onRename: _renameFile,
+        onCopy: _copyFile,
+        onCreateFolder: _createFolder,
+        onAddFiles: _addFiles,
+        onSearchFiles: _searchFiles,
+        onSelectFolder: _selectFolder,
+        onNavigateBack: _navigateBack,
       ),
     );
   }
 }
-
-
-
