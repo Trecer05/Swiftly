@@ -55,7 +55,6 @@ class _CloudScreenState extends State<CloudScreen> with WidgetsBindingObserver {
     }
   }
 
-  /// Инициализирует рабочую директорию
   Future<void> _initWorkingDir() async {
     try {
       final prefs = await SharedPreferences.getInstance();

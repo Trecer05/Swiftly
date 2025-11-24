@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'file_model.dart';
+import 'package:desktop_drop/desktop_drop.dart';
+import 'package:cross_file/cross_file.dart'; 
 
 class FileGrid extends StatelessWidget {
   final List<FileInfo> files;
@@ -15,6 +17,8 @@ class FileGrid extends StatelessWidget {
   final double menuOffsetX; // >0 — левее, <0 — правее
   final double menuOffsetY; // >0 — выше,  <0 — ниже
 
+  final void Function(List<XFile> files)? onDropFiles;
+
   const FileGrid({
     required this.files,
     required this.currentPath,
@@ -25,6 +29,7 @@ class FileGrid extends StatelessWidget {
     this.onCreateFolder,
     this.menuOffsetX = 24,  
     this.menuOffsetY = 12,
+    this.onDropFiles,
     super.key,
   });
 
@@ -178,26 +183,32 @@ class FileGrid extends StatelessWidget {
       builder: (context, constraints) {
         final crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
 
-        return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(20, 0, 24, 24),
-          itemCount: files.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 24,
-            childAspectRatio: 116 / 100,
-          ),
-          itemBuilder: (_, i) {
-            final file = files[i];
-
-            // тут уже не нужен ContextMenuRegion — позицию контролируем сами[web:7]
-            return GestureDetector(
-              onTap: () => onTap?.call(file),
-              onSecondaryTapDown: (details) =>
-                  _showFileMenuWithOffset(context, details, file),
-              child: FileGridItem(file: file),
-            );
+        return DropTarget(
+          // сюда прилетают файлы из проводника
+          onDragDone: (detail) {
+            // detail.files имеет тип List<XFile>
+            onDropFiles?.call(detail.files);
           },
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 0, 24, 24),
+            itemCount: files.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 24,
+              crossAxisSpacing: 24,
+              childAspectRatio: 116 / 100,
+            ),
+            itemBuilder: (_, i) {
+              final file = files[i];
+
+              return GestureDetector(
+                onTap: () => onTap?.call(file),
+                onSecondaryTapDown: (details) =>
+                    _showFileMenuWithOffset(context, details, file),
+                child: FileGridItem(file: file),
+              );
+            },
+          ),
         );
       },
     );

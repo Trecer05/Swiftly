@@ -63,9 +63,11 @@ class FileEditorScreenState extends State<FileEditorScreen> {
 
   Widget _buildContent() {
     if (widget.file.type == 'image' && widget.file.localPath != null) {
-      return Image.file(
+      return Center(
+      child: Image.file(
         File(widget.file.localPath!),
         fit: BoxFit.contain,
+      )
       );
     } else if (widget.file.type == 'file' && widget.file.name.endsWith('.txt')) {
       return TextField(
@@ -78,9 +80,8 @@ class FileEditorScreenState extends State<FileEditorScreen> {
           });
         },
         decoration: InputDecoration(
-          border: InputBorder.none,
           filled: true,
-          fillColor: Colors.transparent,
+          fillColor: Color(0x80FFFFFF),
           contentPadding: EdgeInsets.all(12),
         ),
         style: TextStyle(color: Colors.white),
