@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
-	logger "github.com/Trecer05/Swiftly/internal/config/logger"
+	"log"
 	"os"
+
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 
 	env "github.com/Trecer05/Swiftly/internal/config/environment"
 	kafka "github.com/Trecer05/Swiftly/internal/repository/kafka/auth"
@@ -17,9 +19,12 @@ var ctx = context.Background()
 
 func main() {
 	if err := env.LoadEnvFile("./.env"); err != nil {
-		logger.Logger.Fatalf("Ошибка загрузки env: %v", err)
+		log.Fatalf("Ошибка загрузки env: %v", err)
 	}
-	logger.Logger.Println("ENV loaded")
+	log.Println("ENV loaded")
+	
+	logger.LogInit()
+	logger.Logger.Info("Логгер запущен без ошибок")
 
 	manager := mgr.NewAuthManager("postgres", os.Getenv("DB_AUTH_CONNECTION_STRING"))
 	logger.Logger.Println("DB connected")

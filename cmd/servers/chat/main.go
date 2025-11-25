@@ -2,6 +2,7 @@ package main
 
 import (
 	logger "github.com/Trecer05/Swiftly/internal/config/logger"
+	"log"
 	"os"
 
 	env "github.com/Trecer05/Swiftly/internal/config/environment"
@@ -14,9 +15,12 @@ import (
 
 func main() {
 	if err := env.LoadEnvFile("./.env"); err != nil {
-		logger.Logger.Fatalf("Ошибка загрузки env: %v", err)
+		log.Fatalf("Ошибка загрузки env: %v", err)
 	}
-	logger.Logger.Println("ENV loaded")
+	log.Println("ENV loaded")
+	
+	logger.LogInit()
+	logger.Logger.Info("Логгер запущен без ошибок")
 
 	manager := mgr.NewChatManager("postgres", os.Getenv("DB_CHAT_CONNECTION_STRING"))
 	logger.Logger.Println("DB connected")
