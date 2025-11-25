@@ -362,7 +362,12 @@ func DeleteTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 }
 
 func GetTeamInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
-	id := mux.Vars(r)["team_id"]
+	id, err := strconv.Atoi(mux.Vars(r)["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting team ID to integer", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
 	
 	team, err := mgr.GetTeamInfo(id)
 	if err != nil {
