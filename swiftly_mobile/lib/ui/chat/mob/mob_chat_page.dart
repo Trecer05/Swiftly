@@ -5,6 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'mob_call_screen.dart';
 import '../chat.dart';
 
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:swiftly_mobile/data/models/api_chat_client.dart';
+
+
 const BoxDecoration kChatBackground = BoxDecoration(
   gradient: LinearGradient(
     begin: Alignment.topCenter,
@@ -18,15 +24,17 @@ const BoxDecoration kChatBackground = BoxDecoration(
 
 enum _ChatMenuAction { edit, block, delete }
 
+
+
 class MobileChatPage extends StatelessWidget {
   const MobileChatPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final chats = const [
-      _Chat('Username', 'вот, теперь нормально', '23:02', 6, true),
-      _Chat('Ярослав Хохлов', 'До связи!', '13:37', 0, false),
-      _Chat('Иван Дорн', 'Почему дизайнер ничего н...', 'Tu', 13, false),
+      _Chat('1', 'Username', 'вот, теперь нормально', '23:02', 6, true, 'today', true),
+      _Chat('2', 'Ярослав Хохлов', 'До связи!', '13:37', 0, false, 'yesterday', false),
+      _Chat('3', 'Иван Дорн', 'Почему дизайнер ничего н...', 'Tu', 13, false, 'Mon', false),
     ];
 
     return Scaffold(
@@ -70,7 +78,7 @@ class MobileChatPage extends StatelessWidget {
                   return ListTile(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => MobileChatThreadScreen(title: c.title)),
+                      MaterialPageRoute(builder: (_) => MobileChatThreadScreen(title: c.title, chatId: c.id)),
                     ),
                     leading: Stack(
                       children: [
@@ -138,19 +146,96 @@ class MobileChatPage extends StatelessWidget {
 }
 
 
-class MobileChatThreadScreen extends StatelessWidget {
+class MobileChatThreadScreen extends StatefulWidget {
   final String title;
-  const MobileChatThreadScreen({super.key, required this.title});
+  final String chatId;
+
+  const MobileChatThreadScreen({super.key, required this.title, required this.chatId});
+
+  @override
+  State<MobileChatThreadScreen> createState() => _MobileChatThreadScreenState();
+}
+
+class _MobileChatThreadScreenState extends State<MobileChatThreadScreen> {
+  late final ChatApiClient _api;
+  late final ChatWsClient _ws;
+
+  final List<MessageDto> _messages = [];
+  bool _isTyping = false;
+  StreamSubscription? _wsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _api = ChatApiClient(http.Client());
+    _ws = ChatWsClient();
+
+    _loadHistory();
+    _connectWs();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      // пока чат один, можно захардкодить id или пробросить через конструктор
+      final msgs = await _api.getMessages(widget.chatId);
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(msgs);
+      });
+    } catch (e) {
+      debugPrint('Failed to load history: $e');
+    }
+  }
+
+  Future<void> _connectWs() async {
+    try {
+      await _ws.connect(widget.chatId);
+      _wsSub = _ws.stream?.listen((event) {
+        try {
+          final data = jsonDecode(event as String) as Map<String, dynamic>;
+          final type = data['type'] as String?;
+          if (type == 'message') {
+            final msg = MessageDto.fromJson(data);
+            setState(() => _messages.add(msg));
+          } else if (type == 'typing') {
+            setState(() => _isTyping = true);
+          } else if (type == 'stoptyping') {
+            setState(() => _isTyping = false);
+          }
+        } catch (e) {
+          debugPrint('WS parse error: $e');
+        }
+      });
+    } catch (e) {
+      debugPrint('WS connect error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    _ws.dispose();
+    super.dispose();
+  }
+
+  void _handleSend(String text) {
+    _ws.sendText(text);
+    final local = MessageDto(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      createdAt: DateTime.now(),
+      fromId: 'me', // TODO: заменить на currentUserId
+    );
+    setState(() => _messages.add(local));
+  }
+
+  void _handleTypingChanged(bool isTyping) {
+    _ws.sendTyping(isTyping);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final messages = const [
-      ('ну да, он вообще не по стилю', false, '22:23'),
-      ('давай #2C2C2C\nобратно, и без этой тени', false, '22:24'),
-      ('окей, уже поправил', true, '22:58'),
-      ('вот, теперь нормально', true, '23:02'),
-    ];
-
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: const SystemUiOverlayStyle(
@@ -159,10 +244,10 @@ class MobileChatThreadScreen extends StatelessWidget {
           statusBarBrightness: Brightness.dark,
         ),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Color(0x80FFFFFF),),
+          icon: const Icon(CupertinoIcons.back, color: Color(0x80FFFFFF)),
           onPressed: () {
-            context.push('/call', extra: title); // вместо Navigator.push
-          }
+            Navigator.pop(context);
+          },
         ),
         centerTitle: true,
         title: GestureDetector(
@@ -170,7 +255,7 @@ class MobileChatThreadScreen extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => MobileChatProfileScreen(title: title),
+              builder: (_) => MobileChatProfileScreen(title: widget.title),
             ),
           ),
           child: Row(
@@ -186,7 +271,7 @@ class MobileChatThreadScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -195,7 +280,7 @@ class MobileChatThreadScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'в сети',
+                    _isTyping ? 'печатает…' : 'в сети',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.6),
@@ -216,11 +301,14 @@ class MobileChatThreadScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.call, color: Colors.white),
             onPressed: () {
-              context.push('/call', extra: title);
+              context.push('/call', extra: widget.title);
             },
           ),
           PopupMenuButton<_ChatMenuAction>(
-            icon: const Icon(CupertinoIcons.ellipsis_vertical, color: Color(0x80FFFFFF),),
+            icon: const Icon(
+              CupertinoIcons.ellipsis_vertical,
+              color: Color(0x80FFFFFF),
+            ),
             color: const Color(0xFF171B2A),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -244,27 +332,39 @@ class MobileChatThreadScreen extends StatelessWidget {
                   break;
               }
             },
-            itemBuilder: (context) => [
+            itemBuilder: (context) => const [
               PopupMenuItem(
                 value: _ChatMenuAction.edit,
-                child: Row(children: [
-                  Icon(Icons.edit, size: 18, color: Colors.white,), 
-                  Text('Редактировать', style: TextStyle(color: Colors.white)),
-                ],)
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Редактировать',
+                        style: TextStyle(color: Colors.white)),
+                  ],
+                ),
               ),
               PopupMenuItem(
                 value: _ChatMenuAction.block,
-                child: Row(children: [
-                  Icon(Icons.block, size: 18, color: Colors.white,),
-                  Text('Заблокировать чат', style: TextStyle(color: Colors.white)),
-                ],),
+                child: Row(
+                  children: [
+                    Icon(Icons.block, size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Заблокировать чат',
+                        style: TextStyle(color: Colors.white)),
+                  ],
+                ),
               ),
               PopupMenuItem(
                 value: _ChatMenuAction.delete,
-                child: Row(children: [
-                  Icon(Icons.delete, size: 18, color: Colors.red,),
-                  Text('Удалить чат', style: TextStyle(color: Colors.red)),
-                ],),
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 18, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Удалить чат',
+                        style: TextStyle(color: Colors.red)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -280,57 +380,58 @@ class MobileChatThreadScreen extends StatelessWidget {
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 reverse: true,
-                itemCount: messages.length + 1,
+                itemCount: _messages.length,
                 itemBuilder: (context, index) {
-                  const int dateReverseIndex = 2;
-                  if (index == dateReverseIndex) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF23283B),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text('23 марта',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    );
-                  }
+                  final m = _messages[_messages.length - 1 - index];
+                  final isMine = m.fromId == 'me'; // TODO: сравнить с currentUserId
 
-                  final int revWithoutChip = index > dateReverseIndex ? index - 1 : index;
-                  final int srcIndex = messages.length - 1 - revWithoutChip;
-                  final m = messages[srcIndex];
-
-                  final isMine = m.$2;
-                  final bg = const Color(0x0FFFFFFF);
+                  const bg = Color(0x0FFFFFFF);
                   final radius = BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
                     bottomLeft: Radius.circular(isMine ? 16 : 4),
                     bottomRight: Radius.circular(isMine ? 4 : 16),
                   );
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Align(
-                      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isMine
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 320),
+                        constraints:
+                            const BoxConstraints(maxWidth: 320),
                         child: DecoratedBox(
-                          decoration: BoxDecoration(color: bg, borderRadius: radius),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: radius,
+                          ),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                            padding: const EdgeInsets.fromLTRB(
+                                12, 10, 12, 8),
                             child: Column(
-                              crossAxisAlignment:
-                                  isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              crossAxisAlignment: isMine
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
                               children: [
-                                Text(m.$1, style: const TextStyle(fontSize: 15, height: 1.25, color: Colors.white)),
+                                Text(
+                                  m.text,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    height: 1.25,
+                                    color: Colors.white,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
-                                Text(m.$3,
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(.75), fontSize: 11)),
+                                Text(
+                                  // можно красиво форматнуть время
+                                  '${m.createdAt.hour.toString().padLeft(2, '0')}:${m.createdAt.minute.toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(.75),
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -341,7 +442,10 @@ class MobileChatThreadScreen extends StatelessWidget {
                 },
               ),
             ),
-            const _InputBar(),
+            _InputBar(
+              onSend: _handleSend,
+              onTypingChanged: _handleTypingChanged,
+            ),
           ],
         ),
       ),
@@ -372,57 +476,181 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _InputBar extends StatelessWidget {
-  const _InputBar();
+class _InputBar extends StatefulWidget {
+  final ValueChanged<String> onSend;
+  final ValueChanged<bool>? onTypingChanged;
+
+  const _InputBar({
+    required this.onSend,
+    this.onTypingChanged,
+  });
+
+  @override
+  State<_InputBar> createState() => _InputBarState();
+}
+
+class _InputBarState extends State<_InputBar> {
+  final _controller = TextEditingController();
+  Timer? _typingTimer;
+
+  void _handleChanged(String value) {
+    widget.onTypingChanged?.call(true);
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () {
+      widget.onTypingChanged?.call(false);
+    });
+  }
+
+  void _handleSend() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    widget.onSend(text);
+    _controller.clear();
+    widget.onTypingChanged?.call(false);
+  }
+
+  @override
+  void dispose() {
+    _typingTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: SafeArea(
-        bottom: false,
-        minimum: const EdgeInsets.symmetric(horizontal: 0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0x06FFFFFF),
-            borderRadius: BorderRadius.circular(20),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF111121),
+          border: Border(
+            top: BorderSide(
+              color: Color(0x22FFFFFF),
+              width: 1,
+            ),
           ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.attach_file, color: Colors.white),
-                onPressed: () {},
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF23283B),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Expanded(
-                child: TextField(
-                  style: TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: Colors.white70),
-                    border: InputBorder.none,
-                  ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  CupertinoIcons.add,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  // сюда позже добавим вложения
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171B2A),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        onChanged: _handleChanged,
+                        maxLines: null,
+                        keyboardType: TextInputType.multiline,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Сообщение',
+                          hintStyle: TextStyle(
+                            color: Color(0x80FFFFFF),
+                            fontSize: 15,
+                          ),
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(
+                        CupertinoIcons.smiley,
+                        size: 22,
+                        color: Color(0x80FFFFFF),
+                      ),
+                      onPressed: () {
+                        // сюда потом эмодзи
+                      },
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: () {},
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF6C5CE7),
+                    Color(0xFF9B59B6),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  CupertinoIcons.paperplane_fill,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                onPressed: _handleSend,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+
 class _Chat {
-  final String title, last, time;
+  final String id;
+  final String title;
+  final String subtitle;
+  final String time;
   final int unread;
+  final bool pinned;
+  final String last;
   final bool online;
-  const _Chat(this.title, this.last, this.time, this.unread, this.online);
+
+  const _Chat(
+    this.id,
+    this.title,
+    this.subtitle,
+    this.time,
+    this.unread,
+    this.pinned,
+    this.last,
+    this.online,
+  );
 }
+
 
 class MobileChatProfileScreen extends StatefulWidget {
   final String title;
