@@ -274,3 +274,75 @@ func (manager *Manager) EditTeam(team *models.TeamEdit) error {
     return nil
 }
 
+func (manager *Manager) DeleteTeam(userID, teamID int) error {
+	var realOwnerID int
+	err := manager.Conn.QueryRow(
+		"SELECT owner_id FROM projects WHERE id = $1",
+		teamID,
+	).Scan(&realOwnerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrProjectNotFound
+		}
+		return err
+	}
+
+	if realOwnerID != userID {
+		return errors.ErrUserNotAOwner
+	}
+
+	query := `DELETE FROM projects WHERE id = $1`
+	res, err := manager.Conn.Exec(query, teamID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return errors.ErrProjectNotFound
+	}
+
+	return nil
+}
+
+func (manager *Manager) GetTeamInfo(teamID int) (*models.TeamInfo, error) {
+	var team models.TeamInfo
+	err := manager.Conn.QueryRow(
+		"SELECT id, name, description FROM projects WHERE id = $1",
+		teamID,
+	).Scan(&team.ID, &team.Name, &team.Description)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.ErrProjectNotFound
+		}
+		return nil, err
+	}
+
+	query := `
+		SELECT id, name, avatar_url
+		FROM users
+		WHERE id IN (
+			SELECT user_id FROM project_members WHERE project_id = $1
+		)
+	`
+	rows, err := manager.Conn.Query(query, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.UserShort
+		err := rows.Scan(&user.ID, &user.Name, &user.AvatarURL)
+		if err != nil {
+			return nil, err
+		}
+		team.Users = append(team.Users, user)
+	}
+
+	return &team, nil
+}

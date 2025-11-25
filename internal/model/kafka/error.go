@@ -7,3 +7,7 @@ type Error struct {
 type Status struct {
 	Status string
 }
+
+type Success struct {
+	Msg string
+}

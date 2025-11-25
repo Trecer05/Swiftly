@@ -42,3 +42,10 @@ type Priority struct {
 	Title string `json:"title"`
 	HexColor string `json:"hex_color"`
 }
+
+type TeamInfo struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Description string `json:"description"`
+	Users     []UserShort `json:"users"`
+}

@@ -280,6 +280,10 @@ func EditTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manage
 			logger.Logger.Info("No fields to update")
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNoContent)
 			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error edit team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
 		}
 		
 		logger.Logger.Error("Error edit team: ", err)
@@ -290,5 +294,96 @@ func EditTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manage
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
+	})
+}
+
+func DeleteTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kfMgr *kafka.KafkaManager) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error getting team ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	var ok bool
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	err = mgr.DeleteTeam(userID, id)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error delete team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error delete team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error delete team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	if err := kfMgr.SendMessage(ctx, "team_delete", kafkaModels.TeamTasksDelete{TeamID: id}); err != nil {
+	    logger.Logger.Error("Error sending message", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+	    return
+	}
+	
+	data, err := kfMgr.WaitForResponse(userID, time.Second * 5)
+	if err != nil {
+	    logger.Logger.Error("Error waiting for response", err)
+	    serviceHttp.NewErrorBody(w, "application/json", err, http.StatusGatewayTimeout)
+	    return
+	}
+	
+	switch data.Type {
+	case "error":
+	    var e kafkaModels.Error
+	    json.Unmarshal(data.Payload, &e)
+	    logger.Logger.Error("Error unmarshalling error response", e)
+	case "deleted":
+	    var s kafkaModels.Success
+	    json.Unmarshal(data.Payload, &s)
+	    logger.Logger.Info(s.Msg)
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
+
+func GetTeamInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id := mux.Vars(r)["team_id"]
+	
+	team, err := mgr.GetTeamInfo(id)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error getting team info: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error getting team info: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error getting team info: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"team":   team,
 	})
 }

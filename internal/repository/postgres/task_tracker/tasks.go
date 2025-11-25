@@ -76,3 +76,8 @@ func (manager *Manager) GetUserTasks(userID int, projectID int) ([]models.UserTa
 
     return tasks, nil
 }
+
+func (manager *Manager) DeleteTeamTasks(teamID int) error {
+    _, err := manager.Conn.Exec("DELETE FROM project_columns WHERE project_id = $1", teamID)
+    return err
+}

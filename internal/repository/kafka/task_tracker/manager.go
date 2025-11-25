@@ -100,6 +100,28 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context, manager *mgr.Manag
 			
 			data, _ := json.Marshal(tasks)
 			km.SendMessage(ctx, "tasks", models.Envelope{Type: "tasks", Payload: data})
+		case "team_delete":
+		    var req models.TeamTasksDelete
+		    
+		    if err := json.Unmarshal(msg.Value, &req); err != nil {
+			    logger.Logger.Errorf("Error unmarshaling message: %v", err)
+			
+			    data, _ := json.Marshal(models.Error{Err: err})
+			
+			    km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+			    continue
+			}
+			
+			err := manager.DeleteTeamTasks(req.TeamID)
+			if err != nil {
+				logger.Logger.Errorf("Error deleting team: %v", err)
+				data, _ := json.Marshal(models.Error{Err: err})
+				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+				continue
+			}
+			
+			data, _ := json.Marshal(models.Success{Msg: "Team deleted successfully"})
+			km.SendMessage(ctx, "success", models.Envelope{Type: "success", Payload: data})
         }
     }
 }

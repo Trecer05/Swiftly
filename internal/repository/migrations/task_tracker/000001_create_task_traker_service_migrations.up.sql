@@ -32,8 +32,8 @@ CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     author_id INTEGER NOT NULL,
     developer_id INTEGER NOT NULL,
-    column_id INTEGER NOT NULL REFERENCES project_columns(id),
-    position_in_column INTEGER NOT NULL DEFAULT 0;
+    column_id INTEGER NOT NULL REFERENCES project_columns(id) ON DELETE CASCADE,
+    position_in_column INTEGER NOT NULL DEFAULT 0,
     title TEXT NOT NULL,
     description TEXT,
     label VARCHAR(100),
@@ -47,7 +47,7 @@ CREATE TABLE tasks (
 CREATE TABLE project_tasks (
     project_id INTEGER NOT NULL,
     task_id INTEGER NOT NULL,
-    FOREIGN KEY (task_id) REFERENCES tasks(id)
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- Для быстрого получения задач колонки в правильном порядке
