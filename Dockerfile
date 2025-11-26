@@ -8,7 +8,6 @@ RUN go mod download
 
 COPY . .
 
-# SERVICE определяет, какой main.go собирать
 ARG SERVICE
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/servers/${SERVICE}
@@ -16,11 +15,15 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/servers/${SERVICE}
 # ------------ RUNTIME STAGE -------------
 FROM alpine
 
+# Устанавливаем wget для healthcheck
+RUN apk add --no-cache wget
+
 WORKDIR /root
 
 COPY --from=builder /bin/service .
+# Важно: копируем миграции
+COPY --from=builder /app/internal/repository/migrations ./internal/repository/migrations/
 
-# .env не копируем, docker-compose передаёт env переменные автоматически
 EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
