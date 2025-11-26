@@ -18,8 +18,11 @@ import (
 var ctx = context.Background()
 
 func main() {
-	if err := env.LoadEnvFile("./.env"); err != nil {
-		log.Fatalf("Ошибка загрузки env: %v", err)
+	if _, err := os.Stat("./.env"); err == nil {
+	    env.LoadEnvFile("./.env")
+	    log.Println("ENV loaded from .env")
+	} else {
+	    log.Println("Running inside Docker – using environment variables")
 	}
 	log.Println("ENV loaded")
 	

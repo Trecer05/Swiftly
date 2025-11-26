@@ -1,24 +1,3 @@
-CREATE TABLE IF NOT EXISTS projects (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description VARCHAR(200) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS users_projects (
-    project_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'участник',
-    is_admin BOOLEAN DEFAULT FALSE,
-    added_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (project_id, user_id),
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_users_projects_project_user ON users_projects(project_id, user_id);
-CREATE INDEX idx_users_projects_user_project ON users_projects(user_id, project_id);
-
 -- тут две таблицы для будущего функционала команд
 -- CREATE TABLE IF NOT EXISTS commands (
 --     id SERIAL PRIMARY KEY,
@@ -138,3 +117,24 @@ CREATE TABLE IF NOT EXISTS group_messages_file_urls (
     FOREIGN KEY (group_file_id) REFERENCES group_file_urls(id) ON DELETE CASCADE,
     FOREIGN KEY (group_message_id) REFERENCES group_messages(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS users_projects (
+    project_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'участник',
+    is_admin BOOLEAN DEFAULT FALSE,
+    added_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (project_id, user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_users_projects_project_user ON users_projects(project_id, user_id);
+CREATE INDEX idx_users_projects_user_project ON users_projects(user_id, project_id);
