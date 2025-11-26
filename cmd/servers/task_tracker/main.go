@@ -15,7 +15,7 @@ import (
 	router "github.com/Trecer05/Swiftly/internal/transport/http/task_tracker"
 )
 
-var ctx context.Context
+var ctx = context.Background()
 
 func main() {
 	if _, err := os.Stat("./.env"); err == nil {

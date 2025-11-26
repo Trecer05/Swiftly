@@ -1,4 +1,4 @@
-CREATE TYPE IF NOT EXISTS priority_level AS ENUM ('low', 'medium', 'high');
+CREATE TYPE priority_level AS ENUM ('low', 'medium', 'high');
 
 CREATE TABLE priority_definitions (
     level priority_level PRIMARY KEY,
@@ -11,7 +11,7 @@ INSERT INTO priority_definitions VALUES
 ('medium', 'Medium', '#FFFF00'),
 ('high', 'High', '#FF0000');
 
-CREATE TYPE IF NOT EXISTS task_status AS ENUM ('todo', 'in_progress', 'completed');
+CREATE TYPE task_status AS ENUM ('todo', 'in_progress', 'completed');
 
 CREATE TABLE project_columns (
     id SERIAL PRIMARY KEY,
@@ -40,9 +40,22 @@ CREATE TABLE tasks (
     status task_status NOT NULL DEFAULT 'todo',
     priority priority_level REFERENCES priority_definitions(level),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP DEFAULT NULL
 );
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_tasks_updated_at 
+    BEFORE UPDATE ON tasks 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE project_tasks (
     project_id INTEGER NOT NULL,
