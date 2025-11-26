@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: swift
       POSTGRES_DB: auth_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U swift"]
+      test: ["CMD-SHELL", "pg_isready -U swift -d auth_db"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: swift
       POSTGRES_DB: chat_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U swift"]
+      test: ["CMD-SHELL", "pg_isready -U swift -d chat_db"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -46,7 +46,7 @@ services:
       POSTGRES_PASSWORD: swift
       POSTGRES_DB: task_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U swift"]
+      test: ["CMD-SHELL", "pg_isready -U swift -d task_db"]
       interval: 5s
       timeout: 3s
       retries: 5
