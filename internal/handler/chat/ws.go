@@ -58,6 +58,10 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
+	
+	joinRouter := router.PathPrefix("/join").Subrouter()
+	joinRouter.Use(middleware.AuthMiddleware())
+	joinRouter.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	kafkaChangeManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
 	kafkaChangeManagerTasks := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "team", "team-user-tasks")
@@ -360,6 +364,23 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/team/{team_id}", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/team/{team_id}/applications", func(w http.ResponseWriter, r *http.Request) {
+		GetTeamApplicationsHandler(w, r, mgr)
+	}).Methods(http.MethodGet)
+	
+	apiSecure.HandleFunc("/team/{team_id}/applications/{application_id}", func(w http.ResponseWriter, r *http.Request) {
+		UpdateTeamApplicationHandler(w, r, mgr)
+	}).Methods(http.MethodPut)
+	
+	apiSecure.HandleFunc("/team/{team_id}/applications", func(w http.ResponseWriter, r *http.Request) {
+		CreateTeamApplicationHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
+	
+	joinRouter.HandleFunc("/team/{code}", func(w http.ResponseWriter, r *http.Request) {
+		JoinTeamHandler(w, r, mgr)
+	}).Methods(http.MethodPost)
+	
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

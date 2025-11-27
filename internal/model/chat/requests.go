@@ -1,5 +1,9 @@
 package chat
 
+import (
+	"time"
+)
+
 type GroupCreate struct {
 	Name string `json:"name"`
 	Description string `json:"description"`
@@ -61,4 +65,24 @@ type TeamEdit struct {
 	OwnerID int
 	Name *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
+}
+
+type ApplicationStatus string
+
+const (
+	TeamApplicationStatusPending ApplicationStatus = "pending"
+	TeamApplicationStatusAccepted ApplicationStatus = "accepted"
+	TeamApplicationStatusRejected ApplicationStatus = "rejected"
+)
+
+type TeamApplicationUpdate struct {
+	ID int
+	Status ApplicationStatus `json:"status"`
+}
+
+type CreateJoinCode struct {
+	ProjectID int
+	CreatorID int
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	IsSingleUse *bool `json:"is_single_use,omitempty"`
 }

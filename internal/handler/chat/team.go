@@ -17,6 +17,7 @@ import (
 	kafka "github.com/Trecer05/Swiftly/internal/repository/kafka/chat"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/chat"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
+	serviceChat "github.com/Trecer05/Swiftly/internal/service/chat"
 
 	"github.com/gorilla/mux"
 )
@@ -306,7 +307,6 @@ func DeleteTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		return
 	}
 	
-	var ok bool
 	userID, ok := r.Context().Value("id").(int)
 	if !ok {
 		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
@@ -390,5 +390,184 @@ func GetTeamInfoHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 		"team":   team,
+	})
+}
+
+func GetTeamApplicationsHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := strconv.Atoi(mux.Vars(r)["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting team ID to integer", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	applications, err := mgr.GetTeamApplications(id, ownerID)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error getting team applications: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error getting team applications: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error getting team applications: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"applications": applications,
+	})
+}
+
+func UpdateTeamApplicationHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	vars := mux.Vars(r)
+	
+	teamID, err := strconv.Atoi(vars["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting team ID to integer", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	appID, err := strconv.Atoi(vars["application_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting application ID to integer", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	var status models.TeamApplicationUpdate
+	err = json.NewDecoder(r.Body).Decode(&status)
+	if err != nil {
+		logger.Logger.Error("Error decoding application status", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	status.ID = appID
+	
+	err = mgr.UpdateTeamApplication(teamID, ownerID, status)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error getting team applications: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error getting team applications: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error getting team applications: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
+
+func CreateTeamApplicationHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	id, err := strconv.Atoi(mux.Vars(r)["team_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting team ID to integer", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	ownerID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	var req models.CreateJoinCode
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		logger.Logger.Error("Error decoding create join code request", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+	
+	req.ProjectID = id
+	req.CreatorID = ownerID
+	
+	code := serviceChat.CreateCode()
+	
+	err = mgr.CreateJoinCode(code, &req)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrProjectNotFound) {
+			logger.Logger.Error("Error creating join code: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrUserNotAOwner) {
+			logger.Logger.Error("Error creating join code: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error creating join code: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	// TODO: Когда будет юрл, сразу собирать юрл с кодом и отдавать
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"code": code,
+	})
+}
+
+func JoinTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	code := mux.Vars(r)["code"]
+	
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID", authErrors.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", authErrors.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+	
+	err := mgr.JoinTeam(userID, code)
+	if err != nil {
+		if errors.Is(err, chatErrors.ErrJoinCodeNotFound) {
+			logger.Logger.Error("Error joining team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		} else if errors.Is(err, chatErrors.ErrCodeExpired) {
+			logger.Logger.Error("Error joining team: ", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		
+		logger.Logger.Error("Error joining team: ", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+	
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
 	})
 }

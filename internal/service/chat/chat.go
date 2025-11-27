@@ -3,6 +3,7 @@ package chat
 import (
 	"net/http"
 	"strconv"
+	"github.com/google/uuid"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -72,4 +73,8 @@ func NewRoom() *models.Room {
 		Peers:     make(map[string]*models.PeerState),
 		Published: make(map[string]*models.PublishedTrack),
 	}
+}
+
+func CreateCode() string {
+	return uuid.New().String()
 }

@@ -136,5 +136,32 @@ CREATE TABLE IF NOT EXISTS users_projects (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TYPE ApplicationStatus AS ENUM ('pending', 'accepted', 'rejected');
+
+CREATE TABLE IF NOT EXISTS team_applications (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    project_id BIGINT NOT NULL,
+    status ApplicationStatus NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS project_invites (
+    id SERIAL PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    invite_code VARCHAR(100) UNIQUE NOT NULL,
+    creator_id BIGINT NOT NULL,
+    expires_at TIMESTAMP NOT NULL DEFAULT NOW() + INTERVAL '3 days',
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_single_use BOOLEAN NOT NULL DEFAULT false,
+    used BOOLEAN NOT NULL DEFAULT false,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX invite_code_idx ON project_invites(invite_code);
+
 CREATE INDEX idx_users_projects_project_user ON users_projects(project_id, user_id);
 CREATE INDEX idx_users_projects_user_project ON users_projects(user_id, project_id);

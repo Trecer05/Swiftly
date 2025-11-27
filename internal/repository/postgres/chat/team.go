@@ -5,6 +5,7 @@ import (
 	"github.com/lib/pq"
 	"fmt"
 	"strings"
+	"time"
 
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
 	errors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -345,4 +346,175 @@ func (manager *Manager) GetTeamInfo(teamID int) (*models.TeamInfo, error) {
 	}
 
 	return &team, nil
+}
+
+func (manager *Manager) GetTeamApplications(teamID, ownerID int) ([]models.TeamApplication, error) {
+	var realOwnerID int
+	err := manager.Conn.QueryRow(
+		"SELECT owner_id FROM projects WHERE id = $1",
+		teamID,
+	).Scan(&realOwnerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.ErrProjectNotFound
+		}
+		return nil, err
+	}
+
+	if realOwnerID != ownerID {
+		return nil, errors.ErrUserNotAOwner
+	}
+	
+	var applications []models.TeamApplication
+	query := `
+		SELECT id, user_id, status, created_at
+		FROM team_applications
+		WHERE team_id = $1
+	`
+	rows, err := manager.Conn.Query(query, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var application models.TeamApplication
+		err := rows.Scan(&application.ID, &application.UserID, &application.Status, &application.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		applications = append(applications, application)
+	}
+
+	return applications, nil
+}
+
+func (manager *Manager) UpdateTeamApplication(teamID, ownerID int, status models.TeamApplicationUpdate) error {
+	var realOwnerID int
+	err := manager.Conn.QueryRow(
+		"SELECT owner_id FROM projects WHERE id = $1",
+		teamID,
+	).Scan(&realOwnerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrProjectNotFound
+		}
+		return err
+	}
+
+	if realOwnerID != ownerID {
+		return errors.ErrUserNotAOwner
+	}
+
+	query := `
+		UPDATE team_applications
+		SET status = $1
+		WHERE project_id = $2 and id = $3
+		RETURNING user_id
+	`
+	var userID int
+	err = manager.Conn.QueryRow(query, status.Status, teamID, status.ID).Scan(&userID)
+	if err != nil {
+		return err
+	}
+	
+	switch status.Status {
+	case models.TeamApplicationStatusAccepted:
+		_, err = manager.Conn.Exec(
+	        "INSERT INTO users_projects (project_id, user_id) VALUES ($1, $2)",
+	        teamID, userID,
+	    )
+	    if err != nil {
+	        return err
+	    }
+	}
+
+	return nil
+}
+
+func (manager *Manager) CreateJoinCode(code string, req *models.CreateJoinCode) (error) {
+	var realOwnerID int
+	err := manager.Conn.QueryRow(
+		"SELECT owner_id FROM projects WHERE id = $1",
+		req.ProjectID,
+	).Scan(&realOwnerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrProjectNotFound
+		}
+		return err
+	}
+
+	if realOwnerID != req.CreatorID {
+		return errors.ErrUserNotAOwner
+	}
+	
+	setParts := []string{}
+    args := []string{}
+    idx := 4
+
+    if req.ExpiresAt != nil {
+        setParts = append(setParts, "expires_at")
+        args = append(args, fmt.Sprintf("$%d", idx))
+        idx++
+    }
+
+    if req.IsSingleUse != nil {
+        setParts = append(setParts, "is_single_use")
+        args = append(args, fmt.Sprintf("$%d", idx))
+    }
+    
+    query := fmt.Sprintf("INSERT INTO join_codes (code, project_id, creator_id, %s) VALUES ($1, $2, $3, %s)", strings.Join(setParts, ", "), strings.Join(args, ", "))
+	
+	_, err = manager.Conn.Exec(query, code, req.ProjectID, req.CreatorID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) JoinTeam(userID int, joinCode string) error {
+	var projectID int
+	var expiresAt time.Time
+	var isSingleUse bool
+	var used bool
+	err := manager.Conn.QueryRow(
+		"SELECT project_id, expires_at, is_single_use, used FROM project_invites WHERE code = $1",
+		joinCode,
+	).Scan(&projectID, &expiresAt, &isSingleUse, &used)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.ErrJoinCodeNotFound
+		}
+		return err
+	}
+	
+	if isSingleUse && used {
+		return errors.ErrJoinCodeAlreadyUsed
+	}
+	
+	if time.Now().After(expiresAt) {
+		return errors.ErrCodeExpired
+	}
+	
+	if isSingleUse {
+		_, err = manager.Conn.Exec("UPDATE project_invites SET used = true WHERE code = $1", joinCode)
+		if err != nil {
+			return err
+		}
+	}
+
+	query := `
+		INSERT INTO team_applications (project_id, user_id)
+		VALUES ($1, $2)
+		RETURNING id
+	`
+	var id int
+	err = manager.Conn.QueryRow(query, projectID, userID).Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

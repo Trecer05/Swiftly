@@ -25,6 +25,9 @@ var (
 	
 	ErrProjectNotFound = errors.New("no project found")
 	ErrNoFieldsToUpdate = errors.New("no fields to update")
+	ErrCodeExpired = errors.New("code expired")
+	ErrJoinCodeNotFound = errors.New("join code not found")
+	ErrJoinCodeAlreadyUsed = errors.New("join code already used")
 )
 
 var (
