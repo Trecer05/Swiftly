@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	models "github.com/Trecer05/Swiftly/internal/model/chat"
+	taskModels "github.com/Trecer05/Swiftly/internal/model/task_tracker"
 )
 
 func (manager *Manager) GetUserTasks(userID int, projectID int) ([]models.UserTask, error) {
@@ -92,4 +93,46 @@ func (manager *Manager) CreateStartTasksTables(userID, projectID int) error {
     }
 
     return nil
+}
+
+func (manager *Manager) GetTaskByID(taskID int) (taskModels.Task, error) {
+	var task taskModels.Task
+	var completedAt sql.NullTime
+	var priorityLevel string
+	var status string
+
+	err := manager.Conn.QueryRow("SELECT id, author_id, developer_id, title, description, label, completed_at, priority_level, priority_title, priority_hex_color, status FROM tasks WHERE id = $1", taskID).Scan(
+		&task.ID,
+		&task.AuthorID,
+		&task.DeveloperID,
+		&task.Title,
+		&task.Description,
+		&task.Label,
+		&completedAt,
+		&priorityLevel,
+		&task.Priority.Title,
+		&task.Priority.HexColor,
+		&status,
+	)
+
+	if err != nil {
+		return task, err
+	}
+
+	switch priorityLevel {
+	case "low":
+		task.Priority.Type = taskModels.PriorityLow
+	case "medium":
+		task.Priority.Type = taskModels.PriorityMedium
+	case "high":
+		task.Priority.Type = taskModels.PriorityHigh
+	}
+
+	if completedAt.Valid {
+		task.CompletedAt = &completedAt.Time
+	}
+
+	task.Status = status
+
+	return task, nil
 }
