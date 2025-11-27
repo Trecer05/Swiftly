@@ -8,3 +8,8 @@ type TasksGet struct {
 type TeamTasksDelete struct {
 	TeamID int
 }
+
+type CreateStartTasksTables struct {
+	ProjectID int `json:"project_id"`
+	UserID    int `json:"user_id"`
+}

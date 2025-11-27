@@ -350,7 +350,7 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	}).Methods(http.MethodPut)
 	
 	apiSecure.HandleFunc("/team", func(w http.ResponseWriter, r *http.Request) {
-		CreateTeamHandler(w, r, mgr)
+		CreateTeamHandler(w, r, mgr, kafkaChangeManagerTasks)
 	}).Methods(http.MethodPost)
 	
 	apiSecure.HandleFunc("/team/{team_id}/edit", func(w http.ResponseWriter, r *http.Request) {

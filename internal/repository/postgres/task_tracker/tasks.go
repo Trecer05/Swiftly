@@ -81,3 +81,15 @@ func (manager *Manager) DeleteTeamTasks(teamID int) error {
     _, err := manager.Conn.Exec("DELETE FROM project_columns WHERE project_id = $1", teamID)
     return err
 }
+
+func (manager *Manager) CreateStartTasksTables(userID, projectID int) error {
+    _, err := manager.Conn.Exec(`
+    	INSERT INTO project_columns (project_id, title, position, created_by)
+    	VALUES ($1, 'Start', 'Start tasks', $2)
+    `, projectID, userID)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}

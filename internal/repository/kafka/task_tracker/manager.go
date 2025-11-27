@@ -100,6 +100,28 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context, manager *mgr.Manag
 			
 			data, _ := json.Marshal(tasks)
 			km.SendMessage(ctx, "tasks", models.Envelope{Type: "tasks", Payload: data})
+		case "team_create":
+		    var req models.CreateStartTasksTables
+						
+			if err := json.Unmarshal(msg.Value, &req); err != nil {
+			    logger.Logger.Errorf("Error unmarshaling message: %v", err)
+			
+			    data, _ := json.Marshal(models.Error{Err: err})
+			
+			    km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+			    continue
+			}
+			
+			err := manager.CreateStartTasksTables(req.UserID, req.ProjectID)
+			if err != nil {
+				logger.Logger.Errorf("Error creating start tasks tables: %v", err)
+				data, _ := json.Marshal(models.Error{Err: err})
+				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+				continue
+			}
+			
+			data, _ := json.Marshal(models.Success{Msg: "Start tasks tables created"})
+			km.SendMessage(ctx, "success", models.Envelope{Type: "success", Payload: data})
 		case "team_delete":
 		    var req models.TeamTasksDelete
 		    

@@ -216,7 +216,7 @@ func UpdateUserRoleHandler(w http.ResponseWriter, r *http.Request, mgr *manager.
 	})
 }
 
-func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kfk *kafka.KafkaManager) {
 	var team models.TeamCreate
 	if err := json.NewDecoder(r.Body).Decode(&team); err != nil {
 		logger.Logger.Error("Error decode team: ", err)
@@ -237,6 +237,30 @@ func CreateTeamHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Mana
 		logger.Logger.Error("Error create team: ", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
+	}
+	
+	if err := kfk.SendMessage(ctx, "team_create", kafkaModels.CreateStartTasksTables{ProjectID: id, UserID: team.OwnerID}); err != nil {
+	    logger.Logger.Error("Error sending message", err)
+	    serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+	    return
+	}
+	
+	data, err := kfk.WaitForResponse(team.OwnerID, time.Second * 5)
+	if err != nil {
+	    logger.Logger.Error("Error waiting for response", err)
+	    serviceHttp.NewErrorBody(w, "application/json", err, http.StatusGatewayTimeout)
+	    return
+	}
+	
+	switch data.Type {
+	case "error":
+	    var e kafkaModels.Error
+	    json.Unmarshal(data.Payload, &e)
+	    logger.Logger.Error("Error unmarshalling error response", e)
+	case "created":
+	    var s kafkaModels.Success
+	    json.Unmarshal(data.Payload, &s)
+	    logger.Logger.Info(s.Msg)
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
