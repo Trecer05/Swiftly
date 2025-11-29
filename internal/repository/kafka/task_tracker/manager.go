@@ -36,21 +36,42 @@ func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
         Async:        false,
     }
 
-    reader := kafka.NewReader(kafka.ReaderConfig{
-    	Brokers:        brokers,
-        Topic:          topic,
-        GroupID:        groupID,
-        MinBytes:       1e3,
-        MaxBytes:       10e6,
-        MaxWait:        100 * time.Millisecond,
-        ReadLagInterval: -1,
-        HeartbeatInterval: 3 * time.Second,
-        CommitInterval: 0,
-        RebalanceTimeout: 30 * time.Second,
-        SessionTimeout:  30 * time.Second,
-        Logger:          kafka.LoggerFunc(logger.Logger.Infof),
-        ErrorLogger:     kafka.LoggerFunc(logger.Logger.Errorf),
-    })
+    var reader *kafka.Reader
+    for {
+        // Создаём ридер внутри цикла для повторных попыток
+        reader = kafka.NewReader(kafka.ReaderConfig{
+            Brokers: brokers,
+            Topic: topic,
+            GroupID: groupID,
+            MaxBytes: 10e6,
+            MinBytes: 1,
+            MaxWait: 3 * time.Second,
+            ReadLagInterval: -1,
+            HeartbeatInterval: 3 * time.Second,
+            CommitInterval: 0,
+            RebalanceTimeout: 30 * time.Second,
+            SessionTimeout: 30 * time.Second,
+            StartOffset: kafka.FirstOffset,  // Добавьте это: начинать с начала, если нет сохранённого offset
+            Logger: kafka.LoggerFunc(func(string, ...interface{}) {}),
+            ErrorLogger: kafka.LoggerFunc(logger.Logger.Errorf),
+        })
+
+        // Тестируем соединение (например, через Stats или Lag — это свяжется с брокером/координатором)
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        msg, err := reader.FetchMessage(ctx)
+        cancel()
+        if err == nil || err == context.DeadlineExceeded || errors.Is(err, io.EOF) {
+            // Подключено (даже если нет сообщений)
+            if err == nil {
+                // Если сообщение пришло, можно закоммитить или игнорировать
+                reader.CommitMessages(ctx, msg)
+            }
+            break
+        }
+        logger.Logger.Warnf("Kafka not ready, retrying...: %v", err)
+        reader.Close()
+        time.Sleep(2 * time.Second)
+    }
 
     return &KafkaManager{
         Brokers: brokers,
@@ -82,16 +103,16 @@ func (km *KafkaManager) SendMessage(ctx context.Context, key string, value inter
 
 func (km *KafkaManager) ReadChatMessages(ctx context.Context, manager *mgr.Manager) {
     for {
-        msg, err := km.Reader.ReadMessage(ctx)
-        if errors.Is(err, io.EOF) ||
-               strings.Contains(err.Error(), "fetching message") {
-			time.Sleep(200 * time.Millisecond)
+    	msg, err := km.Reader.FetchMessage(ctx)
+		if errors.Is(err, io.EOF) ||
+		    	strings.Contains(err.Error(), "no messages") || 
+				errors.Is(err, context.DeadlineExceeded) {
+		    continue
+		}
+	    if err != nil {
+	        logger.Logger.Errorf("Kafka error: %v", err)
 	        continue
 	    }
-        if err != nil {
-            logger.Logger.Errorf("Error reading message: %v", err)
-            return
-        }
 
         switch string(msg.Key) {
         case "dashboard":
