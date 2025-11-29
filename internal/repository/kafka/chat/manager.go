@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"errors"
+	"io"
+	"strings"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
 	models "github.com/Trecer05/Swiftly/internal/model/kafka"
@@ -33,13 +36,20 @@ func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
     }
 
     reader := kafka.NewReader(kafka.ReaderConfig{
-        Brokers:  brokers,
-        Topic:    topic,
-        GroupID:  groupID,
-        MinBytes: 10e3,
-        MaxBytes: 10e6,
+    	Brokers:        brokers,
+        Topic:          topic,
+        GroupID:        groupID,
+        MinBytes:       1e3,
+        MaxBytes:       10e6,
+        MaxWait:        100 * time.Millisecond,
+        ReadLagInterval: -1,
+        HeartbeatInterval: 3 * time.Second,
+        CommitInterval: 0,
+        RebalanceTimeout: 30 * time.Second,
+        SessionTimeout:  30 * time.Second,
+        Logger:          kafka.LoggerFunc(logger.Logger.Infof),
+        ErrorLogger:     kafka.LoggerFunc(logger.Logger.Errorf),
     })
-
     return &KafkaManager{
         Brokers: brokers,
         Writer:  writer,
@@ -83,6 +93,11 @@ func (km *KafkaManager) ReadAuthMessages(ctx context.Context) {
 
 	for {
 		msg, err := km.Reader.ReadMessage(ctx)
+		if errors.Is(err, io.EOF) ||
+               strings.Contains(err.Error(), "fetching message") {
+            time.Sleep(200 * time.Millisecond)
+            continue
+		}
 		if err != nil {
 			logger.Logger.Errorf("Error reading message: %v", err)
 			continue
@@ -116,6 +131,11 @@ func (km *KafkaManager) ReadTaskMessages(ctx context.Context) {
 
 	for {
 		msg, err := km.Reader.ReadMessage(ctx)
+		if errors.Is(err, io.EOF) ||
+               strings.Contains(err.Error(), "fetching message") {
+            time.Sleep(200 * time.Millisecond)
+            continue
+		}
 		if err != nil {
 			logger.Logger.Errorf("Error reading message: %v", err)
 			continue
