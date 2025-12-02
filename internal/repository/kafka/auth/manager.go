@@ -34,7 +34,6 @@ func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
 
     var reader *kafka.Reader
     for {
-        // Создаём ридер внутри цикла для повторных попыток
         reader = kafka.NewReader(kafka.ReaderConfig{
             Brokers: brokers,
             Topic: topic,
@@ -47,19 +46,16 @@ func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
             CommitInterval: 0,
             RebalanceTimeout: 30 * time.Second,
             SessionTimeout: 30 * time.Second,
-            StartOffset: kafka.FirstOffset,  // Добавьте это: начинать с начала, если нет сохранённого offset
+            StartOffset: kafka.FirstOffset,
             Logger: kafka.LoggerFunc(func(string, ...interface{}) {}),
             ErrorLogger: kafka.LoggerFunc(logger.Logger.Errorf),
         })
 
-        // Тестируем соединение (например, через Stats или Lag — это свяжется с брокером/координатором)
         ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
         msg, err := reader.FetchMessage(ctx)
         cancel()
         if err == nil || err == context.DeadlineExceeded || errors.Is(err, io.EOF) {
-            // Подключено (даже если нет сообщений)
             if err == nil {
-                // Если сообщение пришло, можно закоммитить или игнорировать
                 reader.CommitMessages(ctx, msg)
             }
             break

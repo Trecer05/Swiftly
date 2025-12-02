@@ -31,7 +31,7 @@ CREATE TABLE project_columns (
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     author_id INTEGER NOT NULL,
-    developer_id INTEGER NOT NULL,
+    developer_id INTEGER,
     column_id INTEGER NOT NULL REFERENCES project_columns(id) ON DELETE CASCADE,
     position_in_column INTEGER NOT NULL DEFAULT 0,
     title TEXT NOT NULL,
@@ -41,6 +41,7 @@ CREATE TABLE tasks (
     priority priority_level REFERENCES priority_definitions(level),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deadline TIMESTAMP DEFAULT NULL,
     completed_at TIMESTAMP DEFAULT NULL
 );
 
