@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
 	id serial PRIMARY KEY,
-	email varchar(100) NOT NULL UNIQUE,
+	email varchar(100),
 	number varchar(100) NOT NULL UNIQUE,
 	password_hash text NOT NULL
 );
