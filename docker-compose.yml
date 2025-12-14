@@ -60,6 +60,25 @@ services:
       - "5435:5432"
     volumes:
       - pg_task_data:/var/lib/postgresql/data
+    
+  postgres_cloud:
+    image: postgres:16
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: swift
+      POSTGRES_PASSWORD: swift
+      POSTGRES_DB: cloud_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swift -d cloud_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg_cloud_data:/var/lib/postgresql/data
 
   # -------------------------------------
   # REDIS
@@ -188,9 +207,29 @@ services:
       KAFKA_ADDRESS: ${KAFKA_ADDRESS}
     ports:
       - "${TASK_SERVER_PORT}:${TASK_SERVER_PORT}"
+  
+  cloud_service:
+    build:
+      context: .
+      args:
+        SERVICE: cloud
+    depends_on:
+      postgres_cloud:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      TASK_SERVER_PORT: ${CLOUD_SERVER_PORT}
+      DB_TASK_CONNECTION_STRING: ${DB_CLOUD_CONNECTION_STRING}
+      KAFKA_ADDRESS: ${KAFKA_ADDRESS}
+    ports:
+      - "${CLOUD_SERVER_PORT}:${CLOUD_SERVER_PORT}"
 
 volumes:
   pg_auth_data:
   pg_chat_data:
   pg_task_data:
+  pg_cloud_data:
   redis_chat_data:

@@ -65,7 +65,9 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 
 	kafkaChangeManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
 	kafkaChangeManagerTasks := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "team", "team-user-tasks")
+	kafkaTeamManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "cloud", "cloud-team")
 
+	go kafkaTeamManager.ReadCloudMessages(ctx)
 	go kafkaChangeManager.ReadAuthMessages(ctx)
 	go kafkaChangeManagerTasks.ReadTaskMessages(ctx)
 	
@@ -350,7 +352,7 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	}).Methods(http.MethodPut)
 	
 	apiSecure.HandleFunc("/team", func(w http.ResponseWriter, r *http.Request) {
-		CreateTeamHandler(w, r, mgr, kafkaChangeManagerTasks)
+		CreateTeamHandler(w, r, mgr, kafkaChangeManagerTasks, kafkaTeamManager)
 	}).Methods(http.MethodPost)
 	
 	apiSecure.HandleFunc("/team/{team_id}/edit", func(w http.ResponseWriter, r *http.Request) {

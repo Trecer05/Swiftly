@@ -10,8 +10,8 @@
 **Тело запроса:**
 ```json
 {
-  "email": "string",
-  "phone": "string",
+  "email": "string,omitempty",
+  "number": "string",
   "password": "string"
 }
 ```
@@ -39,8 +39,8 @@
 **Тело запроса:**
 ```json
 {
-  "email": "string",
-  "phone": "string",
+  "email": "string,omitempty",
+  "number": "string",
   "password": "string"
 }
 ```

@@ -1,15 +1,16 @@
-package chat
+package cloud
 
 import (
 	"context"
 	"encoding/json"
 	"sync"
-	"errors"
 	"io"
+	"errors"
 	"strings"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
 	models "github.com/Trecer05/Swiftly/internal/model/kafka"
+	"github.com/Trecer05/Swiftly/internal/filemanager/cloud"
 	"github.com/segmentio/kafka-go"
 
 	"time"
@@ -67,7 +68,7 @@ func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
         reader.Close()
         time.Sleep(2 * time.Second)
     }
-    
+
     return &KafkaManager{
         Brokers: brokers,
         Writer:  writer,
@@ -96,116 +97,43 @@ func (km *KafkaManager) SendMessage(ctx context.Context, key string, value inter
     return nil
 }
 
-func (km *KafkaManager) ReadMessage(ctx context.Context) error {
-    msg, err := km.Reader.ReadMessage(ctx)
-    if err != nil {
-        return err
+func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
+    for {
+    	msg, err := km.Reader.FetchMessage(ctx)
+		if errors.Is(err, io.EOF) ||
+		    	strings.Contains(err.Error(), "no messages") || 
+				errors.Is(err, context.DeadlineExceeded) {
+		    continue
+		}
+	    if err != nil {
+	        logger.Logger.Errorf("Kafka error: %v", err)
+	        continue
+	    }
+
+        switch string(msg.Key) {
+        case "team_storage_create":
+        	var req models.TeamStorageCreate
+         
+        	if err := json.Unmarshal(msg.Value, &req); err != nil {
+			    logger.Logger.Errorf("Error unmarshaling message: %v", err)
+			
+			    data, _ := json.Marshal(models.Error{Err: err})
+			
+			    km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+			    continue
+			}
+
+			err := cloud.CreateTeamFolders(req.TeamID)
+			if err != nil {
+				logger.Logger.Errorf("Error create folders: %v", err)
+				data, _ := json.Marshal(models.Error{Err: err})
+				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+				continue
+			}
+			
+			km.SendMessage(ctx, "created", models.Envelope{Type: "tasks", Payload: nil})
+        }
     }
-
-    logger.Logger.Infof("Received message: key=%s value=%s", string(msg.Key), string(msg.Value))
-    return nil
-}
-
-func (km *KafkaManager) ReadAuthMessages(ctx context.Context) {
-	logger.Logger.Info("Starting to read messages")
-
-	for {
-		msg, err := km.Reader.FetchMessage(ctx)
-		if errors.Is(err, io.EOF) ||
-		    	strings.Contains(err.Error(), "no messages") || 
-				errors.Is(err, context.DeadlineExceeded) {
-		    continue
-		}
-		if err != nil {
-		    logger.Logger.Errorf("Kafka error: %v", err)
-		    continue
-		}
-
-        switch string(msg.Key) {
-        case "password":
-            err := SendEnvel(ctx, km, "password", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "phone":
-            err := SendEnvel(ctx, km, "phone", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "email":
-            err := SendEnvel(ctx, km, "email", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        }
-	}
-}
-
-func (km *KafkaManager) ReadTaskMessages(ctx context.Context) {
-	logger.Logger.Info("Starting to read messages")
-
-	for {
-		msg, err := km.Reader.FetchMessage(ctx)
-		if errors.Is(err, io.EOF) ||
-		    	strings.Contains(err.Error(), "no messages") || 
-				errors.Is(err, context.DeadlineExceeded) {
-		    continue
-		}
-		if err != nil {
-		    logger.Logger.Errorf("Kafka error: %v", err)
-		    continue
-		}
-
-        switch string(msg.Key) {
-        case "tasks":
-            err := SendEnvel(ctx, km, "tasks", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "error":
-            err := SendEnvel(ctx, km, "error", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        }
-	}
-}
-
-func (km *KafkaManager) ReadCloudMessages(ctx context.Context) {
-	logger.Logger.Info("Starting to read messages")
-
-	for {
-		msg, err := km.Reader.FetchMessage(ctx)
-		if errors.Is(err, io.EOF) ||
-		    	strings.Contains(err.Error(), "no messages") || 
-				errors.Is(err, context.DeadlineExceeded) {
-		    continue
-		}
-		if err != nil {
-		    logger.Logger.Errorf("Kafka error: %v", err)
-		    continue
-		}
-
-        switch string(msg.Key) {
-        case "created":
-            err := SendEnvel(ctx, km, "tasks", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        case "error":
-            err := SendEnvel(ctx, km, "error", msg)
-            if err != nil {
-                logger.Logger.Errorf("Error sending envelope: %v", err)
-                continue
-            }
-        }
-	}
 }
 
 func SendEnvel(ctx context.Context, km *KafkaManager, key string, msg kafka.Message) error {
