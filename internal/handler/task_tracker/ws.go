@@ -77,7 +77,7 @@ func DashboardWSHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Man
 	}()
 	
 	go rds.SendLocalMessage(userId, teamID, msgCh)
-	// go rds.SendLocalNotification(userId, teamID, notifCh)
+	go rds.SendLocalNotification(userId, teamID, notifCh)
 	wsTracker.ReadMessage(teamID, conn, rds, mgr)
 
 	conn.Close()

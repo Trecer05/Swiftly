@@ -1,15 +1,15 @@
-package task_tracker
+package cloud
 
 import (
 	"encoding/json"
 	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"strconv"
 
-	models "github.com/Trecer05/Swiftly/internal/model/task_tracker"
+	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	"github.com/gorilla/websocket"
 )
 
-func (manager *WebSocketManager) ListenPubSub(teamID int, msgCh chan models.Envelope, notifCh chan models.Notifications) {
+func (manager *WebSocketManager) ListenPubSub(teamID int, msgCh chan models.Envelope) {
     manager.MU.Lock()
     if manager.SubscribedSessions[teamID] {
         manager.MU.Unlock()
@@ -30,20 +30,6 @@ func (manager *WebSocketManager) ListenPubSub(teamID int, msgCh chan models.Enve
             }
             m.TeamID = teamID
             msgCh <- m
-        }
-    }()
-
-    notifications := manager.RDB.Subscribe(ctx, "team"+":"+strconv.Itoa(teamID)+":notifications")
-    notCh := notifications.Channel()
-
-    go func() {
-        for msg := range notCh {
-            var notif models.Notifications
-            if err := json.Unmarshal([]byte(msg.Payload), &notif); err != nil {
-                logger.Logger.Println("Invalid pubsub message:", err)
-                continue
-            }
-            notifCh <- notif
         }
     }()
 }
@@ -94,32 +80,4 @@ func (manager *WebSocketManager) SendToUser(teamID int, message models.Envelope)
 
 	channel := "team" + ":" + strconv.Itoa(teamID)
 	return manager.RDB.Publish(ctx, channel, data).Err()
-}
-
-func (manager *WebSocketManager) SendNotificationToUser(teamID int, message models.NotificationMessage, notifType models.NotificationType) error {
-	notif := models.Notifications{
-		Type: notifType,
-		Message: message,
-	}
-
-	data, err := json.Marshal(notif)
-	if err != nil {
-		logger.Logger.Println("Error marshalling message:", err)
-		return err
-	}
-
-	channel := "team" + ":" + strconv.Itoa(teamID) + ":notifications"
-	return manager.RDB.Publish(ctx, channel, data).Err()
-}
-
-func (manager *WebSocketManager) SendLocalNotification(userID, teamID int, notifications <-chan models.Notifications) {
-	for notif := range notifications {
-        manager.MU.RLock()
-		conn := manager.Sessions[teamID][userID]
-		manager.MU.RUnlock()
-
-		if err := conn.WriteJSON(notif); err != nil {
-			logger.Logger.Println("write error:", err)
-		}
-	}
 }

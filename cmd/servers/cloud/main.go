@@ -6,6 +6,7 @@ import (
 	"log"
 	"context"
 
+	redis "github.com/Trecer05/Swiftly/internal/repository/cache/cloud"
 	kfk "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
 	env "github.com/Trecer05/Swiftly/internal/config/environment"
 	migrator "github.com/Trecer05/Swiftly/internal/repository/postgres"
@@ -35,8 +36,8 @@ func main() {
 	cloud.CreateStartDirs()
 	logger.Logger.Println("Start dirs created")
 
-	// rds := redis.NewCloudManager(os.Getenv("CLOUD_REDIS_CONNECTION_STRING"))
-	// logger.Logger.Println("Redis connected")
+	rds := redis.NewCloudManager(os.Getenv("CLOUD_REDIS_CONNECTION_STRING"))
+	logger.Logger.Println("Redis connected")
 	
 	kfMgr := kfk.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "cloud", "cloud-team")
 	
@@ -45,7 +46,7 @@ func main() {
 	migrator.Migrate(manager.Conn, "cloud")
 	logger.Logger.Println("DB migrated")
 
-	r := router.NewCloudRouter(manager)
+	r := router.NewCloudRouter(manager, rds)
 
 	s := server.NewServer(os.Getenv("CLOUD_SERVER_PORT"), r)
 	if err := s.ListenAndServe(); err != nil {

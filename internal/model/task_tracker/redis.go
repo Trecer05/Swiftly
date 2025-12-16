@@ -87,5 +87,12 @@ type TaskDescriptionUpdateMessage struct {
 	Message string `json:"message"`
 }
 
+type NotificationType string
+
+type NotificationMessage struct {}
+
 // TODO: сделать
-type Notifications struct {}
+type Notifications struct {
+	Type NotificationType `json:"type"`
+	Message NotificationMessage `json:"message"`
+}
