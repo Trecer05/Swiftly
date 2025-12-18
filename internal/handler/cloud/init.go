@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	middleware "github.com/Trecer05/Swiftly/internal/handler"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/cloud"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
-	middleware "github.com/Trecer05/Swiftly/internal/handler"
 
 	"github.com/gorilla/mux"
 )
@@ -17,7 +17,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 	apiSecure := r.PathPrefix("/api/v1/cloud").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
-	
+
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods(http.MethodGet)
@@ -34,7 +34,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		CreateTeamFileHandler(w, r, manager, rds)
 	}).Methods(http.MethodPost)
 
-	apiSecure.HandleFunc("/team/{id}/file/{file_id}", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/team/{id:[0-9]+}/file/{id}", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamFileByIDHandler(w, r, manager)
 	}).Methods(http.MethodGet)
 
