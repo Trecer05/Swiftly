@@ -14,6 +14,7 @@ import (
 	cloudService "github.com/Trecer05/Swiftly/internal/service/cloud"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 func GetTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
@@ -66,8 +67,9 @@ func DownloadTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *ma
 }
 
 func prepareTeamFile(r *http.Request, mgr *manager.Manager) (*cloud.File, int, error, int) {
-	teamId, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	fileUUID, err := uuid.Parse(r.URL.Query().Get("file_id"))
+	vars := mux.Vars(r)
+	teamId, _ := strconv.Atoi(vars["id"])
+	fileUUID, err := uuid.Parse(vars["file_id"])
 	if err != nil {
 		return nil, 0, errorFileTypes.ErrFileNotFound, http.StatusNotFound
 	}
