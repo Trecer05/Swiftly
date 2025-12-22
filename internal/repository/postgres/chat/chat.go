@@ -10,49 +10,49 @@ import (
 )
 
 func (manager *Manager) GetUserRoomsForStatus(userId int) ([]models.UserRoom, error) {
-    var rooms []models.UserRoom
-    
-    rows, err := manager.Conn.Query(`
+	var rooms []models.UserRoom
+
+	rows, err := manager.Conn.Query(`
         SELECT c.id, 'private' as type
         FROM chats c
         JOIN chat_users cu ON c.id = cu.chat_id
         WHERE cu.user_id = $1`, userId)
-    if err != nil {
-        return rooms, err
-    }
-    defer rows.Close()
-    
-    for rows.Next() {
-        var room models.UserRoom
-        var roomType string
-        if err := rows.Scan(&room.ID, &roomType); err != nil {
-            continue
-        }
-        room.Type = models.ChatType(roomType)
-        rooms = append(rooms, room)
-    }
-    
-    groupRows, err := manager.Conn.Query(`
+	if err != nil {
+		return rooms, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var room models.UserRoom
+		var roomType string
+		if err := rows.Scan(&room.ID, &roomType); err != nil {
+			continue
+		}
+		room.Type = models.ChatType(roomType)
+		rooms = append(rooms, room)
+	}
+
+	groupRows, err := manager.Conn.Query(`
         SELECT g.id, 'group' as type
         FROM groups g
         JOIN group_users gu ON g.id = gu.group_id
         WHERE gu.user_id = $1`, userId)
-    if err != nil {
-        return rooms, err
-    }
-    defer groupRows.Close()
-    
-    for groupRows.Next() {
-        var room models.UserRoom
-        var roomType string
-        if err := groupRows.Scan(&room.ID, &roomType); err != nil {
-            continue
-        }
-        room.Type = models.ChatType(roomType)
-        rooms = append(rooms, room)
-    }
-    
-    return rooms, nil
+	if err != nil {
+		return rooms, err
+	}
+	defer groupRows.Close()
+
+	for groupRows.Next() {
+		var room models.UserRoom
+		var roomType string
+		if err := groupRows.Scan(&room.ID, &roomType); err != nil {
+			continue
+		}
+		room.Type = models.ChatType(roomType)
+		rooms = append(rooms, room)
+	}
+
+	return rooms, nil
 }
 
 func (manager *Manager) GetUserRooms(userId, limit, offset int) (models.ChatRooms, error) {
@@ -532,36 +532,36 @@ func (manager *Manager) UpdateGroup(id int, req models.GroupEdit) error {
 			UPDATE groups
 			SET name = $1, description = $2
 			WHERE id = $3`, req.Name, req.Description, id); err != nil {
-				if err == sql.ErrNoRows {
-					return errors.ErrNoGroupFound
-				}
-
-				return err
+			if err == sql.ErrNoRows {
+				return errors.ErrNoGroupFound
 			}
+
+			return err
+		}
 		return nil
 	case req.Name != nil:
 		if _, err := manager.Conn.Exec(`
 			UPDATE groups
 			SET name = $1
 			WHERE id = $2`, req.Name, id); err != nil {
-				if err == sql.ErrNoRows {
-					return errors.ErrNoGroupFound
-				}
-
-				return err
+			if err == sql.ErrNoRows {
+				return errors.ErrNoGroupFound
 			}
+
+			return err
+		}
 	case req.Description != nil:
 		if _, err := manager.Conn.Exec(`
 			UPDATE groups
 			SET description = $1
 			WHERE id = $2`, req.Description, id); err != nil {
-				if err == sql.ErrNoRows {
-					return errors.ErrNoGroupFound
-				}
-
-				return err
+			if err == sql.ErrNoRows {
+				return errors.ErrNoGroupFound
 			}
+
+			return err
+		}
 	}
-	
+
 	return nil
 }
