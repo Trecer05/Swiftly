@@ -6,12 +6,13 @@ import (
 
 	middleware "github.com/Trecer05/Swiftly/internal/handler"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/cloud"
+	kafkaManager "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 
 	"github.com/gorilla/mux"
 )
 
-func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSocketManager) {
+func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSocketManager, kafkaManager *kafkaManager.KafkaManager) {
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 
 	apiSecure := r.PathPrefix("/api/v1/cloud").Subrouter()
@@ -35,7 +36,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 	}).Methods(http.MethodPost)
 
 	apiSecure.HandleFunc("/team/{id:[0-9]+}/file/{id}", func(w http.ResponseWriter, r *http.Request) {
-		GetTeamFileByIDHandler(w, r, manager)
+		GetTeamFileByIDHandler(w, r, manager, kafkaManager)
 	}).Methods(http.MethodGet)
 
 	apiSecure.HandleFunc("/user/file", func(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +64,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 	}).Methods(http.MethodDelete)
 
 	apiSecure.HandleFunc("/team/{id}/file/{file_id}/download", func(w http.ResponseWriter, r *http.Request) {
-		DownloadTeamFileByIDHandler(w, r, manager)
+		DownloadTeamFileByIDHandler(w, r, manager, kafkaManager)
 	}).Methods(http.MethodGet)
 
 	apiSecure.HandleFunc("/user/file/{file_id}/download", func(w http.ResponseWriter, r *http.Request) {

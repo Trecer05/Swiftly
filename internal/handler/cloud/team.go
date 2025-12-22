@@ -9,19 +9,20 @@ import (
 	errorAuthTypes "github.com/Trecer05/Swiftly/internal/errors/auth"
 	errorFileTypes "github.com/Trecer05/Swiftly/internal/errors/file"
 	"github.com/Trecer05/Swiftly/internal/model/cloud"
+	kafkaManager "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 	cloudService "github.com/Trecer05/Swiftly/internal/service/cloud"
 	serviceHttp "github.com/Trecer05/Swiftly/internal/transport/http"
 	"github.com/google/uuid"
 )
 
-func GetTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+func GetTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
 	fileModel, userId, err, statusCode := prepareTeamFile(r, mgr)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, statusCode)
 		return
 	}
-	fileByte, err := cloudService.GetFileSync(fileModel, userId)
+	fileByte, err := cloudService.GetFileSync(fileModel, userId, kafkaManager)
 
 	if err != nil {
 		if errors.Is(err, errorFileTypes.ErrPermissionDenied) {
@@ -39,13 +40,13 @@ func GetTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager
 	w.Write(fileByte)
 }
 
-func DownloadTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+func DownloadTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
 	fileModel, userId, err, statusCode := prepareTeamFile(r, mgr)
 	if err != nil {
 		serviceHttp.NewErrorBody(w, "application/json", err, statusCode)
 		return
 	}
-	fileByte, err := cloudService.GetFileStream(fileModel, userId)
+	fileByte, err := cloudService.GetFileStream(fileModel, userId, kafkaManager)
 	if err != nil {
 		if errors.Is(err, errorFileTypes.ErrPermissionDenied) {
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
