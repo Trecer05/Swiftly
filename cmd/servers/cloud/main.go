@@ -46,7 +46,7 @@ func main() {
 	migrator.Migrate(manager.Conn, "cloud")
 	logger.Logger.Println("DB migrated")
 
-	r := router.NewCloudRouter(manager, rds)
+	r := router.NewCloudRouter(manager, rds, kfMgr)
 
 	s := server.NewServer(os.Getenv("CLOUD_SERVER_PORT"), r)
 	if err := s.ListenAndServe(); err != nil {
