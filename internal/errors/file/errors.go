@@ -3,6 +3,8 @@ package file
 import "errors"
 
 var (
-	ErrFileNotFound = errors.New("file not found")
+	ErrFileNotFound  = errors.New("file not found")
 	ErrFilesNotFound = errors.New("files not found")
+
+	ErrPermissionDenied = errors.New("permission denied")
 )

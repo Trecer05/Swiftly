@@ -3,124 +3,146 @@ package cloud
 import (
 	"context"
 	"encoding/json"
-	"sync"
-	"io"
 	"errors"
+	"io"
 	"strings"
+	"sync"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
-	models "github.com/Trecer05/Swiftly/internal/model/kafka"
 	"github.com/Trecer05/Swiftly/internal/filemanager/cloud"
+	models "github.com/Trecer05/Swiftly/internal/model/kafka"
+	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 
 	"time"
 )
 
 type KafkaManager struct {
-    Brokers []string
-    Writer  *kafka.Writer
-    Reader  *kafka.Reader
+	Brokers []string
+	Writer  *kafka.Writer
+	Reader  *kafka.Reader
 
-    mu        sync.Mutex
-    responses map[int]chan models.Envelope
+	mu        sync.Mutex
+	responses map[string]chan models.KafkaResponse
 }
 
 func NewKafkaManager(brokers []string, topic, groupID string) *KafkaManager {
 	logger.Logger.Infof("Create new KafkaManager with brokers: %v, topic: %s, groupID: %s", brokers, topic, groupID)
 
-    writer := &kafka.Writer{
-        Addr:         kafka.TCP(brokers...),
-        Topic:        topic,
-        Balancer:     &kafka.LeastBytes{},
-        RequiredAcks: kafka.RequireAll,
-        Async:        false,
-    }
+	writer := &kafka.Writer{
+		Addr:         kafka.TCP(brokers...),
+		Topic:        topic,
+		Balancer:     &kafka.LeastBytes{},
+		RequiredAcks: kafka.RequireAll,
+		Async:        false,
+	}
 
-    var reader *kafka.Reader
-    for {
-        reader = kafka.NewReader(kafka.ReaderConfig{
-            Brokers: brokers,
-            Topic: topic,
-            GroupID: groupID,
-            MaxBytes: 10e6,
-            MinBytes: 1,
-            MaxWait: 3 * time.Second,
-            ReadLagInterval: -1,
-            HeartbeatInterval: 3 * time.Second,
-            CommitInterval: 0,
-            RebalanceTimeout: 30 * time.Second,
-            SessionTimeout: 30 * time.Second,
-            StartOffset: kafka.FirstOffset,
-            Logger: kafka.LoggerFunc(func(string, ...interface{}) {}),
-            ErrorLogger: kafka.LoggerFunc(logger.Logger.Errorf),
-        })
+	var reader *kafka.Reader
+	for {
+		reader = kafka.NewReader(kafka.ReaderConfig{
+			Brokers:           brokers,
+			Topic:             topic,
+			GroupID:           groupID,
+			MaxBytes:          10e6,
+			MinBytes:          1,
+			MaxWait:           3 * time.Second,
+			ReadLagInterval:   -1,
+			HeartbeatInterval: 3 * time.Second,
+			CommitInterval:    0,
+			RebalanceTimeout:  30 * time.Second,
+			SessionTimeout:    30 * time.Second,
+			StartOffset:       kafka.FirstOffset,
+			Logger:            kafka.LoggerFunc(func(string, ...interface{}) {}),
+			ErrorLogger:       kafka.LoggerFunc(logger.Logger.Errorf),
+		})
 
-        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-        msg, err := reader.FetchMessage(ctx)
-        cancel()
-        if err == nil || err == context.DeadlineExceeded || errors.Is(err, io.EOF) {
-            if err == nil {
-                reader.CommitMessages(ctx, msg)
-            }
-            break
-        }
-        logger.Logger.Warnf("Kafka not ready, retrying...: %v", err)
-        reader.Close()
-        time.Sleep(2 * time.Second)
-    }
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		msg, err := reader.FetchMessage(ctx)
+		cancel()
+		if err == nil || err == context.DeadlineExceeded || errors.Is(err, io.EOF) {
+			if err == nil {
+				reader.CommitMessages(ctx, msg)
+			}
+			break
+		}
+		logger.Logger.Warnf("Kafka not ready, retrying...: %v", err)
+		reader.Close()
+		time.Sleep(2 * time.Second)
+	}
 
-    return &KafkaManager{
-        Brokers: brokers,
-        Writer:  writer,
-        Reader:  reader,
-        responses: make(map[int]chan models.Envelope),
-    }
+	return &KafkaManager{
+		Brokers:   brokers,
+		Writer:    writer,
+		Reader:    reader,
+		responses: make(map[string]chan models.KafkaResponse),
+	}
 }
 
-func (km *KafkaManager) SendMessage(ctx context.Context, key string, value interface{}) error {
-    data, err := json.Marshal(value)
-    if err != nil {
-        return err
-    }
+func (km *KafkaManager) SendMessage(ctx context.Context, key string, value interface{}) (uuid.UUID, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
-    msg := kafka.Message{
-        Key:   []byte(key),
-        Value: []byte(data),
-        Time:  time.Now(),
-    }
+	correlationID := uuid.New()
+	header := kafka.Header{
+		Key:   "correlation_id",
+		Value: []byte(correlationID.String()),
+	}
 
-    if err := km.Writer.WriteMessages(ctx, msg); err != nil {
-        return err
-    }
+	msg := kafka.Message{
+		Key:     []byte(key),
+		Value:   []byte(data),
+		Headers: []kafka.Header{header},
+		Time:    time.Now(),
+	}
 
-    logger.Logger.Infof("Sent message: key=%s value=%s", key, value)
-    return nil
+	if err := km.Writer.WriteMessages(ctx, msg); err != nil {
+		return uuid.Nil, err
+	}
+
+	logger.Logger.Infof("Sent message: key=%s value=%s with correlationID=%s", key, value, correlationID.String())
+	return correlationID, nil
 }
 
 func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
-    for {
-    	msg, err := km.Reader.FetchMessage(ctx)
-		if errors.Is(err, io.EOF) ||
-		    	strings.Contains(err.Error(), "no messages") || 
-				errors.Is(err, context.DeadlineExceeded) {
-		    continue
-		}
-	    if err != nil {
-	        logger.Logger.Errorf("Kafka error: %v", err)
-	        continue
-	    }
+	for {
+		msg, err := km.Reader.FetchMessage(ctx)
 
-        switch string(msg.Key) {
-        case "team_storage_create":
-        	var req models.TeamStorageCreate
-         
-        	if err := json.Unmarshal(msg.Value, &req); err != nil {
-			    logger.Logger.Errorf("Error unmarshaling message: %v", err)
-			
-			    data, _ := json.Marshal(models.Error{Err: err})
-			
-			    km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
-			    continue
+		if errors.Is(err, io.EOF) ||
+			strings.Contains(err.Error(), "no messages") ||
+			errors.Is(err, context.DeadlineExceeded) {
+			continue
+		}
+		if err != nil {
+			logger.Logger.Errorf("Kafka error: %v", err)
+			continue
+		}
+
+		var corrID string
+		for _, h := range msg.Headers {
+			if h.Key == "correlation_id" {
+				corrID = string(h.Value)
+				break
+			}
+		}
+		if corrID != "" {
+			// payload — msg.Value
+			go SendResponse(ctx, km, corrID, msg.Value)
+			km.Reader.CommitMessages(ctx, msg)
+		}
+
+		switch string(msg.Key) {
+		case "team_storage_create":
+			var req models.TeamStorageCreate
+
+			if err := json.Unmarshal(msg.Value, &req); err != nil {
+				logger.Logger.Errorf("Error unmarshaling message: %v", err)
+
+				data, _ := json.Marshal(models.Error{Err: err})
+
+				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
+				continue
 			}
 
 			err := cloud.CreateTeamFolders(req.TeamID)
@@ -130,61 +152,59 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
 				continue
 			}
-			
+
 			km.SendMessage(ctx, "created", models.Envelope{Type: "tasks", Payload: nil})
-        }
-    }
+		}
+	}
 }
 
-func SendEnvel(ctx context.Context, km *KafkaManager, key string, msg kafka.Message) error {
-    var envel models.Envelope
-    if err := json.Unmarshal(msg.Value, &envel); err != nil {
-        logger.Logger.Errorf("Error unmarshaling message: %v", err)
-        return err
-    }
+func SendResponse(ctx context.Context, km *KafkaManager, correlationID string, payload []byte) error {
+	response := models.KafkaResponse{
+		CorrelationID: correlationID,
+		Payload:       payload,
+		Err:           nil,
+	}
 
-    userID := *envel.UserID
+	km.mu.Lock()
+	ch, ok := km.responses[correlationID]
+	km.mu.Unlock()
 
-    km.mu.Lock()
-    ch, ok := km.responses[userID]
-    km.mu.Unlock()
+	if ok {
+		ch <- response
+	} else {
+		logger.Logger.Warnf("No waiting channel for correlationID=%s", correlationID)
+	}
 
-    if ok {
-        ch <- envel
-    } else {
-        logger.Logger.Warnf("No waiting channel for userID=%d", userID)
-    }
-
-    return nil
+	return nil
 }
 
-func (km *KafkaManager) WaitForResponse(userID int, timeout time.Duration) (models.Envelope, error) {
-    ch := make(chan models.Envelope, 1)
+func (km *KafkaManager) WaitForResponse(correlationID string, timeout time.Duration) (models.KafkaResponse, error) {
+	ch := make(chan models.KafkaResponse, 1)
 
-    km.mu.Lock()
-    km.responses[userID] = ch
-    km.mu.Unlock()
+	km.mu.Lock()
+	km.responses[correlationID] = ch
+	km.mu.Unlock()
 
-    defer func() {
-        km.mu.Lock()
-        delete(km.responses, userID)
-        km.mu.Unlock()
-    }()
+	defer func() {
+		km.mu.Lock()
+		delete(km.responses, correlationID)
+		km.mu.Unlock()
+	}()
 
-    select {
-    case resp := <-ch:
-        return resp, nil
-    case <-time.After(timeout):
-        return models.Envelope{Type: "error"}, context.DeadlineExceeded
-    }
+	select {
+	case resp := <-ch:
+		return resp, nil
+	case <-time.After(timeout):
+		return models.KafkaResponse{Err: context.DeadlineExceeded}, context.DeadlineExceeded
+	}
 }
 
 func (km *KafkaManager) Close() error {
-    if err := km.Writer.Close(); err != nil {
-        return err
-    }
-    if err := km.Reader.Close(); err != nil {
-        return err
-    }
-    return nil
+	if err := km.Writer.Close(); err != nil {
+		return err
+	}
+	if err := km.Reader.Close(); err != nil {
+		return err
+	}
+	return nil
 }
