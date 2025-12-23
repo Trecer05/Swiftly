@@ -9,7 +9,7 @@ import (
 )
 
 func CreateStartDirs() {
-	commandsDir := filepath.Join("cloud", "commands")
+	commandsDir := filepath.Join("cloud", "teams")
 	usersDir := filepath.Join("cloud", "users")
 
 	if err := createDirIfNotExist(commandsDir); err != nil {

@@ -67,7 +67,7 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	kafkaChangeManagerTasks := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "team", "team-user-tasks")
 	kafkaTeamManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "cloud", "cloud-team")
 
-	go kafkaTeamManager.ReadCloudMessages(ctx)
+	go kafkaTeamManager.ReadCloudMessages(ctx, mgr)
 	go kafkaChangeManager.ReadAuthMessages(ctx)
 	go kafkaChangeManagerTasks.ReadTaskMessages(ctx)
 	
