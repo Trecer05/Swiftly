@@ -126,11 +126,6 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 				break
 			}
 		}
-		if corrID != "" {
-			// payload — msg.Value
-			go SendResponse(ctx, km, corrID, msg.Value)
-			km.Reader.CommitMessages(ctx, msg)
-		}
 
 		switch string(msg.Key) {
 		case "team_storage_create":
@@ -154,14 +149,21 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 			}
 
 			km.SendMessage(ctx, "created", models.Envelope{Type: "tasks", Payload: nil})
+		case "check_user_response":
+			err := SendResponse(ctx, km, corrID, msg)
+			if err != nil {
+				logger.Logger.Errorf("Error sending envelope: %v", err)
+				continue
+			}
 		}
+
 	}
 }
 
-func SendResponse(ctx context.Context, km *KafkaManager, correlationID string, payload []byte) error {
+func SendResponse(ctx context.Context, km *KafkaManager, correlationID string, msg kafka.Message) error {
 	response := models.KafkaResponse{
 		CorrelationID: correlationID,
-		Payload:       payload,
+		Payload:       msg.Value,
 		Err:           nil,
 	}
 
