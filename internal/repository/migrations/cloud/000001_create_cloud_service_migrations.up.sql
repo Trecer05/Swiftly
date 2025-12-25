@@ -9,6 +9,7 @@ CREATE TABLE folders (
     owner_type VARCHAR(10) CHECK (owner_type IN ('user', 'team')),
     parent_folder_id UUID REFERENCES folders(uuid) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
     
     CONSTRAINT valid_owner CHECK (
         (owner_type = 'user' AND owner_id IS NOT NULL) OR
@@ -26,8 +27,8 @@ CREATE TABLE files (
     size BIGINT NOT NULL DEFAULT 0,
     visibility file_visibility NOT NULL DEFAULT 'private',
     
-    created_by INTEGER NOT NULL,
-    owner_id INTEGER,
+    created_by INTEGER NOT NULL, -- Кто загрузил файл
+    owner_id INTEGER, -- Владелец (пользователь ИЛИ команда)
     owner_type VARCHAR(10) CHECK (owner_type IN ('user', 'team')),
     
     uploaded_at TIMESTAMP DEFAULT NOW(),

@@ -27,7 +27,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		GetTeamFilesAndFoldersHandler(w, r, manager)
 	}).Methods(http.MethodGet)
 
-	apiSecure.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/user/{sort}", func(w http.ResponseWriter, r *http.Request) {
 		GetUserFilesAndFoldersHandler(w, r, manager)
 	}).Methods(http.MethodGet)
 
