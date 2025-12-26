@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -88,4 +89,43 @@ func prepareTeamFile(r *http.Request, mgr *manager.Manager) (*cloud.File, int, e
 	}
 
 	return fileModel, userID, nil, http.StatusOK
+}
+
+// /team/{id}/folder/{folder_id}
+func GetTeamFolderFilesByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
+	vars := mux.Vars(r)
+	teamId, _ := strconv.Atoi(vars["id"])
+	folderId, err := uuid.Parse(vars["folder_id"])
+	if err != nil {
+		serviceHttp.NewErrorBody(w, "application/json", errorFileTypes.ErrFolderNotFound, http.StatusNotFound)
+		return
+	}
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	err = cloudService.CheckUserInTeam(teamId, userID, kafkaManager)
+	if err != nil {
+		if errors.Is(err, errorAuthTypes.ErrUnauthorized) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	folderModel, err := mgr.GetTeamFolderByTeamID(teamId, folderId)
+	if err != nil {
+		if errors.Is(err, errorFileTypes.ErrFolderNotFound) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		}
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(folderModel)
 }
