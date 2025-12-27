@@ -521,19 +521,10 @@ func (manager *Manager) JoinTeam(userID int, joinCode string) error {
 }
 
 func (manager *Manager) IsUserInTeam(teamID int, userID int) (bool, error) {
-	query := `
-		SELECT 1
-		FROM users_projects
-		WHERE project_id = $1
-		AND user_id = $2
-		LIMIT 1;
-	`
-	err := manager.Conn.QueryRow(query, teamID, userID).Scan()
-	if err == sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
+	query := `SELECT EXISTS(SELECT 1 FROM users_projects WHERE project_id = $1 AND user_id = $2)`
+	var exists bool
+	if err := manager.Conn.QueryRow(query, teamID, userID).Scan(&exists); err != nil {
 		return false, err
 	}
-	return true, nil
-
+	return exists, nil
 }

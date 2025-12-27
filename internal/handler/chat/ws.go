@@ -2,11 +2,12 @@ package chat
 
 import (
 	"context"
-	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	logger "github.com/Trecer05/Swiftly/internal/config/logger"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/auth"
 	chatErrors "github.com/Trecer05/Swiftly/internal/errors/chat"
@@ -30,24 +31,24 @@ import (
 //		return origin == "https://домен"
 //	}
 var upgrader = websocket.Upgrader{
-    CheckOrigin: func(r *http.Request) bool {
-        // origin := r.Header.Get("Origin")
-        // allowedOrigins := []string{
-        //     "http://localhost:3000",
-        //     "https://yourdomain.com",
-        // }
-        
-        // for _, allowed := range allowedOrigins {
-        //     if origin == allowed {
-        //         return true
-        //     }
-        // }
-        // return false
+	CheckOrigin: func(r *http.Request) bool {
+		// origin := r.Header.Get("Origin")
+		// allowedOrigins := []string{
+		//     "http://localhost:3000",
+		//     "https://yourdomain.com",
+		// }
+
+		// for _, allowed := range allowedOrigins {
+		//     if origin == allowed {
+		//         return true
+		//     }
+		// }
+		// return false
 
 		return true
-    },
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
+	},
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
 var ctx = context.Background()
@@ -58,22 +59,22 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure := router.PathPrefix("/api/v1").Subrouter()
 	apiSecure.Use(middleware.AuthMiddleware())
 	apiSecure.Use(middleware.RateLimitMiddleware(rateLimiter))
-	
+
 	joinRouter := router.PathPrefix("/join").Subrouter()
 	joinRouter.Use(middleware.AuthMiddleware())
 	joinRouter.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	kafkaChangeManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "profile", "user-change-group")
 	kafkaChangeManagerTasks := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "team", "team-user-tasks")
-	kafkaTeamManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "cloud", "cloud-team")
+	kafkaTeamManager := kafka.NewKafkaManager([]string{os.Getenv("KAFKA_ADDRESS")}, "cloud", "team-cloud-group")
 
 	go kafkaTeamManager.ReadCloudMessages(ctx, mgr)
 	go kafkaChangeManager.ReadAuthMessages(ctx)
 	go kafkaChangeManagerTasks.ReadTaskMessages(ctx)
-	
+
 	defer kafkaChangeManager.Close()
 	defer kafkaChangeManagerTasks.Close()
-	
+
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods(http.MethodGet)
@@ -97,7 +98,7 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/user/{id}/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
 		GetUserAvatarHandler(w, r)
 	}).Methods(http.MethodGet)
-	
+
 	apiSecure.HandleFunc("/user/avatar", func(w http.ResponseWriter, r *http.Request) {
 		UploadProfileAvatarHandler(w, r)
 	}).Methods(http.MethodPost)
@@ -145,7 +146,7 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/group/{id}/avatar/{url}", func(w http.ResponseWriter, r *http.Request) {
 		GetGroupAvatarHandler(w, r)
 	}).Methods(http.MethodGet)
-	
+
 	apiSecure.HandleFunc("/group/{id}/avatar", func(w http.ResponseWriter, r *http.Request) {
 		UploadGroupAvatarHandler(w, r)
 	}).Methods(http.MethodPost)
@@ -333,56 +334,56 @@ func InitChatRoutes(router *mux.Router, mgr *manager.Manager, redis *redis.Manag
 	apiSecure.HandleFunc("/chat/{id}/message/video/{url}", func(w http.ResponseWriter, r *http.Request) {
 		GetVideoMessageHandler(w, r, models.TypePrivate)
 	}).Methods(http.MethodGet)
-	
+
 	// Модуль команды
 	apiSecure.HandleFunc("/team/{id}/dashboard", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamDashboardHandler(w, r, mgr, kafkaChangeManagerTasks, ctx)
 	}).Methods(http.MethodGet)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/user/{username}/add", func(w http.ResponseWriter, r *http.Request) {
 		AddUserToTeamByUsernameHandler(w, r, mgr, redis)
 	}).Methods(http.MethodPost)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/user/{user_id}/remove", func(w http.ResponseWriter, r *http.Request) {
 		RemoveUserFromTeamByIDHandler(w, r, mgr, redis)
 	}).Methods(http.MethodDelete)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/user/{user_id}/role", func(w http.ResponseWriter, r *http.Request) {
 		UpdateUserRoleHandler(w, r, mgr, redis)
 	}).Methods(http.MethodPut)
-	
+
 	apiSecure.HandleFunc("/team", func(w http.ResponseWriter, r *http.Request) {
 		CreateTeamHandler(w, r, mgr, kafkaChangeManagerTasks, kafkaTeamManager)
 	}).Methods(http.MethodPost)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/edit", func(w http.ResponseWriter, r *http.Request) {
 		EditTeamHandler(w, r, mgr, redis)
 	}).Methods(http.MethodPut)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}", func(w http.ResponseWriter, r *http.Request) {
 		DeleteTeamHandler(w, r, mgr, kafkaChangeManagerTasks)
 	}).Methods(http.MethodDelete)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamInfoHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/applications", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamApplicationsHandler(w, r, mgr)
 	}).Methods(http.MethodGet)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/applications/{application_id}", func(w http.ResponseWriter, r *http.Request) {
 		UpdateTeamApplicationHandler(w, r, mgr)
 	}).Methods(http.MethodPut)
-	
+
 	apiSecure.HandleFunc("/team/{team_id}/applications", func(w http.ResponseWriter, r *http.Request) {
 		CreateTeamApplicationHandler(w, r, mgr)
 	}).Methods(http.MethodPost)
-	
+
 	joinRouter.HandleFunc("/team/{code}", func(w http.ResponseWriter, r *http.Request) {
 		JoinTeamHandler(w, r, mgr)
 	}).Methods(http.MethodPost)
-	
+
 }
 
 func ChatHandler(w http.ResponseWriter, r *http.Request, rds *redis.Manager, mgr *manager.Manager) {

@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"database/sql"
+	"fmt"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
@@ -173,4 +174,101 @@ func (manager *Manager) GetTeamFolderByTeamID(teamId int, folderId uuid.UUID) (*
 		return nil, err
 	}
 	return &folder, nil
+}
+
+func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models.FilesAndFoldersResponse, error) {
+	var response models.FilesAndFoldersResponse
+
+	response.Folders = make([]models.Folder, 0)
+	response.Files = make([]models.File, 0)
+
+	// Получаем папки
+	rows, err := manager.Conn.Query(fmt.Sprintf(`
+		SELECT 
+			uuid,
+			name,
+			owner_id,
+			owner_type,
+			parent_folder_id,
+			created_at
+			FROM 
+				folders
+				WHERE
+				    owner_type = 'team' AND
+					owner_id = $1 AND
+					parent_folder_id IS NULL
+			ORDER BY updated_at %s`, sort), teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var folder models.Folder
+		err := rows.Scan(
+			&folder.UUID,
+			&folder.Name,
+			&folder.OwnerID,
+			&folder.OwnerType,
+			&folder.ParentFolderID,
+			&folder.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		response.Folders = append(response.Folders, folder)
+	}
+
+	// Получаем файлы
+	fileRows, err := manager.Conn.Query(fmt.Sprintf(`SELECT
+				uuid,
+				storage_path,
+				original_filename,
+				display_name,
+				mime_type,
+				size,
+				visibility,
+				created_by,
+				owner_id,
+				owner_type,
+				uploaded_at,
+				updated_at,
+				hash,
+				version
+			FROM
+				files
+			WHERE
+			    owner_type = 'team' AND
+				owner_id = $1 AND
+				folder_id is null
+			ORDER BY updated_at %s`, sort), teamID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer fileRows.Close()
+
+	for fileRows.Next() {
+		var file models.File
+		err := fileRows.Scan(
+			&file.UUID,
+			&file.StoragePath,
+			&file.OriginalFilename,
+			&file.DisplayName,
+			&file.MimeType,
+			&file.Size,
+			&file.Visibility,
+			&file.CreatedBy,
+			&file.OwnerID,
+			&file.OwnerType,
+			&file.UploadedAt,
+			&file.UpdatedAt,
+			&file.Hash,
+			&file.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+		response.Files = append(response.Files, file)
+	}
+	return &response, nil
 }

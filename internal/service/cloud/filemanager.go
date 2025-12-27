@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Trecer05/Swiftly/internal/config/logger"
 	cloudFilemanager "github.com/Trecer05/Swiftly/internal/filemanager/cloud"
 	chatModels "github.com/Trecer05/Swiftly/internal/model/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
@@ -111,6 +112,7 @@ func CheckUserInTeam(teamID int, requestUserID int, kafkaManager *cloudKafkaMana
 
 	var r chatModels.CheckUserInTeamResponse
 	if err := json.Unmarshal(resp.Payload, &r); err != nil {
+		logger.Logger.Errorf("Error unmarshaling check user in team response: %v", err)
 		return err
 	}
 	if !r.IsInTeam {

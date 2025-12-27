@@ -183,12 +183,12 @@ func (km *KafkaManager) ReadCloudMessages(ctx context.Context, manager *manager.
 
 	for {
 		msg, err := km.Reader.FetchMessage(ctx)
-		if errors.Is(err, io.EOF) ||
-			strings.Contains(err.Error(), "no messages") ||
-			errors.Is(err, context.DeadlineExceeded) {
-			continue
-		}
 		if err != nil {
+			if errors.Is(err, io.EOF) ||
+				strings.Contains(err.Error(), "no messages") ||
+				errors.Is(err, context.DeadlineExceeded) {
+				continue
+			}
 			logger.Logger.Errorf("Kafka error: %v", err)
 			continue
 		}
@@ -201,6 +201,7 @@ func (km *KafkaManager) ReadCloudMessages(ctx context.Context, manager *manager.
 				continue
 			}
 		case "check_user":
+			logger.Logger.Info("Recieved check_user message")
 			var req models.CheckUserInTeam
 
 			// извлекаем данные из msg.Value
@@ -222,6 +223,8 @@ func (km *KafkaManager) ReadCloudMessages(ctx context.Context, manager *manager.
 				}
 			}
 
+			logger.Logger.Info("Correlation ID: " + corrID)
+
 			isInTeam, err := manager.IsUserInTeam(req.TeamID, req.UserID)
 			if err != nil {
 				logger.Logger.Errorf("Error checking user in team: %v", err)
@@ -229,24 +232,36 @@ func (km *KafkaManager) ReadCloudMessages(ctx context.Context, manager *manager.
 				km.SendMessage(ctx, "error", models.Envelope{Type: "error", Payload: data})
 				continue
 			}
-			respPayload, _ := json.Marshal(chatModels.CheckUserInTeamResponse{
+			respPayload, err := json.Marshal(chatModels.CheckUserInTeamResponse{
 				IsInTeam: isInTeam,
 			})
+
+			if err != nil {
+				logger.Logger.Errorf("Error marshaling response: %v", err)
+				// data, _ := json.Marshal(models.Error{Err: err})
+				km.SendMessage(ctx, "error", models.KafkaResponse{CorrelationID: corrID, Err: err})
+				continue
+			}
 
 			headers := []kafka.Header{}
 			if corrID != "" {
 				headers = append(headers, kafka.Header{Key: "correlation_id", Value: []byte(corrID)})
 			}
 
-			reply := kafka.Message{
-				Key:     []byte("check_user_response"),
-				Value:   respPayload,
-				Headers: headers,
-				Time:    time.Now(),
-			}
-			if err := km.Writer.WriteMessages(ctx, reply); err != nil {
-				logger.Logger.Errorf("error writing check_user response: %v", err)
-			}
+			// reply := kafka.Message{
+			// 	Key:     []byte("check_user_response"),
+			// 	Value:   respPayload,
+			// 	Headers: headers,
+			// 	Time:    time.Now(),
+			// }
+			km.SendMessage(ctx, "check_user_response", models.KafkaResponse{
+				CorrelationID: corrID,
+				Payload:       respPayload,
+				Err:           nil,
+			})
+			// if err := km.Writer.WriteMessages(ctx, reply); err != nil {
+			// 	logger.Logger.Errorf("error writing check_user response: %v", err)
+			// }
 			km.Reader.CommitMessages(ctx, msg)
 		case "error":
 			err := SendEnvel(ctx, km, "error", msg)

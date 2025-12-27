@@ -26,10 +26,11 @@ type Folder struct {
 	Name           string     `json:"name"`
 	OwnerID        int        `json:"owner_id"`
 	OwnerType      OwnerType  `json:"owner_type"`
-	ChildFolders   []Folder   `json:"child_folders"`
-	Files          []File     `json:"files"`
+	ChildFolders   []Folder   `json:"child_folders,omitempty"`
+	Files          []File     `json:"files,omitempty"`
 	ParentFolderID *uuid.UUID `json:"parent_folder_id,omitempty"`
 	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type File struct {
@@ -46,8 +47,8 @@ type File struct {
 	OwnerType        OwnerType      `json:"owner_type"`
 	UploadedAt       string         `json:"uploaded_at"`
 	UpdatedAt        string         `json:"updated_at"`
-	Hash             string         `json:"hash"`
-	Version          int            `json:"version"`
+	Hash             *string        `json:"hash,omitempty"`
+	Version          *int           `json:"version,omitempty"`
 }
 
 type FileShort struct {
@@ -59,12 +60,12 @@ type FileShort struct {
 	Size             int64
 }
 
-type Folder struct {
-	UUID       uuid.UUID
-	Name 	 string
-	OwnerID  int
-	OwnerType OwnerType
-	ParentFolderID   *uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-}
+// type Folder struct {
+// 	UUID           uuid.UUID
+// 	Name           string
+// 	OwnerID        int
+// 	OwnerType      OwnerType
+// 	ParentFolderID *uuid.UUID
+// 	CreatedAt      time.Time
+// 	UpdatedAt      time.Time
+// }
