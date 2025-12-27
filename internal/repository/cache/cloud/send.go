@@ -18,7 +18,7 @@ func (manager *WebSocketManager) ListenPubSub(teamID int, msgCh chan models.Enve
     manager.SubscribedSessions[teamID] = true
     manager.MU.Unlock()
 
-    pubsub := manager.RDB.Subscribe(ctx, "team"+":"+strconv.Itoa(teamID))
+    pubsub := manager.RDB.Subscribe(ctx, "cloud:team:"+strconv.Itoa(teamID))
     ch := pubsub.Channel()
 
     go func() {

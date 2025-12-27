@@ -22,7 +22,7 @@ func GetUserFilesAndFoldersHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	filesAndFolders, err := mgr.GetUserFilesAndFolders(userID, cloudService.ValidateDescAsc(r))
+	filesAndFolders, err := mgr.GetUserFilesAndFolders(userID, cloudService.ValidateQueryDescAsc(r))
 	if err != nil {
 		logger.Logger.Error("Error getting user files and folders", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
@@ -86,7 +86,7 @@ func GetUserFolderFilesByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	filesAndFolders, err := mgr.GetUserFilesAndFoldersByFolderID(userID, folderID.String(), cloudService.ValidateDescAsc(r))
+	filesAndFolders, err := mgr.GetUserFilesAndFoldersByFolderID(userID, folderID.String(), cloudService.ValidateQueryDescAsc(r))
 	if err != nil {
 		logger.Logger.Error("Error getting user files and folders", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
