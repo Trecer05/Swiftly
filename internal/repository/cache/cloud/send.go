@@ -18,7 +18,7 @@ func (manager *WebSocketManager) ListenPubSub(teamID int, msgCh chan models.Enve
     manager.SubscribedSessions[teamID] = true
     manager.MU.Unlock()
 
-    pubsub := manager.RDB.Subscribe(ctx, "team"+":"+strconv.Itoa(teamID))
+    pubsub := manager.RDB.Subscribe(ctx, "cloud:team:"+strconv.Itoa(teamID))
     ch := pubsub.Channel()
 
     go func() {
@@ -71,13 +71,13 @@ func (manager *WebSocketManager) SendLocalMessage(userID, teamID int, messages <
 	}
 }
 
-func (manager *WebSocketManager) SendToUser(teamID int, message models.Envelope) error {
+func (manager *WebSocketManager) SendToTeam(teamID int, message models.Envelope) error {
 	data, err := json.Marshal(message)
 	if err != nil {
 		logger.Logger.Println("Error marshalling message:", err)
 		return err
 	}
 
-	channel := "team" + ":" + strconv.Itoa(teamID)
+	channel := "cloud:team:" + strconv.Itoa(teamID)
 	return manager.RDB.Publish(ctx, channel, data).Err()
 }

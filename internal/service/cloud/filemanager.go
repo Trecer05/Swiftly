@@ -11,6 +11,7 @@ import (
 	chatModels "github.com/Trecer05/Swiftly/internal/model/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	kafkaModels "github.com/Trecer05/Swiftly/internal/model/kafka"
+	postgres "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 	cloudKafkaManager "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
@@ -119,4 +120,32 @@ func CheckUserInTeam(teamID int, requestUserID int, kafkaManager *cloudKafkaMana
 		return errors.ErrPermissionDenied
 	}
 	return nil
+}
+
+func UpdateFileNameByID(mgr *postgres.Manager, fileID, newFilename string, userID int) (time.Time, error) {
+	filepath, err := mgr.GetUserFilepathByID(userID, fileID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	newOrigFilename, newFilepath, err := cloudFilemanager.UpdateFileName(filepath, newFilename)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return mgr.UpdateFileFilenameByID(userID, fileID, newOrigFilename, newFilename, newFilepath)
+}
+
+func UpdateFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, userID int) (time.Time, error) {
+	filepath, err := mgr.GetUserFolderpathByID(userID, folderID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	newFolderName, newFolderpath, err := cloudFilemanager.UpdateFolderName(filepath, newFoldername)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return mgr.UpdateFolderFoldernameByID(userID, folderID, newFolderName, newFolderpath)
 }
