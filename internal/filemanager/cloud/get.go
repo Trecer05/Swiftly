@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	cloudFolder = os.Getenv("CLOUD_STORAGE")
+	teamFolder = os.Getenv("TEAM_STORAGE")
 	userFolder  = os.Getenv("USER_STORAGE")
 )
 
 func GetFileSync(fileModel *models.File) ([]byte, string, error) {
-	dir := filepath.Join(cloudFolder, fileModel.StoragePath, fileModel.OriginalFilename)
+	dir := filepath.Join(teamFolder, fileModel.StoragePath, fileModel.OriginalFilename)
 	file, err := os.ReadFile(dir)
 	if err != nil {
 		return nil, "", err
@@ -36,7 +36,7 @@ func GetUserFileSync(fileModel *models.FileShort) ([]byte, error) {
 }
 
 func GetFileStream(fileModel *models.File) (*os.File, error) {
-	dir := filepath.Join(cloudFolder, fileModel.StoragePath, fileModel.OriginalFilename)
+	dir := filepath.Join(teamFolder, fileModel.StoragePath, fileModel.OriginalFilename)
 	file, err := os.Open(dir)
 	if err != nil {
 		return nil, err

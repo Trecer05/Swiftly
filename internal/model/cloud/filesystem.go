@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const MaxUploadSize = 50 << 20
+
 type OwnerType string
 
 const (
@@ -22,21 +24,21 @@ const (
 )
 
 type File struct {
-	UUID             uuid.UUID
-	FolderID         uuid.UUID
-	StoragePath      string
-	OriginalFilename string
-	DisplayName      string
-	MimeType         string
-	Size             int64
-	Visibility       VisibilityType
-	CreatedBy        int
-	OwnerID          int
-	OwnerType        OwnerType
-	UploadedAt       string
-	UpdatedAt        string
-	Hash             string
-	Version          int
+	UUID             uuid.UUID  `json:"uuid"`
+	FolderID         *uuid.UUID `json:"folder_id,omitempty"`
+	StoragePath      string     `json:"storage_path"`
+	OriginalFilename string     `json:"original_filename"`
+	DisplayName      string     `json:"display_name"`
+	MimeType         string     `json:"mime_type"`
+	Size             int64      `json:"size"`
+	Visibility       VisibilityType  	`json:"visibility"`
+	CreatedBy        int        `json:"created_by"`
+	OwnerID          int        `json:"owner_id"`
+	OwnerType        OwnerType  `json:"owner_type"`
+	UploadedAt       string     `json:"uploaded_at"`
+	UpdatedAt        string     `json:"updated_at"`
+	Hash             string     `json:"hash"`
+	Version          int        `json:"version"`
 }
 
 type FileShort struct {
