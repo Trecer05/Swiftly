@@ -34,23 +34,23 @@ func ReadMessage(chatId int, conn *websocket.Conn, rds *redis.WebSocketManager, 
 
 		switch message.Type {
 		case models.FileCreateType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FileDeleteType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FileUpdateType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FileNameUpdateType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FolderCreateType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FolderDeleteType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FolderNameUpdateType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FolderMoveType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		case models.FileMoveType:
-		    _ = rds.SendToUser(message.TeamID, message)
+		    _ = rds.SendToTeam(message.TeamID, message)
 		default:
 			logger.Logger.Error("Unknown message type:", message.Type)
 		}
