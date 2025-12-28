@@ -8,3 +8,11 @@ type CreateFileRequest struct {
 	Visibility  VisibilityType    `json:"visibility"`
 	OwnerType   OwnerType    `json:"owner_type"`
 }
+
+type FilenameUpdateRequest struct {
+	NewFilename string `json:"new_filename"`
+}
+
+type FoldernameUpdateRequest struct {
+	NewFoldername string `json:"new_foldername"`
+}

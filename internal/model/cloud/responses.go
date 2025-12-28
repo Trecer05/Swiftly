@@ -1,6 +1,10 @@
 package cloud
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type FileResponse struct {
 	UUID        uuid.UUID
@@ -21,4 +25,10 @@ type FileResponse struct {
 type FilesAndFoldersResponse struct {
 	Files   []File
 	Folders []Folder
+}
+
+type FileUpdateResponse struct {
+	UUID        	uuid.UUID
+	UpdatedAt   	time.Time
+	NewFilename     string
 }

@@ -5,8 +5,10 @@ CREATE TYPE file_visibility AS ENUM ('public', 'private', 'shared');
 CREATE TABLE folders (
     uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
+    created_by INTEGER NOT NULL,
     owner_id INTEGER,  -- Владелец (пользователь ИЛИ команда)
     owner_type VARCHAR(10) CHECK (owner_type IN ('user', 'team')),
+    storage_path VARCHAR(500) NOT NULL,
     parent_folder_id UUID REFERENCES folders(uuid) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),

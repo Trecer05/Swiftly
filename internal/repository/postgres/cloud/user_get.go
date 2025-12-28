@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
+	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 
 	"github.com/google/uuid"
@@ -288,3 +289,32 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 	return &response, nil
 }
 
+func (manager *Manager) GetUserFilepathByID(userID int, fileID string) (string, error) {
+	row := manager.Conn.QueryRow(`SELECT storage_path FROM files WHERE uuid = $1`, fileID)
+
+	var storagePath string
+	if err := row.Scan(&storagePath); err != nil {
+		if err == sql.ErrNoRows {
+			return "", cloudErrors.ErrFileNotFound
+		} else {
+			return "", err
+		}
+	}
+
+	return storagePath, nil
+}
+
+func (manager *Manager) GetUserFolderpathByID(userID int, fileID string) (string, error) {
+	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, fileID)
+
+	var storagePath string
+	if err := row.Scan(&storagePath); err != nil {
+		if err == sql.ErrNoRows {
+			return "", cloudErrors.ErrFolderNotFound
+		} else {
+			return "", err
+		}
+	}
+
+	return storagePath, nil
+}

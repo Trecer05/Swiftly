@@ -9,3 +9,11 @@ func DeleteFile(path string) error {
 
 	return nil
 }
+
+func DeleteFolder(path string) error {
+	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+
+	return nil
+}
