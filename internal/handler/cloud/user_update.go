@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
@@ -40,12 +41,12 @@ func UpdateUserFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 
 	updatedAt, err := cloudService.UpdateFileNameByID(mgr, fileID.String(), file.NewFilename, userID)
 	switch {
-	case err == errorCloudTypes.ErrFileNotFound:
-		logger.Logger.Error("Error updating file name", err)
+	case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+		logger.Logger.Error("Error update user filename by ID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		return
 	case err != nil:
-		logger.Logger.Error("Error updating file name", err)
+		logger.Logger.Error("Error update user filename by ID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
@@ -59,7 +60,7 @@ func UpdateUserFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 }
 
 func UpdateUserFolderNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
-		userID, ok := r.Context().Value("id").(int)
+	userID, ok := r.Context().Value("id").(int)
 	if !ok {
 		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
 		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
@@ -82,7 +83,7 @@ func UpdateUserFolderNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr
 
 	updatedAt, err := cloudService.UpdateFolderNameByID(mgr, folderID.String(), folder.NewFoldername, userID)
 	switch {
-	case err == errorCloudTypes.ErrFolderNotFound:
+	case errors.Is(err, errorCloudTypes.ErrFolderNotFound):
 		logger.Logger.Error("Error updating file name", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		return

@@ -48,7 +48,7 @@ func CreateUserFileHandler(w http.ResponseWriter, r *http.Request, manager *mana
 		return
 	}
 	
-	origFilename, storagePath, err := fileManager.SaveUserFile(reader, header, userID)
+	origFilename, storagePath, err := fileManager.SaveUserFile(reader, header, userID, req.FolderID, manager)
 	if err != nil {
 		logger.Logger.Error("Error saving user file", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
@@ -81,6 +81,56 @@ func CreateUserFileHandler(w http.ResponseWriter, r *http.Request, manager *mana
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 			return
 		}
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(dbReq)
+}
+
+func CreateUserFolderHandler(w http.ResponseWriter, r *http.Request, manager *manager.Manager) {
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	var req models.CreateFolderRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		logger.Logger.Error("Error decoding request body", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	storagePath, err := fileManager.CreateUserFolder(&req, userID, manager)
+	if err != nil {
+		logger.Logger.Error("Error creating team folder", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	dbReq := models.Folder{
+		Name: req.DisplayName,
+		OwnerID: userID,
+		CreatedBy: userID,
+		StoragePath: storagePath,
+		ParentFolderID: req.ParentID,
+		OwnerType: req.OwnerType,
+		Visibility: req.Visibility,
+	}
+
+	if err := manager.CreateUserFolder(&dbReq); err != nil {
+		if err := fileManager.DeleteFolder(storagePath); err != nil {
+			logger.Logger.Error("Error deleting team folder", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		}
+
+		logger.Logger.Error("Error creating team folder", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 

@@ -16,3 +16,10 @@ type FilenameUpdateRequest struct {
 type FoldernameUpdateRequest struct {
 	NewFoldername string `json:"new_foldername"`
 }
+
+type CreateFolderRequest struct {
+	ParentID    *uuid.UUID `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
+	DisplayName string    `json:"display_name"`
+	Visibility  VisibilityType    `json:"visibility"`
+	OwnerType   OwnerType    `json:"owner_type"`
+}

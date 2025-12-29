@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
@@ -31,14 +32,14 @@ func DeleteUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 	}
 
 	filepath, err := mgr.DeleteUserFileByID(userID, fileID.String())
-	if err != nil {
-		if err == errorCloudTypes.ErrFileNotFound {
-			logger.Logger.Error("Error deleting user file", err)
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
-		} else {
-			logger.Logger.Error("Error deleting user file", err)
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
-		}
+	switch {
+	case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+		logger.Logger.Error("Error deleting user file by ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		return
+	case err != nil:
+		logger.Logger.Error("Error deleting user file by ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -71,7 +72,7 @@ func DeleteUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *ma
 
 	folderpath, err := mgr.DeleteUserFolderByID(userID, folderID.String())
 	if err != nil {
-		if err == errorCloudTypes.ErrFolderNotFound {
+		if errors.Is(err, errorCloudTypes.ErrFolderNotFound) {
 			logger.Logger.Error("Error deleting user file", err)
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
 		} else {

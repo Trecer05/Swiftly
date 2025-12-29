@@ -14,7 +14,7 @@ var (
 )
 
 func GetFileSync(fileModel *models.File) ([]byte, string, error) {
-	dir := filepath.Join(teamFolder, fileModel.StoragePath, fileModel.OriginalFilename)
+	dir := filepath.Join(fileModel.StoragePath)
 	file, err := os.ReadFile(dir)
 	if err != nil {
 		return nil, "", err
@@ -26,8 +26,18 @@ func GetFileSync(fileModel *models.File) ([]byte, string, error) {
 }
 
 func GetUserFileSync(fileModel *models.FileShort) ([]byte, error) {
-	dir := filepath.Join(userFolder, fileModel.StoragePath, fileModel.OriginalFilename)
+	dir := filepath.Join(fileModel.StoragePath)
 	file, err := os.ReadFile(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func GetUserFileStream(fileModel *models.FileShort) (*os.File, error) {
+	dir := filepath.Join(fileModel.StoragePath)
+	file, err := os.Open(dir)
 	if err != nil {
 		return nil, err
 	}

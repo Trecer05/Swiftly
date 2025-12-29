@@ -146,4 +146,12 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 	apiSecure.HandleFunc("/team/{id}/file/{file_id}/move", func(w http.ResponseWriter, r *http.Request) {
 		MoveTeamFileByIDHandler(w, r, manager, rds)
 	}).Methods(http.MethodPut)
+
+	apiSecure.HandleFunc("/sharedfiles/file/{file_id}", func(w http.ResponseWriter, r *http.Request) {
+		GetSharedFileHandler(w, r, manager)
+	}).Methods(http.MethodGet)
+
+	apiSecure.HandleFunc("/sharedfiles/folder/{folder_id}", func(w http.ResponseWriter, r *http.Request) {
+		GetSharedFolderHandler(w, r, manager)
+	}).Methods(http.MethodGet)
 }

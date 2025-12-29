@@ -51,11 +51,15 @@ type FileShort struct {
 }
 
 type Folder struct {
-	UUID       uuid.UUID
-	Name 	 string
-	OwnerID  int
-	OwnerType OwnerType
-	ParentFolderID   *uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+  UUID           uuid.UUID  `json:"uuid"`
+  Name           string     `json:"name"`
+  CreatedBy      int        `json:"created_by"`
+  OwnerID        int        `json:"owner_id"`
+  OwnerType      OwnerType  `json:"owner_type"`
+  StoragePath    string     `json:"storage_path"`
+  Files          []File     `json:"files,omitempty"`
+  Visibility     VisibilityType  	`json:"visibility"`
+  ParentFolderID *uuid.UUID `json:"parent_folder_id,omitempty"`
+  CreatedAt      time.Time  `json:"created_at"`
+  UpdatedAt      time.Time  `json:"updated_at"`
 }

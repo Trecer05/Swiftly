@@ -156,7 +156,8 @@ func (manager *Manager) GetUserFilesAndFolders(userId int, sort string) (*models
 				f.owner_type,
 				f.parent_folder_id,
 				f.created_at,
-				f.updated_at
+				f.updated_at,
+				f.visibility
 			FROM 
 				folders f
 			WHERE
@@ -180,6 +181,7 @@ func (manager *Manager) GetUserFilesAndFolders(userId int, sort string) (*models
 			&folder.ParentFolderID,
 			&folder.CreatedAt,
 			&folder.UpdatedAt,
+			&folder.Visibility,
 		)
 		if err != nil {
 			return nil, err
@@ -254,7 +256,8 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 				f.owner_type,
 				f.parent_folder_id,
 				f.created_at,
-				f.updated_at
+				f.updated_at,
+				f.visibility
 			FROM 
 				folders f
 			WHERE
@@ -278,6 +281,7 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 			&folder.ParentFolderID,
 			&folder.CreatedAt,
 			&folder.UpdatedAt,
+			&folder.Visibility,
 		)
 		if err != nil {
 			return nil, err
@@ -304,8 +308,8 @@ func (manager *Manager) GetUserFilepathByID(userID int, fileID string) (string, 
 	return storagePath, nil
 }
 
-func (manager *Manager) GetUserFolderpathByID(userID int, fileID string) (string, error) {
-	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, fileID)
+func (manager *Manager) GetUserFolderpathByID(userID int, folderID string) (string, error) {
+	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, folderID)
 
 	var storagePath string
 	if err := row.Scan(&storagePath); err != nil {
