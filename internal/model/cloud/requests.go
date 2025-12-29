@@ -23,3 +23,10 @@ type CreateFolderRequest struct {
 	Visibility  VisibilityType    `json:"visibility"`
 	OwnerType   OwnerType    `json:"owner_type"`
 }
+
+type UpdateFileRequest struct {
+	ParentID    *uuid.UUID `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
+	DisplayName string    `json:"display_name"`
+	Visibility  VisibilityType    `json:"visibility"`
+	OwnerType   OwnerType    `json:"owner_type"`
+}

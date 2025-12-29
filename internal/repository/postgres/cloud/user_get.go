@@ -322,3 +322,13 @@ func (manager *Manager) GetUserFolderpathByID(userID int, folderID string) (stri
 
 	return storagePath, nil
 }
+
+func (manager *Manager) GetOriginalUserFilenameByID(userID int, fileID string) (string, error) {
+	var originalFilename string
+
+	if err := manager.Conn.QueryRow(`SELECT original_filename FROM files WHERE uuid = $1 AND created_by = $2 AND owner_type = 'user'`, fileID, userID).Scan(&originalFilename); err != nil {
+		return "", err
+	}
+
+	return originalFilename, nil
+}

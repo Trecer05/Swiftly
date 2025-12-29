@@ -2,10 +2,16 @@ package cloud
 
 import (
 	"fmt"
+	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
+	"github.com/google/uuid"
 )
 
 func UpdateFileName(filePath, newFilename string) (string, string, error) {
@@ -96,4 +102,77 @@ func cleanFolderName(name string) string {
     }
     
     return name
+}
+
+func UpdateUserFile(reader io.Reader, handler *multipart.FileHeader, userID int, fileID uuid.UUID, parentID *uuid.UUID, mgr *manager.Manager) (string, string, error) {
+    var storagePath string
+    var olderParentDir string
+    var err error
+
+    if parentID == nil {
+        origFilename, err := mgr.GetOriginalUserFilenameByID(userID, fileID.String())
+        if err != nil {
+            return "", "", err
+        }
+
+        olderParentDir = filepath.Join(userFolder, strconv.Itoa(userID))
+		storagePath = filepath.Join(userFolder, strconv.Itoa(userID), origFilename)
+	} else {     
+        olderParentDir, err = mgr.GetUserFolderpathByID(userID, parentID.String())
+        if err != nil {
+            return "", "", err
+        }
+
+        origFilename, err := mgr.GetOriginalUserFilenameByID(userID, fileID.String())
+        if err != nil {
+            return "", "", err
+        }
+        storagePath = filepath.Join(olderParentDir, origFilename)
+    }
+	
+	newFilename := fmt.Sprintf(
+		"%d_%s",
+		time.Now().UnixNano(),
+		handler.Filename,
+	)
+
+	newStoragePath := filepath.Join(olderParentDir, newFilename)
+
+	tmpFile, err := os.CreateTemp(olderParentDir, ".tmp-*")
+	if err != nil {
+		return "", "", err
+	}
+	tmpPath := tmpFile.Name()
+
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+	}()
+
+	if _, err := io.Copy(tmpFile, reader); err != nil {
+		return "", "", err
+	}
+
+	if err := tmpFile.Sync(); err != nil {
+		return "", "", err
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		return "", "", err
+	}
+
+	if err := os.Rename(tmpPath, newStoragePath); err != nil {
+		return "", "", err
+	}
+
+	if dirFd, err := os.Open(olderParentDir); err == nil {
+		_ = dirFd.Sync()
+		_ = dirFd.Close()
+	}
+
+	if err := os.Remove(storagePath); err != nil && !os.IsNotExist(err) {
+		return "", "", err
+	}
+
+	return newFilename, newStoragePath, nil
 }
