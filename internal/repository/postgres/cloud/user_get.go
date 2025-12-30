@@ -156,7 +156,8 @@ func (manager *Manager) GetUserFilesAndFolders(userId int, sort string) (*models
 				f.owner_type,
 				f.parent_folder_id,
 				f.created_at,
-				f.updated_at
+				f.updated_at,
+				f.visibility
 			FROM 
 				folders f
 			WHERE
@@ -180,6 +181,7 @@ func (manager *Manager) GetUserFilesAndFolders(userId int, sort string) (*models
 			&folder.ParentFolderID,
 			&folder.CreatedAt,
 			&folder.UpdatedAt,
+			&folder.Visibility,
 		)
 		if err != nil {
 			return nil, err
@@ -254,7 +256,8 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 				f.owner_type,
 				f.parent_folder_id,
 				f.created_at,
-				f.updated_at
+				f.updated_at,
+				f.visibility
 			FROM 
 				folders f
 			WHERE
@@ -278,6 +281,7 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 			&folder.ParentFolderID,
 			&folder.CreatedAt,
 			&folder.UpdatedAt,
+			&folder.Visibility,
 		)
 		if err != nil {
 			return nil, err
@@ -304,8 +308,8 @@ func (manager *Manager) GetUserFilepathByID(userID int, fileID string) (string, 
 	return storagePath, nil
 }
 
-func (manager *Manager) GetUserFolderpathByID(userID int, fileID string) (string, error) {
-	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, fileID)
+func (manager *Manager) GetUserFolderpathByID(userID int, folderID string) (string, error) {
+	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, folderID)
 
 	var storagePath string
 	if err := row.Scan(&storagePath); err != nil {
@@ -317,4 +321,52 @@ func (manager *Manager) GetUserFolderpathByID(userID int, fileID string) (string
 	}
 
 	return storagePath, nil
+}
+
+func (manager *Manager) GetOriginalUserFilenameByID(userID int, fileID string) (string, error) {
+	var originalFilename string
+
+	if err := manager.Conn.QueryRow(`SELECT original_filename FROM files WHERE uuid = $1 AND created_by = $2 AND owner_type = 'user'`, fileID, userID).Scan(&originalFilename); err != nil {
+		return "", err
+	}
+
+	return originalFilename, nil
+}
+
+func (manager *Manager) GetOriginalUserFilenameAndStoragePathByID(userID int, fileID string) (string, string, error) {
+	var originalFilename, storagePath string
+
+	if err := manager.Conn.QueryRow(`SELECT original_filename, storage_path FROM files WHERE uuid = $1 AND created_by = $2 AND owner_type = 'user'`, fileID, userID).Scan(&originalFilename, &storagePath); err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			return "", "", cloudErrors.ErrFileNotFound
+		default:
+			return "", "", err
+		}
+	}
+
+	return originalFilename, storagePath, nil
+}
+
+func (manager *Manager) GetSharedFile(fileID string) (string, string, error) {
+	var filepath, displayName string
+
+	if err := manager.Conn.QueryRow(`
+		SELECT f.storage_path, f.display_name
+		FROM files f
+		JOIN shared_access sa
+			ON sa.file_id = f.uuid
+		WHERE f.uuid = $1
+			AND f.visibility = 'shared'
+			AND sa.shared_with_type = 'user'
+	'`, fileID).Scan(&filepath, &displayName); err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			return "", "", cloudErrors.ErrFileNotFound
+		default:
+			return "", "", err
+		}
+	}
+
+	return filepath, displayName, nil
 }

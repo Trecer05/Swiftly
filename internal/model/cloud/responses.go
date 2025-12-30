@@ -32,3 +32,7 @@ type FileUpdateResponse struct {
 	UpdatedAt   	time.Time
 	NewFilename     string
 }
+
+type ShareLinkResponse struct {
+	Link string
+}

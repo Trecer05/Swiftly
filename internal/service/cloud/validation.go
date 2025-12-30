@@ -20,7 +20,7 @@ func ValidateQueryDescAsc(r *http.Request) string {
 	return sort
 }
 
-func GetFileAndMetadataFromRequest(r *http.Request, req *models.CreateFileRequest) (multipart.File, *multipart.FileHeader, error) {
+func GetFileAndMetadataFromRequest(r *http.Request, req any) (multipart.File, *multipart.FileHeader, error) {
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		logger.Logger.Error("Error getting file from form", err)

@@ -23,18 +23,6 @@ const (
 	VisibilityShared  VisibilityType = "shared"
 )
 
-type Folder struct {
-	UUID           uuid.UUID  `json:"uuid"`
-	Name           string     `json:"name"`
-	OwnerID        int        `json:"owner_id"`
-	OwnerType      OwnerType  `json:"owner_type"`
-	ChildFolders   []Folder   `json:"child_folders,omitempty"`
-	Files          []File     `json:"files,omitempty"`
-	ParentFolderID *uuid.UUID `json:"parent_folder_id,omitempty"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-}
-
 type File struct {
 	UUID             uuid.UUID      `json:"uuid"`
 	FolderID         *uuid.UUID     `json:"folder_id,omitempty"`
@@ -62,12 +50,16 @@ type FileShort struct {
 	Size             int64
 }
 
-// type Folder struct {
-// 	UUID           uuid.UUID
-// 	Name           string
-// 	OwnerID        int
-// 	OwnerType      OwnerType
-// 	ParentFolderID *uuid.UUID
-// 	CreatedAt      time.Time
-// 	UpdatedAt      time.Time
-// }
+type Folder struct {
+	UUID           uuid.UUID      `json:"uuid"`
+	Name           string         `json:"name"`
+	CreatedBy      int            `json:"created_by"`
+	OwnerID        int            `json:"owner_id"`
+	OwnerType      OwnerType      `json:"owner_type"`
+	StoragePath    string         `json:"storage_path"`
+	Files          []File         `json:"files,omitempty"`
+	Visibility     VisibilityType `json:"visibility"`
+	ParentFolderID *uuid.UUID     `json:"parent_folder_id,omitempty"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}

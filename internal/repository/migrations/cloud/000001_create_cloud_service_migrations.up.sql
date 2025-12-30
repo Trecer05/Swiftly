@@ -9,6 +9,7 @@ CREATE TABLE folders (
     owner_id INTEGER,  -- Владелец (пользователь ИЛИ команда)
     owner_type VARCHAR(10) CHECK (owner_type IN ('user', 'team')),
     storage_path VARCHAR(500) NOT NULL,
+    visibility file_visibility NOT NULL DEFAULT 'private',
     parent_folder_id UUID REFERENCES folders(uuid) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),

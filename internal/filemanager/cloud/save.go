@@ -8,11 +8,24 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	models "github.com/Trecer05/Swiftly/internal/model/cloud"
+	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
+	"github.com/google/uuid"
 )
 
-func SaveUserFile(reader io.Reader, handler *multipart.FileHeader, userID int) (string, string, error) {
-	dir := filepath.Join(userFolder, strconv.Itoa(userID))
-	return saveFilesHelper(reader, handler, dir)
+func SaveUserFile(reader io.Reader, handler *multipart.FileHeader, userID int, parentID *uuid.UUID, mgr *manager.Manager) (string, string, error) {
+	if parentID == nil {
+		dir := filepath.Join(userFolder, strconv.Itoa(userID))
+		return saveFilesHelper(reader, handler, dir)
+	}
+	
+	storagePath, err := mgr.GetUserFolderpathByID(userID, parentID.String())
+	if err != nil {
+		return "", "", err
+	}
+
+	return saveFilesHelper(reader, handler, storagePath)
 }
 
 func saveFilesHelper(reader io.Reader, handler *multipart.FileHeader, dir string) (string, string, error) {
@@ -30,4 +43,33 @@ func saveFilesHelper(reader io.Reader, handler *multipart.FileHeader, dir string
 		return "", "", err
 	}
 	return fileName, filePath, nil
+}
+
+func CreateUserFolder(req *models.CreateFolderRequest, userID int, mgr *manager.Manager) (string, error) {
+	if req.ParentID == nil {
+		storagePath := filepath.Join(userFolder, strconv.Itoa(userID))
+
+		return saveFolderHelper(storagePath, req.DisplayName)
+	}
+
+	storagePath, err := mgr.GetUserFolderpathByID(userID, req.ParentID.String())
+	if err != nil {
+		return "", err
+	}
+
+	return saveFolderHelper(storagePath, req.DisplayName)
+}
+
+func saveFolderHelper(storagePath, name string) (string, error) {
+	if err := os.MkdirAll(filepath.Join(storagePath, name), os.ModePerm); err != nil {
+		if os.IsExist(err) {
+			storagePath = filepath.Join(storagePath, name + fmt.Sprintf("_%d", time.Now().UnixNano()))
+			os.MkdirAll(storagePath, os.ModePerm)
+			return storagePath, nil
+		} else {
+			return "", err
+		}
+	}
+
+	return filepath.Join(storagePath, name), nil
 }
