@@ -71,19 +71,6 @@ CREATE TABLE file_tags (
     PRIMARY KEY (file_id, tag)
 );
 
-CREATE TABLE file_versions (
-    id SERIAL PRIMARY KEY,
-    file_id UUID REFERENCES files(uuid) ON DELETE CASCADE,
-    version INTEGER NOT NULL,
-    storage_path VARCHAR(500) NOT NULL,
-    size BIGINT NOT NULL,
-    hash VARCHAR(64),
-    created_by INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    comment TEXT,
-    UNIQUE(file_id, version)
-);
-
 CREATE INDEX idx_folders_owner ON folders(owner_type, owner_id);
 CREATE INDEX idx_shared_access ON shared_access(shared_with_type, shared_with_id);
 

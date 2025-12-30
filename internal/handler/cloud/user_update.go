@@ -311,3 +311,41 @@ func MoveUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		"new_folder_id": req.NewFolderID.String,
 	})
 }
+
+func ShareUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	folderID, err := uuid.Parse(mux.Vars(r)["folder_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting file ID to int", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	if err := mgr.ShareUserFolderByID(folderID.String(), userID); err != nil {
+		switch {
+		case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case errors.Is(err, errorCloudTypes.ErrNoPermissions):
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		default:
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+	})
+}
