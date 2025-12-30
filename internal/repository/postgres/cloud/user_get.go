@@ -347,3 +347,26 @@ func (manager *Manager) GetOriginalUserFilenameAndStoragePathByID(userID int, fi
 
 	return originalFilename, storagePath, nil
 }
+
+func (manager *Manager) GetSharedFile(fileID string) (string, string, error) {
+	var filepath, displayName string
+
+	if err := manager.Conn.QueryRow(`
+		SELECT f.storage_path, f.display_name
+		FROM files f
+		JOIN shared_access sa
+			ON sa.file_id = f.uuid
+		WHERE f.uuid = $1
+			AND f.visibility = 'shared'
+			AND sa.shared_with_type = 'user'
+	'`, fileID).Scan(&filepath, &displayName); err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			return "", "", cloudErrors.ErrFileNotFound
+		default:
+			return "", "", err
+		}
+	}
+
+	return filepath, displayName, nil
+}

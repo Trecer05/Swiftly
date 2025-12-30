@@ -8,4 +8,5 @@ var (
 	ErrFileNotFound = errors.New("file not found")
 	ErrFolderNotFound = errors.New("folder not found")
 	ErrFileAlreadyExists = errors.New("file already exists")
+	ErrFileNotShared = errors.New("file not shared")
 )
