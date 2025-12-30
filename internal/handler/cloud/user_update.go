@@ -344,8 +344,10 @@ func ShareUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *man
 		}
 	}
 
+	link := cloudService.GenerateShareFolderLink(folderID.String())
+	
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "ok",
+	json.NewEncoder(w).Encode(models.ShareLinkResponse{
+		Link: link,
 	})
 }
