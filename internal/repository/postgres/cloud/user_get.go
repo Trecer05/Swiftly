@@ -293,6 +293,102 @@ func (manager *Manager) GetUserFilesAndFoldersByFolderID(userId int, folderID, s
 	return &response, nil
 }
 
+// type FileShare struct {
+// 	UUID             uuid.UUID  `json:"uuid"`
+// 	FolderID         *uuid.UUID `json:"folder_id,omitempty"`
+// 	DisplayName      string     `json:"display_name"`
+// 	MimeType         string     `json:"mime_type"`
+// 	Size             int64      `json:"size"`
+// 	CreatedAt        time.Time  `json:"created_at"`
+// 	UpdatedAt      time.Time  `json:"updated_at"`
+// }
+
+// type FolderShare struct {
+// 	UUID           uuid.UUID  `json:"uuid"`
+// 	Name           string     `json:"name"`
+// 	ParentFolderID *uuid.UUID `json:"parent_folder_id,omitempty"`
+// 	CreatedAt      time.Time  `json:"created_at"`
+// 	UpdatedAt      time.Time  `json:"updated_at"`
+// }
+
+func (manager *Manager) GetSharedFilesAndFoldersByFolderID(folderID, sort string) (*models.SharedFilesAndFoldersResponse, error) {
+	var response models.SharedFilesAndFoldersResponse
+
+	fileRows, err := manager.Conn.Query(fmt.Sprintf(`SELECT 
+				f.uuid,
+				f.display_name,
+				f.mime_type,
+				f.size,
+				f.uploaded_at,
+				f.updated_at,
+			FROM 
+				files f
+			JOIN shared_access sa
+				ON sa.file_id = f.uuid
+			WHERE f.uuid = $1
+				AND f.visibility = 'shared'
+			ORDER BY updated_at %s`, sort), folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer fileRows.Close()
+
+	for fileRows.Next() {
+		var file models.FileShare
+
+		err := fileRows.Scan(
+			&file.UUID,
+			&file.DisplayName,
+			&file.MimeType,
+			&file.Size,
+			&file.CreatedAt,
+			&file.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		response.Files = append(response.Files, file)
+	}
+
+	folderRows, err := manager.Conn.Query(fmt.Sprintf(`SELECT 
+				f.uuid,
+				f.name,
+				f.parent_folder_id,
+				f.created_at,
+				f.updated_at,
+			FROM 
+				folders f
+			JOIN shared_access sa
+				ON sa.folder_id = f.uuid
+			WHERE f.uuid = $1
+				AND f.visibility = 'shared'
+			ORDER BY updated_at %s`, sort), folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer folderRows.Close()
+
+	for folderRows.Next() {
+		var folder models.FolderShare
+
+		err := folderRows.Scan(
+			&folder.UUID,
+			&folder.Name,
+			&folder.ParentFolderID,
+			&folder.CreatedAt,
+			&folder.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		response.Folders = append(response.Folders, folder)
+	}
+
+	return &response, nil
+}
+
 func (manager *Manager) GetUserFilepathByID(userID int, fileID string) (string, error) {
 	row := manager.Conn.QueryRow(`SELECT storage_path FROM files WHERE uuid = $1`, fileID)
 
@@ -358,7 +454,6 @@ func (manager *Manager) GetSharedFile(fileID string) (string, string, error) {
 			ON sa.file_id = f.uuid
 		WHERE f.uuid = $1
 			AND f.visibility = 'shared'
-			AND sa.shared_with_type = 'user'
 	'`, fileID).Scan(&filepath, &displayName); err != nil {
 		switch {
 		case err == sql.ErrNoRows:

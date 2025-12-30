@@ -201,3 +201,31 @@ func GetSharedFileHandler(w http.ResponseWriter, r *http.Request, mgr *manager.M
 	w.WriteHeader(http.StatusOK)
 	w.Write(byteData)
 }
+
+func GetSharedFolderHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	_, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	folderID, err := uuid.Parse(mux.Vars(r)["folder_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting file ID to int", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	filesAndFolders, err := mgr.GetSharedFilesAndFoldersByFolderID(folderID.String(), cloudService.ValidateQueryDescAsc(r))
+	if err != nil {
+		logger.Logger.Error("Error getting user files and folders", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"data":   filesAndFolders,
+	})
+}

@@ -27,6 +27,11 @@ type FilesAndFoldersResponse struct {
 	Folders []Folder
 }
 
+type SharedFilesAndFoldersResponse struct {
+	Files   []FileShare
+	Folders []FolderShare
+}
+
 type FileUpdateResponse struct {
 	UUID        	uuid.UUID
 	UpdatedAt   	time.Time
