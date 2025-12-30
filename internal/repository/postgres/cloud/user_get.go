@@ -332,3 +332,18 @@ func (manager *Manager) GetOriginalUserFilenameByID(userID int, fileID string) (
 
 	return originalFilename, nil
 }
+
+func (manager *Manager) GetOriginalUserFilenameAndStoragePathByID(userID int, fileID string) (string, string, error) {
+	var originalFilename, storagePath string
+
+	if err := manager.Conn.QueryRow(`SELECT original_filename, storage_path FROM files WHERE uuid = $1 AND created_by = $2 AND owner_type = 'user'`, fileID, userID).Scan(&originalFilename, &storagePath); err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			return "", "", cloudErrors.ErrFileNotFound
+		default:
+			return "", "", err
+		}
+	}
+
+	return originalFilename, storagePath, nil
+}

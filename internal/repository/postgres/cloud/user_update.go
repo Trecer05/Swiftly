@@ -69,3 +69,25 @@ func (manager *Manager) UpdateUserFile(req *models.File) error {
 
 	return nil
 }
+
+func (manager *Manager) MoveUserFileByID(fileID, folderID string, userID int, storagePath string) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE files SET folder_id = $1, storage_path = $2, updated_at = NOW()
+		WHERE uuid = $3 AND created_by = $4 AND owner_type = 'user'
+	`, folderID, storagePath, fileID, userID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) MoveUserFolderByID(folderID, newParentID string, userID int, storagePath string) error {
+	if _, err := manager.Conn.Exec(`
+		UPDATE folders SET parent_folder_id = $1, storage_path = $2, updated_at = NOW()
+		WHERE uuid = $3 AND created_by = $4 AND owner_type = 'user'
+	`, newParentID, storagePath, folderID, userID); err != nil {
+		return err
+	}
+
+	return nil
+}

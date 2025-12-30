@@ -213,3 +213,101 @@ func UpdateUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dbReq)
 }
+
+func MoveUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	fileID, err := uuid.Parse(mux.Vars(r)["file_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting file ID to int", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	var req models.MoveUserFileRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Logger.Error("Error decoding request body", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	storagePath, err := fileManager.MoveUserFile(&req, userID, fileID.String(), mgr)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+			logger.Logger.Error("Error moving file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case err != nil:
+			logger.Logger.Error("Error moving file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := mgr.MoveUserFileByID(fileID.String(), req.NewFolderID.String(), userID, storagePath); err != nil {
+		logger.Logger.Error("Error moving file by ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"new_folder_id": req.NewFolderID.String,
+	})
+}
+
+func MoveUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager) {
+	userID, ok := r.Context().Value("id").(int)
+	if !ok {
+		logger.Logger.Error("Error getting user ID from context", errorAuthTypes.ErrUnauthorized)
+		serviceHttp.NewErrorBody(w, "application/json", errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	folderID, err := uuid.Parse(mux.Vars(r)["folder_id"])
+	if err != nil {
+		logger.Logger.Error("Error converting file ID to int", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	var req models.MoveUserFolderRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Logger.Error("Error decoding request body", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	storagePath, err := fileManager.MoveUserFolder(&req, userID, folderID.String(), mgr)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+			logger.Logger.Error("Error moving file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case err != nil:
+			logger.Logger.Error("Error moving file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := mgr.MoveUserFolderByID(folderID.String(), req.NewFolderID.String(), userID, storagePath); err != nil {
+		logger.Logger.Error("Error moving file by ID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"new_folder_id": req.NewFolderID.String,
+	})
+}

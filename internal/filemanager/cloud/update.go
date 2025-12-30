@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
+	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 	"github.com/google/uuid"
 )
@@ -176,3 +178,94 @@ func UpdateUserFile(reader io.Reader, handler *multipart.FileHeader, userID int,
 
 	return newFilename, newStoragePath, nil
 }
+
+func MoveUserFile(req *models.MoveUserFileRequest, userID int, fileID string, mgr *manager.Manager) (string, error) {
+    var olderStoragePath, newStoragePath, origFilename string
+    var err error
+
+    if req.NewFolderID == nil {
+        origFilename, olderStoragePath, err = mgr.GetOriginalUserFilenameAndStoragePathByID(userID, fileID)
+        if err != nil {
+            return "", err
+        }
+
+        newStoragePath = filepath.Join(userFolder, strconv.Itoa(userID), origFilename)
+    } else {
+        newStoragePath, err = mgr.GetUserFolderpathByID(userID, req.NewFolderID.String())
+        if err != nil {
+            return "", err
+        }
+
+        origFilename, olderStoragePath, err = mgr.GetOriginalUserFilenameAndStoragePathByID(userID, fileID)
+        if err != nil {
+            return "", err
+        }
+
+        newStoragePath = filepath.Join(newStoragePath, origFilename)
+    }
+
+    if _, err := os.Stat(newStoragePath); err == nil {
+        return "", cloudErrors.ErrFileAlreadyExists
+    }
+
+    if olderStoragePath == newStoragePath {
+		return newStoragePath, nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(newStoragePath), 0755); err != nil {
+		return "", err
+	}
+
+	if err := os.Rename(olderStoragePath, newStoragePath); err != nil {
+		return "", err
+	}
+
+	if dirFd, err := os.Open(filepath.Dir(newStoragePath)); err == nil {
+		_ = dirFd.Sync()
+		_ = dirFd.Close()
+	}
+
+	return newStoragePath, nil
+}
+
+func MoveUserFolder(req *models.MoveUserFolderRequest, userID int, fileID string, mgr *manager.Manager) (string, error) {
+    var olderStoragePath, newStoragePath string
+    var err error
+
+    if req.NewFolderID == nil {
+        olderStoragePath, err = mgr.GetUserFolderpathByID(userID, fileID)
+        if err != nil {
+            return "", err
+        }
+
+        newStoragePath = filepath.Join(userFolder, strconv.Itoa(userID), req.FolderName)
+    } else {
+        newStoragePath, err = mgr.GetUserFolderpathByID(userID, req.NewFolderID.String())
+        if err != nil {
+            return "", err
+        }
+
+        olderStoragePath, err = mgr.GetUserFolderpathByID(userID, fileID)
+        if err != nil {
+            return "", err
+        }
+
+        newStoragePath = filepath.Join(newStoragePath, req.FolderName)
+    }
+
+	if err := os.MkdirAll(filepath.Dir(newStoragePath), 0755); err != nil {
+		return "", err
+	}
+
+	if err := os.Rename(olderStoragePath, newStoragePath); err != nil {
+		return "", err
+	}
+
+	if dirFd, err := os.Open(filepath.Dir(newStoragePath)); err == nil {
+		_ = dirFd.Sync()
+		_ = dirFd.Close()
+	}
+
+	return "", nil
+}
+
