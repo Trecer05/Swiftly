@@ -167,7 +167,7 @@ func GetTeamFilesAndFoldersHandler(w http.ResponseWriter, r *http.Request, mgr *
 	}
 
 	cloudService.ValidateQueryDescAsc(r)
-	filesAndFolders, err := mgr.GetTeamFilesAndFolders(userID, cloudService.ValidateDescAsc(r))
+	filesAndFolders, err := mgr.GetTeamFilesAndFolders(userID, cloudService.ValidateQueryDescAsc(r))
 
 	if err != nil {
 		logger.Logger.Error("Error getting user files and folders", err)

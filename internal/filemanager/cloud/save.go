@@ -28,6 +28,11 @@ func SaveUserFile(reader io.Reader, handler *multipart.FileHeader, userID int, p
 	return saveFilesHelper(reader, handler, storagePath)
 }
 
+func SaveTeamFile(reader io.Reader, handler *multipart.FileHeader, teamID int) (string, string, error) {
+	dir := filepath.Join(teamFolder, strconv.Itoa(teamID))
+	return saveFilesHelper(reader, handler, dir)
+}
+
 func saveFilesHelper(reader io.Reader, handler *multipart.FileHeader, dir string) (string, string, error) {
 	fileName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), handler.Filename)
 

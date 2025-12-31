@@ -11,8 +11,8 @@ import (
 	chatModels "github.com/Trecer05/Swiftly/internal/model/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	kafkaModels "github.com/Trecer05/Swiftly/internal/model/kafka"
-	postgres "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 	cloudKafkaManager "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
+	postgres "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 )

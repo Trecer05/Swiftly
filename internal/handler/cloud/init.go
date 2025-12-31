@@ -39,8 +39,8 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		GetUserFilesAndFoldersHandler(w, r, manager)
 	}).Methods(http.MethodGet)
 
-	apiSecure.HandleFunc("/team/{id}/file", func(w http.ResponseWriter, r *http.Request) {
-		CreateTeamFileHandler(w, r, manager, rds)
+	apiSecure.HandleFunc("/team/{id:[0-9]+}/file", func(w http.ResponseWriter, r *http.Request) {
+		CreateTeamFileHandler(w, r, manager, kafkaManager, rds)
 	}).Methods(http.MethodPost)
 
 	apiSecure.HandleFunc("/team/{id:[0-9]+}/file/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +95,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		ShareUserFileByIDHandler(w, r, manager)
 	}).Methods(http.MethodPatch)
 
-	apiSecure.HandleFunc("/team/{id}/folder", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/team/{id:[0-9]+}/folder", func(w http.ResponseWriter, r *http.Request) {
 		CreateTeamFolderHandler(w, r, manager, rds)
 	}).Methods(http.MethodPost)
 
