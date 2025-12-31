@@ -19,7 +19,7 @@ func SaveUserFile(reader io.Reader, handler *multipart.FileHeader, userID int, p
 		dir := filepath.Join(userFolder, strconv.Itoa(userID))
 		return saveFilesHelper(reader, handler, dir)
 	}
-	
+
 	storagePath, err := mgr.GetUserFolderpathByID(userID, parentID.String())
 	if err != nil {
 		return "", "", err
@@ -65,10 +65,25 @@ func CreateUserFolder(req *models.CreateFolderRequest, userID int, mgr *manager.
 	return saveFolderHelper(storagePath, req.DisplayName)
 }
 
+func CreateTeamFolder(req *models.CreateFolderRequest, teamID int, mgr *manager.Manager) (string, error) {
+	if req.ParentID == nil {
+		storagePath := filepath.Join(teamFolder, strconv.Itoa(teamID))
+
+		return saveFolderHelper(storagePath, req.DisplayName)
+	}
+
+	storagePath, err := mgr.GetTeamFolderpathByID(teamID, req.ParentID.String())
+	if err != nil {
+		return "", err
+	}
+
+	return saveFolderHelper(storagePath, req.DisplayName)
+}
+
 func saveFolderHelper(storagePath, name string) (string, error) {
 	if err := os.MkdirAll(filepath.Join(storagePath, name), os.ModePerm); err != nil {
 		if os.IsExist(err) {
-			storagePath = filepath.Join(storagePath, name + fmt.Sprintf("_%d", time.Now().UnixNano()))
+			storagePath = filepath.Join(storagePath, name+fmt.Sprintf("_%d", time.Now().UnixNano()))
 			os.MkdirAll(storagePath, os.ModePerm)
 			return storagePath, nil
 		} else {

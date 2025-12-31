@@ -122,7 +122,7 @@ func CheckUserInTeam(teamID int, requestUserID int, kafkaManager *cloudKafkaMana
 	return nil
 }
 
-func UpdateFileNameByID(mgr *postgres.Manager, fileID, newFilename string, userID int) (time.Time, error) {
+func UpdateUserFileNameByID(mgr *postgres.Manager, fileID, newFilename string, userID int) (time.Time, error) {
 	filepath, err := mgr.GetUserFilepathByID(userID, fileID)
 	if err != nil {
 		return time.Time{}, err
@@ -136,8 +136,36 @@ func UpdateFileNameByID(mgr *postgres.Manager, fileID, newFilename string, userI
 	return mgr.UpdateFileFilenameByID(userID, fileID, newOrigFilename, newFilename, newFilepath)
 }
 
-func UpdateFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, userID int) (time.Time, error) {
+func UpdateTeamFileNameByID(mgr *postgres.Manager, fileID, newFilename string, teamID int, userID int) (time.Time, error) {
+	filepath, err := mgr.GetTeamFilepathByID(teamID, fileID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	newOrigFilename, newFilepath, err := cloudFilemanager.UpdateFileName(filepath, newFilename)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return mgr.UpdateFileFilenameByID(userID, fileID, newOrigFilename, newFilename, newFilepath)
+}
+
+func UpdateUserFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, userID int) (time.Time, error) {
 	filepath, err := mgr.GetUserFolderpathByID(userID, folderID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	newFolderName, newFolderpath, err := cloudFilemanager.UpdateFolderName(filepath, newFoldername)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return mgr.UpdateFolderFoldernameByID(userID, folderID, newFolderName, newFolderpath)
+}
+
+func UpdateTeamFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, teamID int, userID int) (time.Time, error) {
+	filepath, err := mgr.GetTeamFolderpathByID(userID, folderID)
 	if err != nil {
 		return time.Time{}, err
 	}

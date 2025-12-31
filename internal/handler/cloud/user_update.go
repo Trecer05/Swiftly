@@ -40,7 +40,7 @@ func UpdateUserFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	updatedAt, err := cloudService.UpdateFileNameByID(mgr, fileID.String(), file.NewFilename, userID)
+	updatedAt, err := cloudService.UpdateUserFileNameByID(mgr, fileID.String(), file.NewFilename, userID)
 	switch {
 	case errors.Is(err, errorCloudTypes.ErrFileNotFound):
 		logger.Logger.Error("Error update user filename by ID", err)
@@ -54,8 +54,8 @@ func UpdateUserFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.FileUpdateResponse{
-		UUID:      fileID,
-		UpdatedAt: updatedAt,
+		UUID:        fileID,
+		UpdatedAt:   updatedAt,
 		NewFilename: file.NewFilename,
 	})
 }
@@ -82,7 +82,7 @@ func UpdateUserFolderNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr
 		return
 	}
 
-	updatedAt, err := cloudService.UpdateFolderNameByID(mgr, folderID.String(), folder.NewFoldername, userID)
+	updatedAt, err := cloudService.UpdateUserFolderNameByID(mgr, folderID.String(), folder.NewFoldername, userID)
 	switch {
 	case errors.Is(err, errorCloudTypes.ErrFolderNotFound):
 		logger.Logger.Error("Error updating file name", err)
@@ -96,8 +96,8 @@ func UpdateUserFolderNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.FileUpdateResponse{
-		UUID:      folderID,
-		UpdatedAt: updatedAt,
+		UUID:        folderID,
+		UpdatedAt:   updatedAt,
 		NewFilename: folder.NewFoldername,
 	})
 }
@@ -131,7 +131,7 @@ func ShareUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manag
 	}
 
 	link := cloudService.GenerateShareFileLink(fileID.String())
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.ShareLinkResponse{
 		Link: link,
@@ -186,22 +186,22 @@ func UpdateUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
-	
+
 	hash := getHash()
 
 	dbReq := models.File{
-		UUID: fileID,
-		FolderID: req.ParentID,
+		UUID:             fileID,
+		FolderID:         req.ParentID,
 		OriginalFilename: origFilename,
-		DisplayName: req.DisplayName,
-		StoragePath: storagePath,
-		CreatedBy: userID,
-		OwnerID: userID,
-		OwnerType: models.OwnerTypeUser,
-		Hash: hash,
-		MimeType: mimeType,
-		Visibility: req.Visibility,
-		Size: header.Size,
+		DisplayName:      req.DisplayName,
+		StoragePath:      storagePath,
+		CreatedBy:        userID,
+		OwnerID:          userID,
+		OwnerType:        models.OwnerTypeUser,
+		Hash:             hash,
+		MimeType:         mimeType,
+		Visibility:       req.Visibility,
+		Size:             header.Size,
 	}
 
 	if err := mgr.UpdateUserFile(&dbReq); err != nil {
@@ -229,7 +229,7 @@ func MoveUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manage
 		return
 	}
 
-	var req models.MoveUserFileRequest
+	var req models.MoveFileRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Logger.Error("Error decoding request body", err)
@@ -278,7 +278,7 @@ func MoveUserFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
-	var req models.MoveUserFolderRequest
+	var req models.MoveFolderRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Logger.Error("Error decoding request body", err)
