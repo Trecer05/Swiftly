@@ -7,32 +7,32 @@ import (
 )
 
 type FileResponse struct {
-	UUID        uuid.UUID
-	FolderID    uuid.UUID
-	DisplayName string
-	MimeType    string
-	Size        int64
-	Visibility  string
-	CreatedBy   int
-	OwnerID     int
-	OwnerType   string
-	UploadedAt  string
-	UpdatedAt   string
-	Hash        string
-	Version     int
+	UUID        uuid.UUID `json:"uuid"`
+	FolderID    uuid.UUID `json:"folder_id"`
+	DisplayName string    `json:"display_name"`
+	MimeType    string    `json:"mime_type"`
+	Size        int64     `json:"size"`
+	Visibility  string    `json:"visibility"`
+	CreatedBy   int       `json:"created_by"`
+	OwnerID     int       `json:"owner_id"`
+	OwnerType   string    `json:"owner_type"`
+	UploadedAt  string    `json:"uploaded_at"`
+	UpdatedAt   string    `json:"updated_at"`
+	Hash        string    `json:"hash"`
+	Version     int       `json:"version"`
 }
 
 type FilesAndFoldersResponse struct {
-	Files   []File
-	Folders []Folder
+	Files   []File   `json:"files"`
+	Folders []Folder `json:"folders"`
 }
 
 type FileUpdateResponse struct {
-	UUID        	uuid.UUID
-	UpdatedAt   	time.Time
-	NewFilename     string
+	UUID        uuid.UUID `json:"uuid"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	NewFilename string    `json:"new_filename"`
 }
 
 type ShareLinkResponse struct {
-	Link string
+	Link string `json:"link"`
 }

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Trecer05/Swiftly/internal/config/logger"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	manager "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
 	"github.com/google/uuid"
@@ -28,9 +29,18 @@ func SaveUserFile(reader io.Reader, handler *multipart.FileHeader, userID int, p
 	return saveFilesHelper(reader, handler, storagePath)
 }
 
-func SaveTeamFile(reader io.Reader, handler *multipart.FileHeader, teamID int) (string, string, error) {
-	dir := filepath.Join(teamFolder, strconv.Itoa(teamID))
-	return saveFilesHelper(reader, handler, dir)
+func SaveTeamFile(reader io.Reader, handler *multipart.FileHeader, teamID int, parentID *uuid.UUID, mgr *manager.Manager) (string, string, error) {
+	if parentID == nil {
+		dir := filepath.Join(teamFolder, strconv.Itoa(teamID))
+		return saveFilesHelper(reader, handler, dir)
+	}
+
+	storagePath, err := mgr.GetTeamFolderpathByID(teamID, parentID.String())
+	if err != nil {
+		return "", "", err
+	}
+
+	return saveFilesHelper(reader, handler, storagePath)
 }
 
 func saveFilesHelper(reader io.Reader, handler *multipart.FileHeader, dir string) (string, string, error) {
@@ -40,11 +50,13 @@ func saveFilesHelper(reader io.Reader, handler *multipart.FileHeader, dir string
 
 	dst, err := os.Create(filePath)
 	if err != nil {
+		logger.Logger.Error("Error creating file on disk ", err)
 		return "", "", err
 	}
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, reader); err != nil {
+		logger.Logger.Error("Error copy file ", err)
 		return "", "", err
 	}
 	return fileName, filePath, nil

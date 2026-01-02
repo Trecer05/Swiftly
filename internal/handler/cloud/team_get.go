@@ -20,13 +20,13 @@ import (
 )
 
 func GetTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
-	fileModel, userId, err, statusCode := prepareTeamFile(r, mgr)
+	fileModel, teamID, err, statusCode := prepareTeamFile(r, mgr)
 	if err != nil {
 		logger.Logger.Error("Error preparing file", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, statusCode)
 		return
 	}
-	fileByte, err := cloudService.GetFileSync(fileModel, userId, kafkaManager)
+	fileByte, err := cloudService.GetFileSync(fileModel, teamID, kafkaManager)
 
 	if err != nil {
 		if errors.Is(err, errorFileTypes.ErrPermissionDenied) {
@@ -75,7 +75,7 @@ func DownloadTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *ma
 
 func prepareTeamFile(r *http.Request, mgr *manager.Manager) (*cloud.File, int, error, int) {
 	vars := mux.Vars(r)
-	teamId, _ := strconv.Atoi(vars["id"])
+	teamID, _ := strconv.Atoi(vars["id"])
 	fileUUID, err := uuid.Parse(vars["file_id"])
 	if err != nil {
 		logger.Logger.Error("Error parsing file UUID", err)
@@ -87,7 +87,7 @@ func prepareTeamFile(r *http.Request, mgr *manager.Manager) (*cloud.File, int, e
 		return nil, 0, errorAuthTypes.ErrUnauthorized, http.StatusUnauthorized
 	}
 
-	fileModel, err := mgr.GetTeamFileByID(teamId, fileUUID)
+	fileModel, err := mgr.GetTeamFileByID(teamID, fileUUID)
 	if err != nil {
 		logger.Logger.Error("Error getting team file by ID", err)
 		if errors.Is(err, errorFileTypes.ErrFileNotFound) {

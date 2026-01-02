@@ -57,9 +57,9 @@ type Folder struct {
 	OwnerID        int            `json:"owner_id"`
 	OwnerType      OwnerType      `json:"owner_type"`
 	StoragePath    string         `json:"storage_path"`
-	Files          []File         `json:"files,omitempty"`
+	Files          []File         `json:"files"`
 	Visibility     VisibilityType `json:"visibility"`
-	ParentFolderID *uuid.UUID     `json:"parent_folder_id,omitempty"`
+	ParentFolderID *uuid.UUID     `json:"parent_folder_id"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 }

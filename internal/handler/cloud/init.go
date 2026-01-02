@@ -43,7 +43,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		CreateTeamFileHandler(w, r, manager, kafkaManager, rds)
 	}).Methods(http.MethodPost)
 
-	apiSecure.HandleFunc("/team/{id:[0-9]+}/file/{id}", func(w http.ResponseWriter, r *http.Request) {
+	apiSecure.HandleFunc("/team/{id:[0-9]+}/file/{file_id}", func(w http.ResponseWriter, r *http.Request) {
 		GetTeamFileByIDHandler(w, r, manager, kafkaManager)
 	}).Methods(http.MethodGet)
 

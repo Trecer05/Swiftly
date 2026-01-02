@@ -71,9 +71,9 @@ func CreateTeamFileHandler(w http.ResponseWriter, r *http.Request, mgr *manager.
 	}
 
 	// Сохраняем файл на диск
-	originalFilename, storagePath, err := fileManager.SaveTeamFile(reader, header, userID)
+	originalFilename, storagePath, err := fileManager.SaveTeamFile(reader, header, teamID, req.FolderID, mgr)
 	if err != nil {
-		logger.Logger.Error("Error saving user file", err)
+		logger.Logger.Error("Error saving team file", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}

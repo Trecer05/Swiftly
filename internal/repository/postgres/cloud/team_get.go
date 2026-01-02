@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/Trecer05/Swiftly/internal/config/logger"
 	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
@@ -18,10 +19,14 @@ func hasAccessToTeamFile(file *models.File, requestUserID int, isInTeam bool) er
 		case models.VisibilityPrivate:
 			if file.OwnerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			if !isInTeam {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		}
 	case models.OwnerTypeTeam:
@@ -29,10 +34,14 @@ func hasAccessToTeamFile(file *models.File, requestUserID int, isInTeam bool) er
 		case models.VisibilityPublic:
 			if !isInTeam {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityPrivate:
 			if file.OwnerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			return nil
@@ -150,11 +159,12 @@ func (manager *Manager) GetTeamFilesFromFolder(teamId int, requestUserID int, fo
 			&file.Version,
 		)
 		if err != nil {
+			logger.Logger.Error("Error parsing data from query", err.Error())
 			return nil, err
 		}
 		// Если получение папки организации уже подразумевает, что пользователь в этой организации,
 		// то передаем isInTeam = true в функцию проверки доступа к файлу
-		if hasAccessToTeamFile(&file, requestUserID, true) != nil {
+		if hasAccessToTeamFile(&file, requestUserID, true) == nil {
 			files = append(files, file)
 		}
 	}
@@ -240,6 +250,7 @@ func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models
 		err := rows.Scan(
 			&folder.UUID,
 			&folder.Name,
+			&folder.CreatedBy,
 			&folder.OwnerID,
 			&folder.OwnerType,
 			&folder.ParentFolderID,

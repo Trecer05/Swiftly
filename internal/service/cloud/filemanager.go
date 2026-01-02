@@ -42,10 +42,14 @@ func checkAccess(file *models.File, requestUserID int, kafkaManager *cloudKafkaM
 		case models.VisibilityPrivate:
 			if file.OwnerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			if err := CheckUserInTeam(file.OwnerID, requestUserID, kafkaManager); err != nil {
 				return err
+			} else {
+				return nil
 			}
 
 		}
@@ -54,10 +58,14 @@ func checkAccess(file *models.File, requestUserID int, kafkaManager *cloudKafkaM
 		case models.VisibilityPublic:
 			if err := CheckUserInTeam(file.OwnerID, requestUserID, kafkaManager); err != nil {
 				return err
+			} else {
+				return nil
 			}
 		case models.VisibilityPrivate:
 			if file.OwnerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			return nil

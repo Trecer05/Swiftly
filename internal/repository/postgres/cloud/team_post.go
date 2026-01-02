@@ -7,6 +7,7 @@ func (manager *Manager) CreateTeamFile(req *models.File) error {
 		storage_path, 
 		original_filename, 
 		display_name, 
+		folder_id,
 		mime_type, 
 		size, 
 		visibility, 
@@ -15,11 +16,12 @@ func (manager *Manager) CreateTeamFile(req *models.File) error {
 		owner_type, 
 		hash
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'team', $9) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'team', $10) 
 	RETURNING uuid, uploaded_at, updated_at`,
 		req.StoragePath,
 		req.OriginalFilename,
 		req.DisplayName,
+		req.FolderID,
 		req.MimeType,
 		req.Size,
 		req.Visibility,
@@ -56,15 +58,17 @@ func (manager *Manager) CreateTeamFolder(req *models.Folder, storagePath string)
 		created_by,
 		owner_id,
 		owner_type,
-		storage_path
+		storage_path,
+		visibility,
 		parent_folder_id
 		)
-	VALUES ($1, $2, $3, 'team', $4, $5)
+	VALUES ($1, $2, $3, 'team', $4, $5, $6)
 	RETURNING uuid, created_at, updated_at`,
 		req.Name,
 		req.CreatedBy,
 		req.OwnerID,
 		storagePath,
+		req.Visibility,
 		req.ParentFolderID).Scan(&req.UUID, &req.CreatedAt, &req.UpdatedAt)
 
 	if err != nil {
