@@ -50,6 +50,44 @@ func hasAccessToTeamFile(file *models.File, requestUserID int, isInTeam bool) er
 	return errors.ErrPermissionDenied
 }
 
+func hasAccessToTeamFolder(folder *models.Folder, requestUserID int, isInTeam bool) error {
+	switch folder.OwnerType {
+	case models.OwnerTypeUser:
+		switch folder.Visibility {
+		case models.VisibilityPrivate:
+			if folder.OwnerID != requestUserID {
+				return errors.ErrPermissionDenied
+			} else {
+				return nil
+			}
+		case models.VisibilityShared:
+			if !isInTeam {
+				return errors.ErrPermissionDenied
+			} else {
+				return nil
+			}
+		}
+	case models.OwnerTypeTeam:
+		switch folder.Visibility {
+		case models.VisibilityPublic:
+			if !isInTeam {
+				return errors.ErrPermissionDenied
+			} else {
+				return nil
+			}
+		case models.VisibilityPrivate:
+			if folder.OwnerID != requestUserID {
+				return errors.ErrPermissionDenied
+			} else {
+				return nil
+			}
+		case models.VisibilityShared:
+			return nil
+		}
+	}
+	return errors.ErrPermissionDenied
+}
+
 func (manager *Manager) GetTeamFileByID(teamId int, fileId uuid.UUID) (*models.File, error) {
 	var file models.File
 	row := manager.Conn.QueryRow(`SELECT 
@@ -171,16 +209,21 @@ func (manager *Manager) GetTeamFilesFromFolder(teamId int, requestUserID int, fo
 	return files, nil
 }
 
-func (manager *Manager) GetTeamFolderByTeamID(teamId int, folderId uuid.UUID) (*models.Folder, error) {
-	var folder models.Folder
-	var parent sql.NullString
+func (manager *Manager) GetTeamFolderByTeamID(teamId int, requestUserID int, folderId uuid.UUID) (*models.FilesAndFoldersResponse, error) {
+	// var folder models.Folder
+	var response models.FilesAndFoldersResponse
 
-	err := manager.Conn.QueryRow(`SELECT 
+	response.Files = make([]models.File, 0)
+	response.Folders = make([]models.Folder, 0)
+
+	// Get main folder data
+	folderRows, err := manager.Conn.Query(`SELECT 
 				uuid,
 				name,
 				created_by,
 				owner_id,
 				owner_type,
+				visibility,
 				parent_folder_id,
 				created_at
 			FROM 
@@ -188,15 +231,8 @@ func (manager *Manager) GetTeamFolderByTeamID(teamId int, folderId uuid.UUID) (*
 			WHERE
 			    owner_type = 'team' AND
 				owner_id = $1 AND
-				uuid = $2`, teamId, folderId).Scan(
-		&folder.UUID,
-		&folder.Name,
-		&folder.CreatedBy,
-		&folder.OwnerID,
-		&folder.OwnerType,
-		&parent,
-		&folder.CreatedAt,
-	)
+				parent_folder_id = $2`, teamId, folderId)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.ErrFolderNotFound
@@ -204,21 +240,44 @@ func (manager *Manager) GetTeamFolderByTeamID(teamId int, folderId uuid.UUID) (*
 			return nil, err
 		}
 	}
-	if parent.Valid {
-		parentUUID, err := uuid.Parse(parent.String)
+
+	defer folderRows.Close()
+	for folderRows.Next() {
+		var folder models.Folder
+		var parent sql.NullString
+		err := folderRows.Scan(
+			&folder.UUID,
+			&folder.Name,
+			&folder.CreatedBy,
+			&folder.OwnerID,
+			&folder.OwnerType,
+			&folder.Visibility,
+			&parent,
+			&folder.CreatedAt,
+		)
 		if err != nil {
-			return nil, err
+			continue
 		}
-		folder.ParentFolderID = &parentUUID
+		if parent.Valid {
+			parentUUID, err := uuid.Parse(parent.String)
+			if err != nil {
+				return nil, err
+			}
+			folder.ParentFolderID = &parentUUID
+		}
+		if hasAccessToTeamFolder(&folder, requestUserID, true) == nil {
+			response.Folders = append(response.Folders, folder)
+		}
 	}
-	folder.Files, err = manager.GetTeamFilesFromFolder(teamId, folder.OwnerID, folderId)
+
+	response.Files, err = manager.GetTeamFilesFromFolder(teamId, requestUserID, folderId)
 	if err != nil {
 		return nil, err
 	}
-	return &folder, nil
+	return &response, nil
 }
 
-func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models.FilesAndFoldersResponse, error) {
+func (manager *Manager) GetTeamFilesAndFolders(teamID int, requestUserID int, sort string) (*models.FilesAndFoldersResponse, error) {
 	var response models.FilesAndFoldersResponse
 
 	response.Folders = make([]models.Folder, 0)
@@ -232,6 +291,7 @@ func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models
 			created_by,
 			owner_id,
 			owner_type,
+			visibility,
 			parent_folder_id,
 			created_at
 			FROM 
@@ -242,6 +302,7 @@ func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models
 					parent_folder_id IS NULL
 			ORDER BY updated_at %s`, sort), teamID)
 	if err != nil {
+		logger.Logger.Error("Failed to get folder data from database ", err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -253,13 +314,16 @@ func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models
 			&folder.CreatedBy,
 			&folder.OwnerID,
 			&folder.OwnerType,
+			&folder.Visibility,
 			&folder.ParentFolderID,
 			&folder.CreatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		response.Folders = append(response.Folders, folder)
+		if hasAccessToTeamFolder(&folder, requestUserID, true) == nil {
+			response.Folders = append(response.Folders, folder)
+		}
 	}
 
 	// Получаем файлы
@@ -312,7 +376,9 @@ func (manager *Manager) GetTeamFilesAndFolders(teamID int, sort string) (*models
 		if err != nil {
 			return nil, err
 		}
-		response.Files = append(response.Files, file)
+		if hasAccessToTeamFile(&file, requestUserID, true) == nil {
+			response.Files = append(response.Files, file)
+		}
 	}
 	return &response, nil
 }

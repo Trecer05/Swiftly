@@ -127,7 +127,7 @@ func GetTeamFolderFilesByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	folderModel, err := mgr.GetTeamFolderByTeamID(teamId, folderId)
+	folderModel, err := mgr.GetTeamFolderByTeamID(teamId, userID, folderId)
 	if err != nil {
 		if errors.Is(err, errorFileTypes.ErrFolderNotFound) {
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
@@ -145,7 +145,7 @@ func GetTeamFolderFilesByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 // "/team/{id}"
 func GetTeamFilesAndFoldersHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager) {
 	vars := mux.Vars(r)
-	teamId, _ := strconv.Atoi(vars["id"]) // Валидируем teamId на уровне роутера.
+	teamID, _ := strconv.Atoi(vars["id"]) // Валидируем teamId на уровне роутера.
 
 	userID, ok := r.Context().Value("id").(int)
 	if !ok {
@@ -154,7 +154,7 @@ func GetTeamFilesAndFoldersHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	err := cloudService.CheckUserInTeam(teamId, userID, kafkaManager)
+	err := cloudService.CheckUserInTeam(teamID, userID, kafkaManager)
 
 	if err != nil {
 		if errors.Is(err, errorFileTypes.ErrPermissionDenied) {
@@ -166,8 +166,7 @@ func GetTeamFilesAndFoldersHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	cloudService.ValidateQueryDescAsc(r)
-	filesAndFolders, err := mgr.GetTeamFilesAndFolders(userID, cloudService.ValidateQueryDescAsc(r))
+	filesAndFolders, err := mgr.GetTeamFilesAndFolders(teamID, userID, cloudService.ValidateQueryDescAsc(r))
 
 	if err != nil {
 		logger.Logger.Error("Error getting user files and folders", err)
