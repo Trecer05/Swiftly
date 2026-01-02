@@ -27,6 +27,11 @@ type FilesAndFoldersResponse struct {
 	Folders []Folder `json:"folders"`
 }
 
+type SharedFilesAndFoldersResponse struct {
+	Files   []FileShare
+	Folders []FolderShare
+}
+
 type FileUpdateResponse struct {
 	UUID        uuid.UUID `json:"uuid"`
 	UpdatedAt   time.Time `json:"updated_at"`
