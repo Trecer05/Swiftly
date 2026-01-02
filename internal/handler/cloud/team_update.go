@@ -381,7 +381,7 @@ func MoveTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manage
 		return
 	}
 
-	fileUUID, err := uuid.Parse(vars["folder_id"])
+	fileUUID, err := uuid.Parse(vars["file_id"])
 	if err != nil {
 		logger.Logger.Error("Error parsing folder UUID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
@@ -418,5 +418,54 @@ func MoveTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manage
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"new_folder_id": req.NewFolderID.String,
+	})
+}
+
+// "/team/{id:[0-9]+}/folder/{folder_id}/share"
+func ShareTeamFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *manager.Manager, kafkaManager *kafkaManager.KafkaManager, rds *redis.WebSocketManager) {
+	// Получаем переменные из запроса
+	vars := mux.Vars(r)
+	teamID, _ := strconv.Atoi(vars["id"]) // Валидируем teamId на уровне роутера.
+
+	userID, err := cloudService.AuthorizeUserInTeam(r, teamID, kafkaManager)
+	if err != nil {
+		if errors.Is(err, errorAuthTypes.ErrUnauthorized) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		logger.Logger.Error("Error checking user in team", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	folderUUID, err := uuid.Parse(vars["folder_id"])
+	if err != nil {
+		logger.Logger.Error("Error parsing folder UUID", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	if err := mgr.ShareTeamFolderByID(folderUUID.String(), teamID, userID); err != nil {
+		switch {
+		case errors.Is(err, errorCloudTypes.ErrFileNotFound):
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case errors.Is(err, errorCloudTypes.ErrNoPermissions):
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		default:
+			logger.Logger.Error("Error sharing file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	link := cloudService.GenerateShareFolderLink(folderUUID.String())
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(models.ShareLinkResponse{
+		Link: link,
 	})
 }

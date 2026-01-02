@@ -119,13 +119,13 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		DeleteUserFolderByIDHandler(w, r, manager)
 	}).Methods(http.MethodDelete)
 
-	// apiSecure.HandleFunc("/user/folder/{folder_id}/share", func(w http.ResponseWriter, r *http.Request) {
-	// 	ShareUserFolderByIDHandler(w, r, manager)
-	// }).Methods(http.MethodPatch)
+	apiSecure.HandleFunc("/user/folder/{folder_id}/share", func(w http.ResponseWriter, r *http.Request) {
+		ShareUserFolderByIDHandler(w, r, manager)
+	}).Methods(http.MethodPatch)
 
-	// apiSecure.HandleFunc("/team/{id:[0-9]+}/folder/{folder_id}/share", func(w http.ResponseWriter, r *http.Request) {
-	// 	ShareTeamFolderByIDHandler(w, r, manager)
-	// }).Methods(http.MethodPatch)
+	apiSecure.HandleFunc("/team/{id:[0-9]+}/folder/{folder_id}/share", func(w http.ResponseWriter, r *http.Request) {
+		ShareTeamFolderByIDHandler(w, r, manager, kafkaManager, rds)
+	}).Methods(http.MethodPatch)
 
 	apiSecure.HandleFunc("/user/folder/{folder_id}/name", func(w http.ResponseWriter, r *http.Request) {
 		UpdateUserFolderNameByIDHandler(w, r, manager)
@@ -155,7 +155,7 @@ func InitCloudRoutes(r *mux.Router, manager *manager.Manager, rds *redis.WebSock
 		GetSharedFileHandler(w, r, manager)
 	}).Methods(http.MethodGet)
 
-	// apiSecure.HandleFunc("/sharedfiles/folder/{folder_id}", func(w http.ResponseWriter, r *http.Request) {
-	// 	GetSharedFolderHandler(w, r, manager)
-	// }).Methods(http.MethodGet)
+	apiSecure.HandleFunc("/sharedfiles/folder/{folder_id}", func(w http.ResponseWriter, r *http.Request) {
+		GetSharedFolderHandler(w, r, manager)
+	}).Methods(http.MethodGet)
 }
