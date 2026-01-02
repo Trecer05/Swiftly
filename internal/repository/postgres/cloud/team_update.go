@@ -5,9 +5,9 @@ import models "github.com/Trecer05/Swiftly/internal/model/cloud"
 func (manager *Manager) UpdateTeamFile(req *models.File) error {
 	if err := manager.Conn.QueryRow(`
 		UPDATE files SET original_filename = $1, display_name = $2, storage_path = $3, updated_at = NOW(), hash = $4, version = version + 1, size = $5, mime_type = $6
-		WHERE uuid = $7 AND created_by = $8 AND owner_type = 'team'
-		RETURNING updated_at
-	`, req.OriginalFilename, req.DisplayName, req.StoragePath, req.Hash, req.Size, req.MimeType, req.UUID, req.CreatedBy).Scan(&req.Hash); err != nil {
+		WHERE uuid = $7 AND owner_id = $8 AND owner_type = 'team'
+		RETURNING created_by, uploaded_at, updated_at, version
+	`, req.OriginalFilename, req.DisplayName, req.StoragePath, req.Hash, req.Size, req.MimeType, req.UUID, req.OwnerID).Scan(&req.CreatedBy, &req.UploadedAt, &req.UpdatedAt, &req.Version); err != nil {
 		return err
 	}
 

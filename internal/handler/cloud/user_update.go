@@ -180,7 +180,7 @@ func UpdateUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
-	origFilename, storagePath, err := fileManager.UpdateUserFile(reader, header, userID, fileID, req.ParentID, mgr)
+	origFilename, storagePath, err := fileManager.UpdateUserFile(reader, header, userID, fileID, req.FolderID, mgr)
 	if err != nil {
 		logger.Logger.Error("Error saving user file", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
@@ -191,7 +191,7 @@ func UpdateUserFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 
 	dbReq := models.File{
 		UUID:             fileID,
-		FolderID:         req.ParentID,
+		FolderID:         req.FolderID,
 		OriginalFilename: origFilename,
 		DisplayName:      req.DisplayName,
 		StoragePath:      storagePath,

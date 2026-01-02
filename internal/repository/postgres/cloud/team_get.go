@@ -91,26 +91,26 @@ func hasAccessToTeamFolder(folder *models.Folder, requestUserID int, isInTeam bo
 func (manager *Manager) GetTeamFileByID(teamId int, fileId uuid.UUID) (*models.File, error) {
 	var file models.File
 	row := manager.Conn.QueryRow(`SELECT 
-				f.uuid,
-				f.storage_path,
-				f.original_filename,
-				f.display_name,
-				f.mime_type,
-				f.size,
-				f.visibility,
-				f.created_by,
-				f.owner_id,
-				f.owner_type,
-				f.uploaded_at,
-				f.updated_at,
-				f.hash,
-				f.version
+				uuid,
+				storage_path,
+				original_filename,
+				display_name,
+				mime_type,
+				size,
+				visibility,
+				created_by,
+				owner_id,
+				owner_type,
+				uploaded_at,
+				updated_at,
+				hash,
+				version
 			FROM 
-				files f
+				files
 			WHERE 
 			    owner_type = 'team' AND
 				owner_id = $1 AND
-				f.uuid = $2`, teamId, fileId)
+				uuid = $2`, teamId, fileId)
 	err := row.Scan(
 		&file.UUID,
 		&file.StoragePath,
@@ -413,10 +413,10 @@ func (manager *Manager) GetTeamFilepathByID(teamID int, fileID string) (string, 
 	return storagePath, nil
 }
 
-func (manager *Manager) GetOriginalTeamFilenameByID(userID int, teamID int, fileID string) (string, error) {
+func (manager *Manager) GetOriginalTeamFilenameByID(teamID int, fileID string) (string, error) {
 	var originalFilename string
 
-	if err := manager.Conn.QueryRow(`SELECT original_filename FROM files WHERE uuid = $1 AND created_by = $2 AND owner_id = $3 AND owner_type = 'team'`, fileID, userID, teamID).Scan(&originalFilename); err != nil {
+	if err := manager.Conn.QueryRow(`SELECT original_filename FROM files WHERE uuid = $1 AND owner_id = $2 AND owner_type = 'team'`, fileID, teamID).Scan(&originalFilename); err != nil {
 		return "", err
 	}
 

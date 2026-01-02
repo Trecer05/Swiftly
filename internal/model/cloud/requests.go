@@ -25,7 +25,7 @@ type CreateFolderRequest struct {
 }
 
 type UpdateFileRequest struct {
-	ParentID    *uuid.UUID     `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
+	FolderID    *uuid.UUID     `json:"folder_id,omitempty"` // Можно добавить в корень хранилища
 	DisplayName string         `json:"display_name"`
 	Visibility  VisibilityType `json:"visibility"`
 	OwnerType   OwnerType      `json:"owner_type"`

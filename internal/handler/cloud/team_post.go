@@ -87,7 +87,7 @@ func CreateTeamFileHandler(w http.ResponseWriter, r *http.Request, mgr *manager.
 		DisplayName:      req.DisplayName,
 		StoragePath:      storagePath,
 		CreatedBy:        userID,
-		OwnerID:          userID,
+		OwnerID:          teamID,
 		OwnerType:        models.OwnerTypeTeam,
 		Hash:             hash,
 		MimeType:         mimeType,

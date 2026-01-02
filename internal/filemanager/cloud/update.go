@@ -185,7 +185,7 @@ func UpdateTeamFile(reader io.Reader, handler *multipart.FileHeader, teamID int,
 	var err error
 
 	if parentID == nil {
-		origFilename, err := mgr.GetOriginalTeamFilenameByID(userID, teamID, fileID.String())
+		origFilename, err := mgr.GetOriginalTeamFilenameByID(teamID, fileID.String())
 		if err != nil {
 			return "", "", err
 		}
@@ -198,7 +198,7 @@ func UpdateTeamFile(reader io.Reader, handler *multipart.FileHeader, teamID int,
 			return "", "", err
 		}
 
-		origFilename, err := mgr.GetOriginalTeamFilenameByID(userID, teamID, fileID.String())
+		origFilename, err := mgr.GetOriginalTeamFilenameByID(teamID, fileID.String())
 		if err != nil {
 			return "", "", err
 		}

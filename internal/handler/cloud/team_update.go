@@ -54,6 +54,21 @@ func UpdateTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
+	fileModel, err := mgr.GetTeamFileByID(teamID, fileUUID)
+	if err != nil {
+		if errors.Is(err, errorCloudTypes.ErrFileNotFound) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		} else {
+			logger.Logger.Error("Error getting team file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	if cloudService.HasAccessToTeamFile(fileModel, userID, true) != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+		return
+	}
+
 	file, header, err := cloudService.GetFileAndMetadataFromRequest(r, &req)
 	if err != nil {
 		logger.Logger.Error("Error getting file and metadata from request", err)
@@ -71,7 +86,7 @@ func UpdateTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
-	origFilename, storagePath, err := fileManager.UpdateTeamFile(reader, header, teamID, userID, fileUUID, req.ParentID, mgr)
+	origFilename, storagePath, err := fileManager.UpdateTeamFile(reader, header, teamID, userID, fileUUID, req.FolderID, mgr)
 	if err != nil {
 		logger.Logger.Error("Error saving user file", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
@@ -82,12 +97,11 @@ func UpdateTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 
 	dbReq := models.File{
 		UUID:             fileUUID,
-		FolderID:         req.ParentID,
+		FolderID:         req.FolderID,
 		OriginalFilename: origFilename,
 		DisplayName:      req.DisplayName,
 		StoragePath:      storagePath,
-		CreatedBy:        userID,
-		OwnerID:          userID,
+		OwnerID:          teamID,
 		OwnerType:        models.OwnerTypeUser,
 		Hash:             hash,
 		MimeType:         mimeType,
@@ -139,6 +153,21 @@ func UpdateTeamFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 	if err != nil {
 		logger.Logger.Error("Error parsing folder UUID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
+		return
+	}
+
+	fileModel, err := mgr.GetTeamFileByID(teamID, fileUUID)
+	if err != nil {
+		if errors.Is(err, errorCloudTypes.ErrFileNotFound) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+		} else {
+			logger.Logger.Error("Error getting team file by ID", err)
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	if cloudService.HasAccessToTeamFile(fileModel, userID, true) != nil {
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
 		return
 	}
 

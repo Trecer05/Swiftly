@@ -62,7 +62,7 @@ func checkAccess(file *models.File, requestUserID int, kafkaManager *cloudKafkaM
 				return nil
 			}
 		case models.VisibilityPrivate:
-			if file.OwnerID != requestUserID {
+			if file.CreatedBy != requestUserID {
 				return errors.ErrPermissionDenied
 			} else {
 				return nil
@@ -78,28 +78,43 @@ func checkAccess(file *models.File, requestUserID int, kafkaManager *cloudKafkaM
 // чтобы каждый раз не обращаться к кафке для каждой проверки файла
 // принимаем bool значение, состоит ли пользователь в организации
 func HasAccessToTeamFile(file *models.File, requestUserID int, isInTeam bool) error {
-	switch file.OwnerType {
+	return hasAccessToTeamResource(file.OwnerType, file.Visibility, file.OwnerID, requestUserID, isInTeam)
+}
+
+func HasAccessToTeamFolder(folder *models.Folder, requestUserID int, isInTeam bool) error {
+	return hasAccessToTeamResource(folder.OwnerType, folder.Visibility, folder.OwnerID, requestUserID, isInTeam)
+}
+
+func hasAccessToTeamResource(ownerType models.OwnerType, visibility models.VisibilityType, ownerID int, requestUserID int, isInTeam bool) error {
+	switch ownerType {
 	case models.OwnerTypeUser:
-		switch file.Visibility {
+		switch visibility {
 		case models.VisibilityPrivate:
-			if file.OwnerID != requestUserID {
+			if ownerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			if !isInTeam {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
-
 		}
 	case models.OwnerTypeTeam:
-		switch file.Visibility {
+		switch visibility {
 		case models.VisibilityPublic:
 			if !isInTeam {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityPrivate:
-			if file.OwnerID != requestUserID {
+			if ownerID != requestUserID {
 				return errors.ErrPermissionDenied
+			} else {
+				return nil
 			}
 		case models.VisibilityShared:
 			return nil
@@ -173,6 +188,7 @@ func UpdateUserFolderNameByID(mgr *postgres.Manager, folderID, newFoldername str
 }
 
 func UpdateTeamFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, teamID int, userID int) (time.Time, error) {
+
 	filepath, err := mgr.GetTeamFolderpathByID(userID, folderID)
 	if err != nil {
 		return time.Time{}, err
