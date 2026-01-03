@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
+	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	cloudFilemanager "github.com/Trecer05/Swiftly/internal/filemanager/cloud"
 	chatModels "github.com/Trecer05/Swiftly/internal/model/chat"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	kafkaModels "github.com/Trecer05/Swiftly/internal/model/kafka"
 	cloudKafkaManager "github.com/Trecer05/Swiftly/internal/repository/kafka/cloud"
 	postgres "github.com/Trecer05/Swiftly/internal/repository/postgres/cloud"
+	"github.com/google/uuid"
 
 	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 )
@@ -159,7 +161,16 @@ func UpdateUserFileNameByID(mgr *postgres.Manager, fileID, newFilename string, u
 	return mgr.UpdateFileFilenameByID(userID, fileID, newOrigFilename, newFilename, newFilepath)
 }
 
-func UpdateTeamFileNameByID(mgr *postgres.Manager, fileID, newFilename string, teamID int, userID int) (time.Time, error) {
+func UpdateTeamFileNameByID(mgr *postgres.Manager, fileID uuid.UUID, newFilename string, teamID int, requestUserID int) (time.Time, error) {
+	fileModel, err := mgr.GetTeamFileByID(teamID, fileID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if fileModel.CreatedBy != requestUserID {
+		return time.Time{}, cloudErrors.ErrNoPermissions
+	}
+
 	filepath, err := mgr.GetTeamFilepathByID(teamID, fileID)
 	if err != nil {
 		return time.Time{}, err
@@ -170,7 +181,7 @@ func UpdateTeamFileNameByID(mgr *postgres.Manager, fileID, newFilename string, t
 		return time.Time{}, err
 	}
 
-	return mgr.UpdateFileFilenameByID(userID, fileID, newOrigFilename, newFilename, newFilepath)
+	return mgr.UpdateFileFilenameByID(requestUserID, fileID.String(), newOrigFilename, newFilename, newFilepath)
 }
 
 func UpdateUserFolderNameByID(mgr *postgres.Manager, folderID, newFoldername string, userID int) (time.Time, error) {

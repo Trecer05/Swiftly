@@ -156,21 +156,6 @@ func UpdateTeamFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	fileModel, err := mgr.GetTeamFileByID(teamID, fileUUID)
-	if err != nil {
-		if errors.Is(err, errorCloudTypes.ErrFileNotFound) {
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
-		} else {
-			logger.Logger.Error("Error getting team file by ID", err)
-			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
-		}
-		return
-	}
-	if cloudService.HasAccessToTeamFile(fileModel, userID, true) != nil {
-		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
-		return
-	}
-
 	var file models.FilenameUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&file); err != nil {
 		logger.Logger.Error("Error decoding request body", err)
@@ -178,7 +163,7 @@ func UpdateTeamFileNameByIDHandler(w http.ResponseWriter, r *http.Request, mgr *
 		return
 	}
 
-	updatedAt, err := cloudService.UpdateTeamFileNameByID(mgr, fileUUID.String(), file.NewFilename, teamID, userID)
+	updatedAt, err := cloudService.UpdateTeamFileNameByID(mgr, fileUUID, file.NewFilename, teamID, userID)
 	switch {
 	case errors.Is(err, errorCloudTypes.ErrFileNotFound):
 		logger.Logger.Error("Error update user filename by ID", err)

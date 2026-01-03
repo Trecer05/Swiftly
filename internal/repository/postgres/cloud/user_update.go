@@ -14,7 +14,7 @@ func (manager *Manager) UpdateFileFilenameByID(userID int, fileID, newOrigName, 
 
 	if err := manager.Conn.QueryRow(`
 		UPDATE files SET original_filename = $1, display_name = $2, storage_path = $3, updated_at = NOW()
-		WHERE uuid = $4 AND owner_id = $5
+		WHERE uuid = $4 AND created_by = $5
 		RETURNING updated_at
 	`, newOrigName, newFilename, newFilepath, fileID, userID).Scan(&updatedAt); err != nil {
 		return time.Time{}, err

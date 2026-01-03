@@ -398,7 +398,7 @@ func (manager *Manager) GetTeamFolderpathByID(teamID int, folderID string) (stri
 	return storagePath, nil
 }
 
-func (manager *Manager) GetTeamFilepathByID(teamID int, fileID string) (string, error) {
+func (manager *Manager) GetTeamFilepathByID(teamID int, fileID uuid.UUID) (string, error) {
 	row := manager.Conn.QueryRow(`SELECT storage_path FROM files WHERE uuid = $1 AND owner_type = 'team' AND owner_id = $2`, fileID, teamID)
 
 	var storagePath string
