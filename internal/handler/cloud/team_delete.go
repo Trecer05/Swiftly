@@ -8,6 +8,7 @@ import (
 
 	"github.com/Trecer05/Swiftly/internal/config/logger"
 	errorAuthTypes "github.com/Trecer05/Swiftly/internal/errors/auth"
+	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	fileManager "github.com/Trecer05/Swiftly/internal/filemanager/cloud"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	redis "github.com/Trecer05/Swiftly/internal/repository/cache/cloud"
@@ -26,7 +27,7 @@ func DeleteTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 	vars := mux.Vars(r)
 	teamID, _ := strconv.Atoi(vars["id"]) // Валидируем teamId на уровне роутера.
 
-	_, err := cloudService.AuthorizeUserInTeam(r, teamID, kafkaManager)
+	userID, err := cloudService.AuthorizeUserInTeam(r, teamID, kafkaManager)
 	if err != nil {
 		if errors.Is(err, errorAuthTypes.ErrUnauthorized) {
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
@@ -43,8 +44,16 @@ func DeleteTeamFileByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusBadRequest)
 		return
 	}
-	filePath, err := mgr.DeleteTeamFileByID(teamID, fileUUID)
+	filePath, err := mgr.DeleteTeamFileByID(teamID, userID, fileUUID)
 	if err != nil {
+		switch {
+		case errors.Is(err, cloudErrors.ErrFileNotFound):
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case errors.Is(err, cloudErrors.ErrNoPermissions):
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
 		logger.Logger.Error("Error deleting team file by ID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
@@ -82,7 +91,7 @@ func DeleteTeamFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *ma
 	vars := mux.Vars(r)
 	teamID, _ := strconv.Atoi(vars["id"]) // Валидируем teamId на уровне роутера.
 
-	_, err := cloudService.AuthorizeUserInTeam(r, teamID, kafkaManager)
+	userID, err := cloudService.AuthorizeUserInTeam(r, teamID, kafkaManager)
 	if err != nil {
 		if errors.Is(err, errorAuthTypes.ErrUnauthorized) {
 			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
@@ -100,9 +109,17 @@ func DeleteTeamFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *ma
 		return
 	}
 
-	folderPath, err := mgr.DeleteTeamFileByID(teamID, folderUUID)
+	folderPath, err := mgr.DeleteTeamFolderByID(teamID, userID, folderUUID)
 	if err != nil {
-		logger.Logger.Error("Error deleting team file by ID", err)
+		switch {
+		case errors.Is(err, cloudErrors.ErrFileNotFound):
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		case errors.Is(err, cloudErrors.ErrNoPermissions):
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		logger.Logger.Error("Error deleting team folder by ID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
 	}
