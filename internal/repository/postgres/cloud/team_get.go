@@ -277,6 +277,51 @@ func (manager *Manager) GetTeamFolderByTeamID(teamId int, requestUserID int, fol
 	return &response, nil
 }
 
+func (manager *Manager) GetFolderByID(folderId uuid.UUID) (*models.Folder, error) {
+	var folder models.Folder
+	var parent sql.NullString
+
+	err := manager.Conn.QueryRow(`SELECT 
+				uuid,
+				name,
+				created_by,
+				owner_id,
+				owner_type,
+				visibility,
+				parent_folder_id,
+				created_at
+			FROM 
+				folders
+			WHERE
+				uuid = $1
+				`, folderId).Scan(
+		&folder.UUID,
+		&folder.Name,
+		&folder.CreatedBy,
+		&folder.OwnerID,
+		&folder.OwnerType,
+		&folder.Visibility,
+		&parent,
+		&folder.CreatedAt,
+	)
+	if parent.Valid {
+		parentUUID, err := uuid.Parse(parent.String)
+		if err != nil {
+			return nil, err
+		}
+		folder.ParentFolderID = &parentUUID
+	}
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.ErrFolderNotFound
+		} else {
+			return nil, err
+		}
+	}
+	return &folder, nil
+}
+
 func (manager *Manager) GetTeamFilesAndFolders(teamID int, requestUserID int, sort string) (*models.FilesAndFoldersResponse, error) {
 	var response models.FilesAndFoldersResponse
 

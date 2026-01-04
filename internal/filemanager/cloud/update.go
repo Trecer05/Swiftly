@@ -380,7 +380,7 @@ func MoveTeamFolder(req *models.MoveFolderRequest, teamID int, folderID string, 
 		_ = dirFd.Close()
 	}
 
-	return "", nil
+	return newStoragePath, nil
 }
 
 func MoveTeamFile(req *models.MoveFileRequest, teamID int, fileID string, mgr *manager.Manager) (string, error) {

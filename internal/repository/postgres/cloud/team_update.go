@@ -186,11 +186,11 @@ func (manager *Manager) MoveTeamFileByID(fileID, folderID string, teamID int, st
 	return nil
 }
 
-func (manager *Manager) MoveTeamFolderByID(folderID, newParentID string, teamID int, storagePath string) error {
+func (manager *Manager) MoveTeamFolderByID(folderID, newParentID string, teamID int, storagePath string, newFolderName string) error {
 	if _, err := manager.Conn.Exec(`
-		UPDATE folders SET parent_folder_id = $1, storage_path = $2, updated_at = NOW()
-		WHERE uuid = $3 AND owner_id = $4 AND owner_type = 'team'
-	`, newParentID, storagePath, folderID, teamID); err != nil {
+		UPDATE folders SET parent_folder_id = $1, storage_path = $2, updated_at = NOW(), name = $3
+		WHERE uuid = $4 AND owner_id = $5 AND owner_type = 'team'
+	`, newParentID, storagePath, newFolderName, folderID, teamID); err != nil {
 		return err
 	}
 

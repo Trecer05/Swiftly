@@ -324,6 +324,28 @@ func MoveTeamFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
+	folderModel, err := mgr.GetFolderByID(folderUUID)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorCloudTypes.ErrFolderNotFound):
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusNotFound)
+			return
+		}
+		logger.Logger.Error("Error moving folder by id", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
+	if err := cloudService.HasAccessToTeamFolder(folderModel, userID, true); err != nil {
+		if errors.Is(err, errorAuthTypes.ErrUnauthorized) {
+			serviceHttp.NewErrorBody(w, "application/json", err, http.StatusForbidden)
+			return
+		}
+		logger.Logger.Error("Error checking access", err)
+		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
+		return
+	}
+
 	storagePath, err := fileManager.MoveTeamFolder(&req, teamID, folderUUID.String(), mgr)
 	if err != nil {
 		switch {
@@ -337,7 +359,7 @@ func MoveTeamFolderByIDHandler(w http.ResponseWriter, r *http.Request, mgr *mana
 		return
 	}
 
-	if err := mgr.MoveTeamFolderByID(folderUUID.String(), req.NewFolderID.String(), userID, storagePath); err != nil {
+	if err := mgr.MoveTeamFolderByID(folderUUID.String(), req.NewFolderID.String(), userID, storagePath, req.FolderName); err != nil {
 		logger.Logger.Error("Error moving folder by ID", err)
 		serviceHttp.NewErrorBody(w, "application/json", err, http.StatusInternalServerError)
 		return
