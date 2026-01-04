@@ -2,66 +2,62 @@ package cloud
 
 import (
 	"database/sql"
-	"time"
+	"errors"
 
 	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 	"github.com/lib/pq"
 )
 
-func (manager *Manager) UpdateFileFilenameByID(userID int, fileID, newOrigName, newFilename, newFilepath string) (time.Time, error) {
-	var updatedAt time.Time
-
+func (manager *Manager) UpdateTeamFile(req *models.File) error {
 	if err := manager.Conn.QueryRow(`
-		UPDATE files SET original_filename = $1, display_name = $2, storage_path = $3, updated_at = NOW()
-		WHERE uuid = $4 AND created_by = $5
-		RETURNING updated_at
-	`, newOrigName, newFilename, newFilepath, fileID, userID).Scan(&updatedAt); err != nil {
-		return time.Time{}, err
+		UPDATE files SET original_filename = $1, display_name = $2, storage_path = $3, updated_at = NOW(), hash = $4, version = version + 1, size = $5, mime_type = $6
+		WHERE uuid = $7 AND owner_id = $8 AND owner_type = 'team'
+		RETURNING created_by, uploaded_at, updated_at, version
+	`, req.OriginalFilename, req.DisplayName, req.StoragePath, req.Hash, req.Size, req.MimeType, req.UUID, req.OwnerID).Scan(&req.CreatedBy, &req.UploadedAt, &req.UpdatedAt, &req.Version); err != nil {
+		return err
 	}
 
-	return updatedAt, nil
+	return nil
 }
 
-func (manager *Manager) UpdateFolderFoldernameByID(userID int, folderID, newFoldername, newFolderpath string) (time.Time, error) {
-	var updatedAt time.Time
-
-	if err := manager.Conn.QueryRow(`
-		UPDATE folders SET name = $1, storage_path = $2, updated_at = NOW()
-		WHERE uuid = $3 AND created_by = $4
-		RETURNING updated_at
-	`, newFoldername, newFolderpath, folderID, userID).Scan(&updatedAt); err != nil {
-		return time.Time{}, err
-	}
-
-	return updatedAt, nil
-}
-
-func (manager *Manager) ShareUserFileByID(fileID string, userID int) error {
+func (manager *Manager) ShareTeamFileByID(fileID string, teamID int, userID int) error {
 	tx, err := manager.Conn.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback() // nolint: errcheck
 
+	var created_by int
+	if err := tx.QueryRow(`SELECT created_by FROM files WHERE uuid = $1 AND owner_type = 'team'`, fileID).Scan(&created_by); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return cloudErrors.ErrFileNotFound
+		}
+		return err
+	}
+
+	if created_by != userID {
+		return cloudErrors.ErrNoPermissions
+	}
+
 	if _, err := tx.Exec(`
-	    UPDATE files SET visibility = 'shared' AND updated_at = NOW()
-		WHERE uuid = $1 AND created_by = $2 AND owner_type = 'user'
+	    UPDATE files SET visibility = 'shared', updated_at = NOW()
+		WHERE uuid = $1 AND created_by = $2 AND owner_type = 'team'
 	`, fileID, userID); err != nil {
 		return err
 	}
 
 	if _, err := tx.Exec(`
 		INSERT INTO shared_access (file_id, shared_with_id, shared_with_type, shared_by)
-			VALUES ($1, $2, 'user', $2)
-	`, fileID, userID); err != nil {
+			VALUES ($1, $2, 'team', $3)
+	`, fileID, teamID, userID); err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
-func (manager *Manager) ShareUserFolderByID(folderID string, userID int) error {
+func (manager *Manager) ShareTeamFolderByID(folderID string, teamID int, userID int) error {
 	tx, err := manager.Conn.Begin()
 	if err != nil {
 		return err
@@ -74,7 +70,7 @@ func (manager *Manager) ShareUserFolderByID(folderID string, userID int) error {
 		SELECT created_by
 		FROM folders
 		WHERE uuid = $1
-		  AND owner_type = 'user'
+		  AND owner_type = 'team'
 	`, folderID).Scan(&ownerID)
 
 	if err != nil {
@@ -147,12 +143,12 @@ func (manager *Manager) ShareUserFolderByID(folderID string, userID int) error {
 		)
 		SELECT
 			uuid,
-			created_by,
-			'user',
+			$3,
+			'team',
 			$2
 		FROM folders
 		WHERE uuid = ANY($1)
-	`, pq.Array(folderIDs), userID)
+	`, pq.Array(folderIDs), userID, teamID)
 	if err != nil {
 		return err
 	}
@@ -166,12 +162,12 @@ func (manager *Manager) ShareUserFolderByID(folderID string, userID int) error {
 		)
 		SELECT
 			f.uuid,
-			f.created_by,
-			'user',
+			$3,
+			'team',
 			$2
 		FROM files f
 		WHERE f.folder_id = ANY($1)
-	`, pq.Array(folderIDs), userID)
+	`, pq.Array(folderIDs), userID, teamID)
 	if err != nil {
 		return err
 	}
@@ -179,34 +175,22 @@ func (manager *Manager) ShareUserFolderByID(folderID string, userID int) error {
 	return tx.Commit()
 }
 
-func (manager *Manager) UpdateUserFile(req *models.File) error {
-	if err := manager.Conn.QueryRow(`
-		UPDATE files SET original_filename = $1, display_name = $2, storage_path = $3, updated_at = NOW(), hash = $4, version = version + 1, size = $5, mime_type = $6
-		WHERE uuid = $7 AND created_by = $8
-		RETURNING updated_at
-	`, req.OriginalFilename, req.DisplayName, req.StoragePath, req.Hash, req.Size, req.MimeType, req.UUID, req.CreatedBy).Scan(&req.Hash); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (manager *Manager) MoveUserFileByID(fileID, folderID string, userID int, storagePath string) error {
+func (manager *Manager) MoveTeamFileByID(fileID, folderID string, teamID int, storagePath string) error {
 	if _, err := manager.Conn.Exec(`
 		UPDATE files SET folder_id = $1, storage_path = $2, updated_at = NOW()
-		WHERE uuid = $3 AND created_by = $4 AND owner_type = 'user'
-	`, folderID, storagePath, fileID, userID); err != nil {
+		WHERE uuid = $3 AND owner_id = $4 AND owner_type = 'team'
+	`, folderID, storagePath, fileID, teamID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (manager *Manager) MoveUserFolderByID(folderID, newParentID string, userID int, storagePath string) error {
+func (manager *Manager) MoveTeamFolderByID(folderID, newParentID string, teamID int, storagePath string, newFolderName string) error {
 	if _, err := manager.Conn.Exec(`
-		UPDATE folders SET parent_folder_id = $1, storage_path = $2, updated_at = NOW()
-		WHERE uuid = $3 AND created_by = $4 AND owner_type = 'user'
-	`, newParentID, storagePath, folderID, userID); err != nil {
+		UPDATE folders SET parent_folder_id = $1, storage_path = $2, updated_at = NOW(), name = $3
+		WHERE uuid = $4 AND owner_id = $5 AND owner_type = 'team'
+	`, newParentID, storagePath, newFolderName, folderID, teamID); err != nil {
 		return err
 	}
 

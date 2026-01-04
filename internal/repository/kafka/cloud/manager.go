@@ -109,23 +109,23 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 	for {
 		msg, err := km.Reader.FetchMessage(ctx)
 
-		if errors.Is(err, io.EOF) ||
-			strings.Contains(err.Error(), "no messages") ||
-			errors.Is(err, context.DeadlineExceeded) {
-			continue
-		}
 		if err != nil {
+			if errors.Is(err, io.EOF) ||
+				strings.Contains(err.Error(), "no messages") ||
+				errors.Is(err, context.DeadlineExceeded) {
+				continue
+			}
 			logger.Logger.Errorf("Kafka error: %v", err)
 			continue
 		}
 
-		var corrID string
-		for _, h := range msg.Headers {
-			if h.Key == "correlation_id" {
-				corrID = string(h.Value)
-				break
-			}
-		}
+		// var corrID string
+		// for _, h := range msg.Headers {
+		// 	if h.Key == "correlation_id" {
+		// 		corrID = string(h.Value)
+		// 		break
+		// 	}
+		// }
 
 		switch string(msg.Key) {
 		case "team_storage_create":
@@ -150,7 +150,7 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 
 			km.SendMessage(ctx, "created", models.Envelope{Type: "tasks", Payload: nil})
 		case "check_user_response":
-			err := SendResponse(ctx, km, corrID, msg)
+			err := SendResponse(ctx, km, msg)
 			if err != nil {
 				logger.Logger.Errorf("Error sending envelope: %v", err)
 				continue
@@ -160,21 +160,21 @@ func (km *KafkaManager) ReadChatMessages(ctx context.Context) {
 	}
 }
 
-func SendResponse(ctx context.Context, km *KafkaManager, correlationID string, msg kafka.Message) error {
-	response := models.KafkaResponse{
-		CorrelationID: correlationID,
-		Payload:       msg.Value,
-		Err:           nil,
+func SendResponse(ctx context.Context, km *KafkaManager, msg kafka.Message) error {
+	var resp models.KafkaResponse
+	if err := json.Unmarshal(msg.Value, &resp); err != nil {
+		logger.Logger.Errorf("Error unmarshaling response message: %v", err)
+		return err
 	}
 
 	km.mu.Lock()
-	ch, ok := km.responses[correlationID]
+	ch, ok := km.responses[resp.CorrelationID]
 	km.mu.Unlock()
 
 	if ok {
-		ch <- response
+		ch <- resp
 	} else {
-		logger.Logger.Warnf("No waiting channel for correlationID=%s", correlationID)
+		logger.Logger.Warnf("No waiting channel for correlationID=%s", resp.CorrelationID)
 	}
 
 	return nil

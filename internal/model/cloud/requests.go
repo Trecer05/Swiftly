@@ -3,10 +3,10 @@ package cloud
 import "github.com/google/uuid"
 
 type CreateFileRequest struct {
-	FolderID    *uuid.UUID `json:"folder_id,omitempty"` // Можно добавить в корень хранилища
-	DisplayName string    `json:"display_name"`
-	Visibility  VisibilityType    `json:"visibility"`
-	OwnerType   OwnerType    `json:"owner_type"`
+	FolderID    *uuid.UUID     `json:"folder_id,omitempty"` // Можно добавить в корень хранилища
+	DisplayName string         `json:"display_name"`
+	Visibility  VisibilityType `json:"visibility"`
+	OwnerType   OwnerType      `json:"owner_type"`
 }
 
 type FilenameUpdateRequest struct {
@@ -18,24 +18,24 @@ type FoldernameUpdateRequest struct {
 }
 
 type CreateFolderRequest struct {
-	ParentID    *uuid.UUID `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
-	DisplayName string    `json:"display_name"`
-	Visibility  VisibilityType    `json:"visibility"`
-	OwnerType   OwnerType    `json:"owner_type"`
+	ParentID    *uuid.UUID     `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
+	DisplayName string         `json:"display_name"`
+	Visibility  VisibilityType `json:"visibility"`
+	OwnerType   OwnerType      `json:"owner_type"`
 }
 
 type UpdateFileRequest struct {
-	ParentID    *uuid.UUID `json:"parent_id,omitempty"` // Можно добавить в корень хранилища
-	DisplayName string    `json:"display_name"`
-	Visibility  VisibilityType    `json:"visibility"`
-	OwnerType   OwnerType    `json:"owner_type"`
+	FolderID    *uuid.UUID     `json:"folder_id,omitempty"` // Можно добавить в корень хранилища
+	DisplayName string         `json:"display_name"`
+	Visibility  VisibilityType `json:"visibility"`
+	OwnerType   OwnerType      `json:"owner_type"`
 }
 
-type MoveUserFileRequest struct {
+type MoveFileRequest struct {
 	NewFolderID *uuid.UUID `json:"new_folder_id,omitempty"` // Можно добавить в корень хранилища
 }
 
-type MoveUserFolderRequest struct {
+type MoveFolderRequest struct {
 	NewFolderID *uuid.UUID `json:"new_folder_id,omitempty"` // Можно добавить в корень хранилища
-	FolderName  string    `json:"folder_name,omitempty"`
+	FolderName  string     `json:"folder_name,omitempty"`
 }

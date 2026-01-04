@@ -24,21 +24,21 @@ const (
 )
 
 type File struct {
-	UUID             uuid.UUID  `json:"uuid"`
-	FolderID         *uuid.UUID `json:"folder_id,omitempty"`
-	StoragePath      string     `json:"storage_path"`
-	OriginalFilename string     `json:"original_filename"`
-	DisplayName      string     `json:"display_name"`
-	MimeType         string     `json:"mime_type"`
-	Size             int64      `json:"size"`
-	Visibility       VisibilityType  	`json:"visibility"`
-	CreatedBy        int        `json:"created_by"`
-	OwnerID          int        `json:"owner_id"`
-	OwnerType        OwnerType  `json:"owner_type"`
-	UploadedAt       string     `json:"uploaded_at"`
-	UpdatedAt        string     `json:"updated_at"`
-	Hash             string     `json:"hash"`
-	Version          int        `json:"version"`
+	UUID             uuid.UUID      `json:"uuid"`
+	FolderID         *uuid.UUID     `json:"folder_id,omitempty"`
+	StoragePath      string         `json:"storage_path"`
+	OriginalFilename string         `json:"original_filename"`
+	DisplayName      string         `json:"display_name"`
+	MimeType         string         `json:"mime_type"`
+	Size             int64          `json:"size"`
+	Visibility       VisibilityType `json:"visibility"`
+	CreatedBy        int            `json:"created_by"`
+	OwnerID          int            `json:"owner_id"`
+	OwnerType        OwnerType      `json:"owner_type"`
+	UploadedAt       string         `json:"uploaded_at"`
+	UpdatedAt        string         `json:"updated_at"`
+	Hash             string         `json:"hash"`
+	Version          int            `json:"version"`
 }
 
 type FileShort struct {
@@ -51,27 +51,27 @@ type FileShort struct {
 }
 
 type Folder struct {
-	UUID           uuid.UUID  `json:"uuid"`
-	Name           string     `json:"name"`
-	CreatedBy      int        `json:"created_by"`
-	OwnerID        int        `json:"owner_id"`
-	OwnerType      OwnerType  `json:"owner_type"`
-	StoragePath    string     `json:"storage_path"`
-	Files          []File     `json:"files,omitempty"`
-	Visibility     VisibilityType  	`json:"visibility"`
-	ParentFolderID *uuid.UUID `json:"parent_folder_id,omitempty"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	UUID           uuid.UUID      `json:"uuid"`
+	Name           string         `json:"name"`
+	CreatedBy      int            `json:"created_by"`
+	OwnerID        int            `json:"owner_id"`
+	OwnerType      OwnerType      `json:"owner_type"`
+	StoragePath    string         `json:"storage_path"`
+	Files          []File         `json:"files,omitempty"`
+	Visibility     VisibilityType `json:"visibility"`
+	ParentFolderID *uuid.UUID     `json:"parent_folder_id,omitempty"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 type FileShare struct {
-	UUID             uuid.UUID  `json:"uuid"`
-	FolderID         *uuid.UUID `json:"folder_id,omitempty"`
-	DisplayName      string     `json:"display_name"`
-	MimeType         string     `json:"mime_type"`
-	Size             int64      `json:"size"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	UUID        uuid.UUID  `json:"uuid"`
+	FolderID    *uuid.UUID `json:"folder_id,omitempty"`
+	DisplayName string     `json:"display_name"`
+	MimeType    string     `json:"mime_type"`
+	Size        int64      `json:"size"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type FolderShare struct {

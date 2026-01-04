@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
+	errors "github.com/Trecer05/Swiftly/internal/errors/file"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
 
 	"github.com/google/uuid"
@@ -405,7 +405,7 @@ func (manager *Manager) GetUserFilepathByID(userID int, fileID string) (string, 
 }
 
 func (manager *Manager) GetUserFolderpathByID(userID int, folderID string) (string, error) {
-	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1`, folderID)
+	row := manager.Conn.QueryRow(`SELECT storage_path FROM folders WHERE uuid = $1 AND owner_type = 'user' AND owner_id = $2`, folderID, userID)
 
 	var storagePath string
 	if err := row.Scan(&storagePath); err != nil {
@@ -454,7 +454,7 @@ func (manager *Manager) GetSharedFile(fileID string) (string, string, error) {
 			ON sa.file_id = f.uuid
 		WHERE f.uuid = $1
 			AND f.visibility = 'shared'
-	'`, fileID).Scan(&filepath, &displayName); err != nil {
+	`, fileID).Scan(&filepath, &displayName); err != nil {
 		switch {
 		case err == sql.ErrNoRows:
 			return "", "", cloudErrors.ErrFileNotFound
