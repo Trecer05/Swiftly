@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"database/sql"
+	"errors"
 
 	cloudErrors "github.com/Trecer05/Swiftly/internal/errors/cloud"
 	models "github.com/Trecer05/Swiftly/internal/model/cloud"
@@ -27,8 +28,20 @@ func (manager *Manager) ShareTeamFileByID(fileID string, teamID int, userID int)
 	}
 	defer tx.Rollback() // nolint: errcheck
 
+	var created_by int
+	if err := tx.QueryRow(`SELECT created_by FROM files WHERE uuid = $1 AND owner_type = 'team'`, fileID).Scan(&created_by); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return cloudErrors.ErrFileNotFound
+		}
+		return err
+	}
+
+	if created_by != userID {
+		return cloudErrors.ErrNoPermissions
+	}
+
 	if _, err := tx.Exec(`
-	    UPDATE files SET visibility = 'shared' AND updated_at = NOW()
+	    UPDATE files SET visibility = 'shared', updated_at = NOW()
 		WHERE uuid = $1 AND created_by = $2 AND owner_type = 'team'
 	`, fileID, userID); err != nil {
 		return err

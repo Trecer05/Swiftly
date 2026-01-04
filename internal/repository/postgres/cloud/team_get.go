@@ -76,7 +76,7 @@ func hasAccessToTeamFolder(folder *models.Folder, requestUserID int, isInTeam bo
 				return nil
 			}
 		case models.VisibilityPrivate:
-			if folder.OwnerID != requestUserID {
+			if folder.CreatedBy != requestUserID {
 				return errors.ErrPermissionDenied
 			} else {
 				return nil

@@ -1,0 +1,12 @@
+# корень проекта
+root = "."
+
+# временный каталог для сборки
+tmp_dir = "tmp"
+
+[build]
+# точка входа сервиса (твоё main.go)
+cmd = "go build -o ./tmp/main ./cmd/servers/cloud"
+bin = "tmp/main"
+include_ext = ["go"]
+exclude_dir = ["vendor", "tmp"]

@@ -454,7 +454,7 @@ func (manager *Manager) GetSharedFile(fileID string) (string, string, error) {
 			ON sa.file_id = f.uuid
 		WHERE f.uuid = $1
 			AND f.visibility = 'shared'
-	'`, fileID).Scan(&filepath, &displayName); err != nil {
+	`, fileID).Scan(&filepath, &displayName); err != nil {
 		switch {
 		case err == sql.ErrNoRows:
 			return "", "", cloudErrors.ErrFileNotFound

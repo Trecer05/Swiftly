@@ -211,8 +211,15 @@ services:
   cloud_service:
     build:
       context: .
+      target: dev
       args:
         SERVICE: cloud
+    command: /go/bin/air
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
     depends_on:
       postgres_cloud:
         condition: service_healthy
